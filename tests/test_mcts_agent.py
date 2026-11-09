@@ -12,6 +12,12 @@ from src.mcts.agent import (
     compute_ucb1_scores,
     normalize_sibling_q_values,
 )
+from src.mcts.diagnostics import (
+    MCTSDiagnosticsTracker,
+    compute_leaf_visit_distribution,
+    compute_superclass_visit_distribution,
+    compute_visitation_entropy,
+)
 from src.mcts.sampler import DualStreamBatchSampler
 from src.trees.confusion_tree import build_confusion_tree
 from src.trees.semantic_tree import build_semantic_tree
@@ -407,5 +413,90 @@ def test_dual_stream_sampler_small_leaf_replacement_and_validation() -> None:
 
     with pytest.raises(ValueError, match="internal node"):
         sampler.sample_batch(tree.root_id)
+
+
+def test_visitation_entropy_zero_single_and_uniform() -> None:
+    """Verify `compute_visitation_entropy(tree)` handles 0 visits, single-leaf collapse, and uniform visits (MCTS-03, AC 3)."""
+    _, tree = _make_small_semantic_tree()
+    leaf_ids = tree.leaf_node_ids()
+    num_leaves = int(leaf_ids.size)
+    assert num_leaves == 6
+
+    # 1. Zero visits -> (0.0, 0.0) without NaN
+    h_zero, h_norm_zero = compute_visitation_entropy(tree)
+    assert h_zero == 0.0
+    assert h_norm_zero == 0.0
+
+    # 2. Single-leaf collapse (tunnel vision: 100% visits on leaf 0) -> (0.0, 0.0)
+    tree.visits[leaf_ids[0]] = 25
+    h_single, h_norm_single = compute_visitation_entropy(tree)
+    assert pytest.approx(h_single, abs=1e-12) == 0.0
+    assert pytest.approx(h_norm_single, abs=1e-12) == 0.0
+
+    # 3. Uniform visits across all K=6 leaves -> (ln(6), 1.0)
+    tree.visits[leaf_ids] = 10
+    h_uni, h_norm_uni = compute_visitation_entropy(tree)
+    assert pytest.approx(h_uni, rel=1e-12, abs=1e-12) == float(np.log(6.0))
+    assert pytest.approx(h_norm_uni, rel=1e-12, abs=1e-12) == 1.0
+
+    # 4. Known non-uniform distribution: p = [0.5, 0.25, 0.25, 0, 0, 0]
+    tree.visits[leaf_ids] = np.array([20, 10, 10, 0, 0, 0], dtype=np.int64)
+    expected_h = -(0.5 * np.log(0.5) + 2.0 * 0.25 * np.log(0.25))
+    h_nonuni, h_norm_nonuni = compute_visitation_entropy(tree)
+    assert pytest.approx(h_nonuni, rel=1e-12, abs=1e-12) == float(expected_h)
+    assert pytest.approx(h_norm_nonuni, rel=1e-12, abs=1e-12) == float(expected_h / np.log(6.0))
+
+
+def test_superclass_visit_distribution_and_tracker() -> None:
+    """Verify `compute_superclass_visit_distribution()` and `MCTSDiagnosticsTracker` across Semantic and Ward trees (MCTS-03, AC 4)."""
+    class_to_indices, sem_tree = _make_small_semantic_tree()
+    rng = np.random.default_rng(123)
+    ward_tree = build_confusion_tree(rng.uniform(1.0, 5.0, size=(6, 6)), class_to_indices)
+
+    for tree in (sem_tree, ward_tree):
+        # At step 0 (unvisited), all 20 superclasses have 0.0 proportion
+        sc_dist_zero = compute_superclass_visit_distribution(tree)
+        assert len(sc_dist_zero) == 20
+        assert sum(sc_dist_zero.values()) == 0.0
+        leaf_dist_zero = compute_leaf_visit_distribution(tree)
+        assert sum(leaf_dist_zero.values()) == 0.0
+
+        agent = MCTSHNMAgent(tree=tree, exploration_c=2.0, momentum_alpha=0.3, q_norm=True)
+        tracker = MCTSDiagnosticsTracker(tree=tree)
+
+        # Perform 3 updates: beaver (4 -> aquatic_mammals), shark (73 -> fish), orchid (54 -> flowers)
+        cls_to_leaf = tree.class_id_to_leaf_node_id()
+        agent.update(cls_to_leaf[4], reward=1.5)
+        tracker.record_step(step=1, leaf_node_id=cls_to_leaf[4], reward=1.5)
+
+        agent.update(cls_to_leaf[4], reward=2.0)
+        tracker.record_step(step=2, leaf_node_id=cls_to_leaf[4], reward=2.0)
+
+        agent.update(cls_to_leaf[73], reward=0.5)
+        tracker.record_step(step=3, leaf_node_id=cls_to_leaf[73], reward=0.5)
+
+        agent.update(cls_to_leaf[54], reward=1.0)
+        diag_last = tracker.record_step(step=4, leaf_node_id=cls_to_leaf[54], reward=1.0)
+
+        assert diag_last.step == 4
+        assert diag_last.leaf_class_id == 54
+        assert diag_last.entropy_nats > 0.0
+
+        sc_dist = compute_superclass_visit_distribution(tree)
+        assert len(sc_dist) == 20
+        assert pytest.approx(sum(sc_dist.values()), rel=1e-12, abs=1e-12) == 1.0
+        assert pytest.approx(sc_dist["aquatic_mammals"], rel=1e-12, abs=1e-12) == 0.50
+        assert pytest.approx(sc_dist["fish"], rel=1e-12, abs=1e-12) == 0.25
+        assert pytest.approx(sc_dist["flowers"], rel=1e-12, abs=1e-12) == 0.25
+
+        summary = tracker.summary()
+        assert summary["num_recorded_steps"] == 4
+        assert summary["total_leaf_visits"] == 4
+        assert pytest.approx(
+            sum(summary["leaf_visit_distribution"].values()),  # type: ignore[arg-type]
+            rel=1e-12,
+            abs=1e-12,
+        ) == 1.0
+
 
 

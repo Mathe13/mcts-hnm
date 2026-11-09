@@ -8,10 +8,10 @@ While *GiantHunter* (*Bioinformatics*, 2025) introduced a Monte Carlo Tree Searc
 
 ## Goals
 
-- [ ] Implement `MCTSHNMAgent` (`src/mcts/agent.py`) supporting deterministic UCB1 tree traversal from root to leaf with unvisited-node priority ($n_i = 0$) and a configurable `q_norm: bool` toggle comparing Strict GiantHunter (raw $Q_i$) against Enhanced MCTS-HNM (Min-Max sibling normalization $\bar{Q}_i^{\text{norm}} \in [0, 1]$) (`ISS-07`, `AD-005`).
-- [ ] Implement MCTS backpropagation (`src/mcts/agent.py`) updating the selected leaf's action-value via exponential moving average momentum $Q_l^{(t)} = \alpha r + (1 - \alpha) Q_l^{(t-1)}$ (default $\alpha = 0.3$) and updating every ancestor node $p$ bottom-up via instance-weighted aggregation $Q_p = \frac{1}{M_p} \sum_{c \in \text{Children}(p)} M_c Q_c$ (`ISS-08`).
-- [ ] Implement `DualStreamBatchSampler` (`src/mcts/sampler.py`) assembling negative mini-batches of size $B_{\text{neg}}$ from $\lfloor (1 - \beta) B_{\text{neg}} \rfloor$ MCTS-selected leaf instances and $\lceil \beta B_{\text{neg}} \rceil$ uniformly sampled anchor instances for $\beta \in [0.0, 1.0]$, with optional positive class sampling for Scenario 1 (`ISS-09`, `AD-005`).
-- [ ] Implement RL diagnostic metrics (`src/mcts/diagnostics.py`) including Tree Visitation Entropy $H_t = -\sum_{i \in \text{Leaves}} p_i \ln p_i$, normalized entropy $H_t / \ln K$, and per-superclass visit distribution tracking across both Semantic and Ward Confusion trees (`ISS-09`).
+- [x] Implement `MCTSHNMAgent` (`src/mcts/agent.py`) supporting deterministic UCB1 tree traversal from root to leaf with unvisited-node priority ($n_i = 0$) and a configurable `q_norm: bool` toggle comparing Strict GiantHunter (raw $Q_i$) against Enhanced MCTS-HNM (Min-Max sibling normalization $\bar{Q}_i^{\text{norm}} \in [0, 1]$) (`ISS-07`, `AD-005`).
+- [x] Implement MCTS backpropagation (`src/mcts/agent.py`) updating the selected leaf's action-value via exponential moving average momentum $Q_l^{(t)} = \alpha r + (1 - \alpha) Q_l^{(t-1)}$ (default $\alpha = 0.3$) and updating every ancestor node $p$ bottom-up via instance-weighted aggregation $Q_p = \frac{1}{M_p} \sum_{c \in \text{Children}(p)} M_c Q_c$ (`ISS-08`).
+- [x] Implement `DualStreamBatchSampler` (`src/mcts/sampler.py`) assembling negative mini-batches of size $B_{\text{neg}}$ from $\lfloor (1 - \beta) B_{\text{neg}} \rfloor$ MCTS-selected leaf instances and $\lceil \beta B_{\text{neg}} \rceil$ uniformly sampled anchor instances for $\beta \in [0.0, 1.0]$, with optional positive class sampling for Scenario 1 (`ISS-09`, `AD-005`).
+- [x] Implement RL diagnostic metrics (`src/mcts/diagnostics.py`) including Tree Visitation Entropy $H_t = -\sum_{i \in \text{Leaves}} p_i \ln p_i$, normalized entropy $H_t / \ln K$, and per-superclass visit distribution tracking across both Semantic and Ward Confusion trees (`ISS-09`).
 
 ## Out of Scope
 
@@ -114,7 +114,7 @@ Each requirement maps to a unique ID for tracking across design, tasks, and veri
 | -------------- | ----- | ----- | ------ |
 | MCTS-01 | P1: UCB1 Selection & Min-Max Q-Normalization (`ISS-07`) | Execute | Verified |
 | MCTS-02 | P1: Momentum Backpropagation & Hierarchical Aggregation (`ISS-08`) | Execute | Verified |
-| MCTS-03 | P1: Dual-Stream Batch Sampler & RL Diagnostics (`ISS-09`) | Execute | Implementing |
+| MCTS-03 | P1: Dual-Stream Batch Sampler & RL Diagnostics (`ISS-09`) | Execute | Verified |
 
 **Coverage:** 3 total requirements mapped to `EPIC-03`.
 
@@ -142,7 +142,7 @@ Every departure from the original *GiantHunter* paper (`btaf239.pdf`) and offici
 
 ## Success Criteria
 
-- [ ] `.venv/bin/pytest -v tests/test_mcts_agent.py` passes 100% of unit and integration checks covering `MCTS-01`, `MCTS-02`, and `MCTS-03`.
-- [ ] `MCTSHNMAgent` deterministically explores all unvisited children before revisiting any visited sibling and accurately switches between Strict GiantHunter (`q_norm=False`) and Enhanced MCTS-HNM (`q_norm=True`).
-- [ ] `MCTSHNMAgent.update()` matches exact analytical values for multi-step leaf momentum ($Q_l^{(t)} = \alpha r + (1-\alpha) Q_l^{(t-1)}$) and bottom-up instance-weighted parent aggregation ($Q_p = \frac{1}{M_p} \sum M_c Q_c$) on both Semantic and Ward Confusion trees.
-- [ ] `DualStreamBatchSampler` and `src/mcts/diagnostics.py` enforce exact batch size conservation ($K_{\text{mcts}} + K_{\text{uni}} == B_{\text{neg}}$), single-warning replacement fallback for small leaves, and non-NaN Tree Visitation Entropy $H_t$.
+- [x] `.venv/bin/pytest -v tests/test_mcts_agent.py` passes 100% of unit and integration checks covering `MCTS-01`, `MCTS-02`, and `MCTS-03`.
+- [x] `MCTSHNMAgent` deterministically explores all unvisited children before revisiting any visited sibling and accurately switches between Strict GiantHunter (`q_norm=False`) and Enhanced MCTS-HNM (`q_norm=True`).
+- [x] `MCTSHNMAgent.update()` matches exact analytical values for multi-step leaf momentum ($Q_l^{(t)} = \alpha r + (1-\alpha) Q_l^{(t-1)}$) and bottom-up instance-weighted parent aggregation ($Q_p = \frac{1}{M_p} \sum M_c Q_c$) on both Semantic and Ward Confusion trees.
+- [x] `DualStreamBatchSampler` and `src/mcts/diagnostics.py` enforce exact batch size conservation ($K_{\text{mcts}} + K_{\text{uni}} == B_{\text{neg}}$), single-warning replacement fallback for small leaves, and non-NaN Tree Visitation Entropy $H_t$.

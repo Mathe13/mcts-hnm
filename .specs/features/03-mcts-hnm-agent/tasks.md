@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/03-mcts-hnm-agent/design.md`
-**Status**: In Progress
+**Status**: Done
 **Approved**: 2026-11-08 - user: "prossiga"
 **Build**: `.venv/bin/python -m compileall -q src tests`
 **Run unit**: `.venv/bin/pytest -v`
@@ -141,11 +141,11 @@ T3 → T4
 
 **Done when**:
 
-- [ ] `compute_visitation_entropy(tree)` computes Shannon entropy $H_t = -\sum_{n_i > 0} p_i \ln p_i$ and normalized entropy $H_t / \ln K \in [0.0, 1.0]$, returning `(0.0, 0.0)` when total leaf visits equal `0`
-- [ ] `compute_superclass_visit_distribution(tree)` maps leaf visits to all 20 CIFAR-100 coarse superclass names on both Semantic and Ward Confusion trees, and `MCTSDiagnosticsTracker` logs step-level RL diagnostics
-- [ ] Unit tests `test_visitation_entropy_zero_single_and_uniform` and `test_superclass_visit_distribution_and_tracker` pass in `tests/test_mcts_agent.py`
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v`
-- [ ] Test count: 41 tests pass (no silent deletions)
+- [x] `compute_visitation_entropy(tree)` computes Shannon entropy $H_t = -\sum_{n_i > 0} p_i \ln p_i$ and normalized entropy $H_t / \ln K \in [0.0, 1.0]$, returning `(0.0, 0.0)` when total leaf visits equal `0`
+- [x] `compute_superclass_visit_distribution(tree)` maps leaf visits to all 20 CIFAR-100 coarse superclass names on both Semantic and Ward Confusion trees, and `MCTSDiagnosticsTracker` logs step-level RL diagnostics
+- [x] Unit tests `test_visitation_entropy_zero_single_and_uniform` and `test_superclass_visit_distribution_and_tracker` pass in `tests/test_mcts_agent.py`
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v`
+- [x] Test count: 41 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
@@ -199,7 +199,7 @@ The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none
 **Dispatched:** none
-**Walked:** pending execution
+**Walked:** Executed all 12 checks in `tests/test_mcts_agent.py` (41 total tests passing across repository) verifying Strict vs. Enhanced UCB1 selection, unvisited-node priority, momentum leaf updates, instance-weighted ancestor backpropagation, Dual-Stream batch sampling, and Tree Visitation Entropy diagnostics across Semantic and Ward Confusion trees.
 
 ---
 
