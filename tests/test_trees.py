@@ -412,3 +412,61 @@ def test_confusion_matrix_invalid_inputs_raise() -> None:
         build_confusion_tree(np.eye(5), pools_3)
 
 
+def test_notebook_02_structure_and_execution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """C12: notebooks/02_tree_construction.ipynb is a valid nbformat v4 notebook calling src.trees.*."""
+    import ast
+    import matplotlib
+    import matplotlib.pyplot as plt
+    import nbformat
+
+    matplotlib.use("Agg")
+    monkeypatch.setattr(plt, "show", lambda *args, **kwargs: None)
+
+    nb_path = Path(__file__).resolve().parents[1] / "notebooks" / "02_tree_construction.ipynb"
+    assert nb_path.exists(), f"Missing notebook at {nb_path}"
+
+    nb = nbformat.read(nb_path, as_version=4)
+    nbformat.validate(nb)
+
+    md_cells = [c for c in nb.cells if c.cell_type == "markdown"]
+    code_cells = [c for c in nb.cells if c.cell_type == "code"]
+    assert len(md_cells) >= 3
+    assert len(code_cells) >= 4
+
+    joined_code = "\n\n".join(c.source for c in code_cells)
+    for cell in code_cells:
+        ast.parse(cell.source)
+
+    for required_ref in (
+        "src.utils.seed",
+        "src.data.splits",
+        "src.trees.base_tree",
+        "src.trees.semantic_tree",
+        "src.trees.confusion_tree",
+        "build_semantic_tree",
+        "build_confusion_tree",
+        "compute_confusion_distance_matrix",
+        "estimate_validation_confusion_matrix",
+        "dendrogram",
+    ):
+        assert required_ref in joined_code, f"Notebook 02 missing reference to {required_ref}"
+
+    # Execute the notebook cells end-to-end redirecting REPO_ROOT to tmp_path for clean artifact output
+    ns: dict[str, object] = {}
+    for idx, cell in enumerate(code_cells):
+        src = cell.source
+        if idx == 0:
+            src += f"\nREPO_ROOT = Path({str(tmp_path)!r})"
+        exec(compile(src, f"<notebook_02_cell_{idx}>", "exec"), ns)
+    plt.close("all")
+
+    assert (tmp_path / "embeddings" / "trees" / "semantic_tree_scenario2.npz").exists()
+    assert (tmp_path / "embeddings" / "trees" / "confusion_tree_scenario2.npz").exists()
+    sem_s2 = ns["sem_tree_s2"]
+    conf_s2 = ns["conf_tree_s2"]
+    assert isinstance(sem_s2, FastHierarchyTree) and sem_s2.num_nodes == 121
+    assert isinstance(conf_s2, FastHierarchyTree) and conf_s2.num_nodes == 199
+
+
+
+

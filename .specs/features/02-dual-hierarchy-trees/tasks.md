@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/02-dual-hierarchy-trees/design.md`
-**Status**: In Progress
+**Status**: Done
 **Approved**: 2026-11-08 - user: "prossiga"
 **Build**: `.venv/bin/python -m compileall -q src tests`
 **Run unit**: `.venv/bin/pytest -v`
@@ -141,10 +141,10 @@ T3 → T4
 
 **Done when**:
 
-- [ ] `notebooks/02_tree_construction.ipynb` is a valid `nbformat` v4 notebook with markdown documentation and thin code cells calling `src.trees.*`
-- [ ] Integration test `test_notebook_02_structure_and_execution` in `tests/test_trees.py` verifies `nbformat` validity, required `src.*` imports, and end-to-end execution of the tree construction pipeline
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v`
-- [ ] Test count: 29 tests pass (no silent deletions)
+- [x] `notebooks/02_tree_construction.ipynb` is a valid `nbformat` v4 notebook with markdown documentation and thin code cells calling `src.trees.*`
+- [x] Integration test `test_notebook_02_structure_and_execution` in `tests/test_trees.py` verifies `nbformat` validity, required `src.*` imports, and end-to-end execution of the tree construction pipeline
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v`
+- [x] Test count: 29 tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full
@@ -198,7 +198,7 @@ The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none
 **Dispatched:** none
-**Walked:** pending
+**Walked:** Executed all 12 checks in `tests/test_trees.py` (29 total tests passing across repository) and ran `notebooks/02_tree_construction.ipynb` end-to-end to verify Semantic (`121`/`120` nodes) and Ward Confusion (`199`/`197` nodes) tree construction and `.npz` export.
 
 ---
 

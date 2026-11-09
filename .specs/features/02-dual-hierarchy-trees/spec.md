@@ -8,10 +8,10 @@ Monte Carlo Tree Search for Hard Negative Mining (MCTS-HNM) requires navigating 
 
 ## Goals
 
-- [ ] Implement a vectorized, contiguous-array tree representation (`FastHierarchyTree` in `src/trees/base_tree.py`) storing `parents`, `children`, `child_counts`, `is_leaf`, `leaf_to_class_id`, `instance_counts`, `visits`, and `q_values` in NumPy arrays with deterministic `.npz` serialization and state reset (`ISS-04`).
-- [ ] Implement `build_semantic_tree()` (`src/trees/semantic_tree.py`) constructing the 3-level CIFAR-100 Semantic Hierarchy (Virtual Root $\rightarrow$ 20 Superclasses $\rightarrow$ 99 Negative Leaves in Scenario 1 or 100 Fine Class Leaves in Scenario 2) with exact bottom-up instance count aggregation (`ISS-05`, `AD-002`, `AD-004`).
-- [ ] Implement `compute_confusion_distance_matrix()` and `build_confusion_tree()` (`src/trees/confusion_tree.py`) converting a validation confusion matrix $C \in \mathbb{R}^{K \times K}$ into symmetric normalized distances $D_{i,j} = 1 - \frac{C_{i,j} + C_{j,i}}{2 \cdot \max(C)}$ and a binary Ward linkage hierarchy (`scipy.cluster.hierarchy.linkage(method="ward")`), plus a helper `estimate_validation_confusion_matrix()` to compute $C$ from cached Tier-1 embeddings (`ISS-06`, `AD-002`).
-- [ ] Deliver a versioned Jupyter notebook (`notebooks/02_tree_construction.ipynb`) that constructs both Semantic and Confusion trees for Scenario 1 and Scenario 2, renders confusion matrix heatmaps and Ward dendrograms, verifies structural invariants, and exports serialized tree artifacts (`ISS-06`, `AD-008`).
+- [x] Implement a vectorized, contiguous-array tree representation (`FastHierarchyTree` in `src/trees/base_tree.py`) storing `parents`, `children`, `child_counts`, `is_leaf`, `leaf_to_class_id`, `instance_counts`, `visits`, and `q_values` in NumPy arrays with deterministic `.npz` serialization and state reset (`ISS-04`).
+- [x] Implement `build_semantic_tree()` (`src/trees/semantic_tree.py`) constructing the 3-level CIFAR-100 Semantic Hierarchy (Virtual Root $\rightarrow$ 20 Superclasses $\rightarrow$ 99 Negative Leaves in Scenario 1 or 100 Fine Class Leaves in Scenario 2) with exact bottom-up instance count aggregation (`ISS-05`, `AD-002`, `AD-004`).
+- [x] Implement `compute_confusion_distance_matrix()` and `build_confusion_tree()` (`src/trees/confusion_tree.py`) converting a validation confusion matrix $C \in \mathbb{R}^{K \times K}$ into symmetric normalized distances $D_{i,j} = 1 - \frac{C_{i,j} + C_{j,i}}{2 \cdot \max(C)}$ and a binary Ward linkage hierarchy (`scipy.cluster.hierarchy.linkage(method="ward")`), plus a helper `estimate_validation_confusion_matrix()` to compute $C$ from cached Tier-1 embeddings (`ISS-06`, `AD-002`).
+- [x] Deliver a versioned Jupyter notebook (`notebooks/02_tree_construction.ipynb`) that constructs both Semantic and Confusion trees for Scenario 1 and Scenario 2, renders confusion matrix heatmaps and Ward dendrograms, verifies structural invariants, and exports serialized tree artifacts (`ISS-06`, `AD-008`).
 
 ## Out of Scope
 
@@ -111,9 +111,9 @@ Each requirement maps to a unique ID for tracking across design, tasks, and veri
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| TREE-01 | P1: Vectorized Hierarchy Tree Data Structure (`ISS-04`) | Execute | Implementing |
-| TREE-02 | P1: Mode A — Native CIFAR-100 Semantic Hierarchy Builder (`ISS-05`) | Execute | Implementing |
-| TREE-03 | P1: Mode B — Data-Driven Ward Confusion Tree & Notebook 02 (`ISS-06`) | Execute | Implementing |
+| TREE-01 | P1: Vectorized Hierarchy Tree Data Structure (`ISS-04`) | Execute | Verified |
+| TREE-02 | P1: Mode A — Native CIFAR-100 Semantic Hierarchy Builder (`ISS-05`) | Execute | Verified |
+| TREE-03 | P1: Mode B — Data-Driven Ward Confusion Tree & Notebook 02 (`ISS-06`) | Execute | Verified |
 
 **Coverage:** 3 total requirements mapped to `EPIC-02`.
 
@@ -140,7 +140,7 @@ Every departure from the original *GiantHunter* paper (`btaf239.pdf`) and offici
 
 ## Success Criteria
 
-- [ ] `.venv/bin/pytest -v tests/test_trees.py` passes 100% of unit and integration checks covering `TREE-01`, `TREE-02`, and `TREE-03`.
-- [ ] Both `build_semantic_tree()` and `build_confusion_tree()` satisfy all `FastHierarchyTree` structural invariants (single root, cycle-free reachability, exact bottom-up instance count sums) across Scenario 1 (`99` leaves) and Scenario 2 (`100` leaves).
-- [ ] `build_confusion_tree()` provably groups synthetically confused class pairs as sibling leaves at the lowest Ward linkage merge height and rejects zero-sum or `NaN` confusion matrices with `ValueError`.
-- [ ] `notebooks/02_tree_construction.ipynb` is versioned, valid (`nbformat` v4), and invokes `src.trees.*` cleanly for remote JupyterHub execution.
+- [x] `.venv/bin/pytest -v tests/test_trees.py` passes 100% of unit and integration checks covering `TREE-01`, `TREE-02`, and `TREE-03`.
+- [x] Both `build_semantic_tree()` and `build_confusion_tree()` satisfy all `FastHierarchyTree` structural invariants (single root, cycle-free reachability, exact bottom-up instance count sums) across Scenario 1 (`99` leaves) and Scenario 2 (`100` leaves).
+- [x] `build_confusion_tree()` provably groups synthetically confused class pairs as sibling leaves at the lowest Ward linkage merge height and rejects zero-sum or `NaN` confusion matrices with `ValueError`.
+- [x] `notebooks/02_tree_construction.ipynb` is versioned, valid (`nbformat` v4), and invokes `src.trees.*` cleanly for remote JupyterHub execution.
