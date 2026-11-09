@@ -68,22 +68,17 @@
 
 ## Handoff
 
-- **Feature**: `04-tier1-benchmark-suite` (`.specs/features/04-tier1-benchmark-suite/`)
-- **Phase / Task**: Done & Verified (`validate_verification.py` exited 0)
+- **Feature**: `05-extensions-and-e2e` (`.specs/features/05-extensions-and-e2e/`)
+- **Phase / Task**: Tasks (`design.md` and `tasks.md` validated via `validate_tasks.py`, awaiting user approval)
 - **Completed**:
   - Feature `F1` (`01-data-and-embeddings`): Done & Verified (`T1`–`T6`, 17 tests passing)
   - Feature `F2` (`02-dual-hierarchy-trees`): Done & Verified (`T1`–`T4`, 12 checks passing)
   - Feature `F3` (`03-mcts-hnm-agent`): Done & Verified (`T1`–`T4`, 12 checks passing)
-  - `T1` (`1673adb`): `src/models/mlp_head.py` (`Tier1MLPHead` 2-layer MLP head and `create_mlp_optimizer` Adam factory)
-  - `T2` (`839e7dd`): `src/training/baselines.py` (`UniformSampler` and `OHEMSampler` baseline sampling strategies)
-  - `T3` (`72ebd28`): `src/training/trainer.py` (`evaluate_scenario1_metrics` and `evaluate_scenario2_metrics` evaluators)
-  - `T4` (`8aeba4c`): `src/training/trainer.py` (`train_scenario1` and `train_scenario2` training loops coupled with MCTS rewards and diagnostics)
-  - `T5` (`caf0852`): `src/utils/statistics.py` (`compute_paired_statistical_tests` with zero-difference guard)
-  - `T6` (`896e759`): `src/training/benchmark_runner.py` (`run_benchmark` multi-seed runner with atomic JSON/CSV export)
-  - `T7` (`e0ae07d`): `notebooks/03_tier1_mcts_benchmarks.ipynb` (versioned JupyterHub orchestration notebook)
-  - Independent Verifier (`eb05d787-b4fa-4568-b0d1-d831cdd98fdd`): `PASS` across all 12 checks (`C1`–`C12`, 54 total tests passing)
-- **In-progress**: None
-- **Next step**: Feature `F5` (`05-extensions-and-e2e`: dynamic entropy leaf expansion & Tier-2 end-to-end ResNet-18 pipeline)
+  - Feature `F4` (`04-tier1-benchmark-suite`): Done & Verified (`T1`–`T7`, 12 checks passing, 54 total tests)
+  - Approved `.specs/features/05-extensions-and-e2e/spec.md` (`EXP-01`, `EXP-02`, `EXP-03`)
+  - Created and validated `.specs/features/05-extensions-and-e2e/design.md` and `.specs/features/05-extensions-and-e2e/tasks.md` (`T1`–`T6`, 11 checks `C1`–`C11`)
+- **In-progress**: Awaiting user approval of `05-extensions-and-e2e/tasks.md`
+- **Next step**: Upon task approval, run `validate_tasks.py --execute` and implement `T1`–`T6` sequentially with atomic commits
 - **Blockers**: None
-- **Uncommitted files**: None (clean working tree)
+- **Uncommitted files**: `.specs/features/05-extensions-and-e2e/{spec.md,design.md,tasks.md}`, `.specs/STATE.md`
 - **Branch**: `main`
