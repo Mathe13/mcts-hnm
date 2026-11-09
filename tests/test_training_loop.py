@@ -14,9 +14,62 @@ from src.training.trainer import (
     train_scenario1,
     train_scenario2,
 )
+import ast
+from pathlib import Path
+import nbformat
+import matplotlib.pyplot as plt
+
 from src.trees.semantic_tree import build_semantic_tree
 from src.training.benchmark_runner import run_benchmark
 from src.utils.statistics import compute_paired_statistical_tests
+
+
+def test_notebook_03_execution(tmp_path) -> None:
+    repo_root = Path(__file__).resolve().parent.parent
+    nb_path = repo_root / "notebooks" / "03_tier1_mcts_benchmarks.ipynb"
+    assert nb_path.is_file(), "notebooks/03_tier1_mcts_benchmarks.ipynb must exist"
+
+    nb = nbformat.read(nb_path, as_version=4)
+    nbformat.validate(nb)
+
+    md_cells = [c for c in nb.cells if c.cell_type == "markdown"]
+    code_cells = [c for c in nb.cells if c.cell_type == "code"]
+    assert len(md_cells) >= 4
+    assert len(code_cells) >= 5
+
+    joined_code = "\n\n".join(c.source for c in code_cells)
+    for cell in code_cells:
+        ast.parse(cell.source)
+
+    for required_ref in (
+        "src.training.benchmark_runner",
+        "run_benchmark",
+        "RESULTS_DIR",
+        "SEEDS",
+    ):
+        assert required_ref in joined_code, f"Notebook 03 missing reference to {required_ref}"
+
+    # Execute cells in isolated namespace with accelerated steps/seeds
+    ns: dict[str, object] = {}
+    for idx, cell in enumerate(code_cells):
+        src = cell.source
+        if idx == 0:
+            src += f"\nRESULTS_DIR = Path({str(tmp_path)!r})"
+        if "SEEDS = (42, 43, 44, 45, 46)" in src:
+            src = src.replace("SEEDS = (42, 43, 44, 45, 46)", "SEEDS = (42, 43)")
+            src = src.replace("num_steps=100", "num_steps=10")
+            src = src.replace("eval_every=25", "eval_every=5")
+        if "num_steps=60" in src:
+            src = src.replace("num_steps=60", "num_steps=10")
+            src = src.replace("eval_every=20", "eval_every=5")
+
+        exec(compile(src, f"<notebook_03_cell_{idx}>", "exec"), ns)
+    plt.close("all")
+
+    assert (tmp_path / "tier1_axis1_samplers.json").exists()
+    assert (tmp_path / "tier1_axis1_samplers.csv").exists()
+    assert (tmp_path / "tier1_axis2_tree_ablation.json").exists()
+    assert (tmp_path / "tier1_scenario2_curriculum.json").exists()
 
 
 def test_run_benchmark_multi_seed_and_export(tmp_path) -> None:

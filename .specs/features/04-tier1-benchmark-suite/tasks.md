@@ -213,9 +213,9 @@ T5 → T6 → T7
 
 **Done when**:
 
-- [ ] `notebooks/03_tier1_mcts_benchmarks.ipynb` is a valid `nbformat` v4 notebook executing all 3 benchmark axes via high-level `src.*` APIs and rendering summary figures/tables
-- [ ] End-to-end integration test executes the notebook cells without errors
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v`
+- [x] `notebooks/03_tier1_mcts_benchmarks.ipynb` is a valid `nbformat` v4 notebook executing all 3 benchmark axes via high-level `src.*` APIs and rendering summary figures/tables
+- [x] End-to-end integration test executes the notebook cells without errors
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v`
 
 **Tests**: integration
 **Gate**: full
