@@ -105,11 +105,11 @@ T5 → T6
 
 **Done when**:
 
-- [ ] `set_global_seed(seed)` seeds `random`, `PYTHONHASHSEED`, `numpy.random`, and `torch` (CPU/CUDA/cuDNN deterministic mode)
-- [ ] Negative or non-integer seeds (including `bool`) raise `ValueError`
-- [ ] Unit tests `test_set_global_seed_reproducibility` and `test_set_global_seed_invalid_raises` pass in `tests/test_seed_and_taxonomy.py`
-- [ ] Gate check passes: `uv run pytest -v`
-- [ ] Test count: 3 tests pass (no silent deletions)
+- [x] `set_global_seed(seed)` seeds `random`, `PYTHONHASHSEED`, `numpy.random`, and `torch` (CPU/CUDA/cuDNN deterministic mode)
+- [x] Negative or non-integer seeds (including `bool`) raise `ValueError`
+- [x] Unit tests `test_set_global_seed_reproducibility` and `test_set_global_seed_invalid_raises` pass in `tests/test_seed_and_taxonomy.py`
+- [x] Gate check passes: `.venv/bin/pytest -v`
+- [x] Test count: 3 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
