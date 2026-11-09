@@ -126,14 +126,14 @@ T5 → T6 → T7
 
 **Done when**:
 
-- [ ] `evaluate_scenario1_metrics()` returns finite metrics (`loss`, `f1`, `precision`, `recall`, `auprc`, `fpr_at_95_recall`) using `zero_division=0.0`
-- [ ] `evaluate_scenario2_metrics()` returns finite metrics (`loss`, `top1_accuracy`, `macro_f1`, `worst_10_class_recall`) using `zero_division=0.0`
-- [ ] Unit tests pass verifying metric bounds and exact values on synthetic predictions
-- [ ] Gate check passes: `.venv/bin/pytest -v`
+- [x] `evaluate_scenario1_metrics()` returns finite metrics (`loss`, `f1`, `precision`, `recall`, `auprc`, `fpr_at_95_recall`) using `zero_division=0.0`
+- [x] `evaluate_scenario2_metrics()` returns finite metrics (`loss`, `top1_accuracy`, `macro_f1`, `worst_10_class_recall`) using `zero_division=0.0`
+- [x] Unit tests pass verifying metric bounds and exact values on synthetic predictions
+- [x] Gate check passes: `.venv/bin/pytest -v`
 
 **Tests**: unit
 **Gate**: quick
-**Commit**: `feat(training): implement evaluation metrics for Scenario 1 and Scenario 2`
+**Commit**: `feat(training): add metrics for Scenario 1 and Scenario 2`
 
 ---
 

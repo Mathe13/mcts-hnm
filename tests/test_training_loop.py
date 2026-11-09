@@ -8,6 +8,34 @@ import torch
 
 from src.models.mlp_head import Tier1MLPHead, create_mlp_optimizer
 from src.training.baselines import OHEMSampler, UniformSampler
+from src.training.trainer import evaluate_scenario1_metrics, evaluate_scenario2_metrics
+
+
+def test_evaluate_scenario1_and_scenario2_metrics() -> None:
+    # Scenario 1 binary test
+    model_bin = Tier1MLPHead(input_dim=4, hidden_dim=8, num_outputs=1, squeeze_binary=True)
+    features = torch.randn(20, 4)
+    y_bin = np.zeros(20, dtype=np.int64)
+    y_bin[:4] = 1  # 4 positives, 16 negatives
+
+    m1 = evaluate_scenario1_metrics(model_bin, features, y_bin, batch_size=8)
+    assert "loss" in m1 and m1["loss"] >= 0.0
+    assert 0.0 <= m1["f1"] <= 1.0
+    assert 0.0 <= m1["precision"] <= 1.0
+    assert 0.0 <= m1["recall"] <= 1.0
+    assert 0.0 <= m1["auprc"] <= 1.0
+    assert 0.0 <= m1["fpr_at_95_recall"] <= 1.0
+
+    # Scenario 2 multi-class test
+    model_multi = Tier1MLPHead(input_dim=4, hidden_dim=8, num_outputs=10)
+    y_multi = np.repeat(np.arange(10, dtype=np.int64), 3)  # 30 samples, 10 classes
+    features_multi = torch.randn(30, 4)
+
+    m2 = evaluate_scenario2_metrics(model_multi, features_multi, y_multi, num_classes=10, batch_size=8)
+    assert "loss" in m2 and m2["loss"] >= 0.0
+    assert 0.0 <= m2["top1_accuracy"] <= 1.0
+    assert 0.0 <= m2["macro_f1"] <= 1.0
+    assert 0.0 <= m2["worst_10_class_recall"] <= 1.0
 
 
 def test_uniform_sampler_batch_generation() -> None:
