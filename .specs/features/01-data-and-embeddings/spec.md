@@ -8,12 +8,12 @@ Evaluating MCTS-based hard negative mining across multiple random seeds and hype
 
 ## Goals
 
-- [ ] Configure a reproducible Python 3.10+ package (`pyproject.toml`) managed by `uv` with all scientific, deep learning, testing (`pytest`), and Jupyter (`ipykernel`, `nbformat`) dependencies (`AD-003`, `AD-008`).
-- [ ] Enforce deterministic random seeding across Python `random`, `numpy`, and `torch` (CPU/CUDA/cuDNN) via `src/utils/seed.py`.
-- [ ] Provide a zero-I/O-overhead CIFAR-100 taxonomy module (`src/data/cifar100_taxonomy.py`) mapping all 100 fine classes (`0..99`) to their 20 native superclasses (`0..19`) and human-readable names.
-- [ ] Extract and cache deterministic `[N, 512]` feature embeddings from a frozen ImageNet-pretrained ResNet-18 backbone (`src/data/extract_embeddings.py`) across stratified train (`45,000`), validation (`5,000`), and test (`10,000`) splits with cache checksum/shape verification (`AD-001`).
-- [ ] Generate deterministic index splits (`src/data/splits.py`) for Scenario 1 (Imbalanced Binary One-vs-Rest with positive subsample ratios $\rho \in \{0.10, 0.02, 0.01\}$ relative to per-class negative count, plus explicit target counts) and Scenario 2 (100-way Multi-class Curriculum) (`AD-004`).
-- [ ] Deliver a clean, versioned Jupyter notebook (`notebooks/01_data_and_embeddings.ipynb`) that orchestrates CIFAR-100 download, embedding extraction, cache verification, and split visualization end-to-end on a remote JupyterHub (`AD-008`).
+- [x] Configure a reproducible Python 3.10+ package (`pyproject.toml`) managed by `uv` with all scientific, deep learning, testing (`pytest`), and Jupyter (`ipykernel`, `nbformat`) dependencies (`AD-003`, `AD-008`).
+- [x] Enforce deterministic random seeding across Python `random`, `numpy`, and `torch` (CPU/CUDA/cuDNN) via `src/utils/seed.py`.
+- [x] Provide a zero-I/O-overhead CIFAR-100 taxonomy module (`src/data/cifar100_taxonomy.py`) mapping all 100 fine classes (`0..99`) to their 20 native superclasses (`0..19`) and human-readable names.
+- [x] Extract and cache deterministic `[N, 512]` feature embeddings from a frozen ImageNet-pretrained ResNet-18 backbone (`src/data/extract_embeddings.py`) across stratified train (`45,000`), validation (`5,000`), and test (`10,000`) splits with cache checksum/shape verification (`AD-001`).
+- [x] Generate deterministic index splits (`src/data/splits.py`) for Scenario 1 (Imbalanced Binary One-vs-Rest with positive subsample ratios $\rho \in \{0.10, 0.02, 0.01\}$ relative to per-class negative count, plus explicit target counts) and Scenario 2 (100-way Multi-class Curriculum) (`AD-004`).
+- [x] Deliver a clean, versioned Jupyter notebook (`notebooks/01_data_and_embeddings.ipynb`) that orchestrates CIFAR-100 download, embedding extraction, cache verification, and split visualization end-to-end on a remote JupyterHub (`AD-008`).
 
 ## Out of Scope
 
@@ -143,7 +143,7 @@ Every departure from the original *GiantHunter* paper (`btaf239.pdf`) and offici
 
 ## Success Criteria
 
-- [ ] `uv run pytest` executes all unit tests for `F1` (`tests/test_seed_and_taxonomy.py`, `tests/test_extract_embeddings.py`, `tests/test_splits_and_notebook.py`) with 100% pass rate.
-- [ ] All 20 CIFAR-100 superclasses and 100 fine classes are bijectively verified and mapped in `src/data/cifar100_taxonomy.py`.
-- [ ] Stratified train/val/test embedding extraction and cache validation run deterministically with `seed=42`.
-- [ ] `notebooks/01_data_and_embeddings.ipynb` is versioned, valid, and invokes `src/` APIs cleanly for remote JupyterHub execution.
+- [x] `uv run pytest` executes all unit tests for `F1` (`tests/test_seed_and_taxonomy.py`, `tests/test_extract_embeddings.py`, `tests/test_splits_and_notebook.py`) with 100% pass rate.
+- [x] All 20 CIFAR-100 superclasses and 100 fine classes are bijectively verified and mapped in `src/data/cifar100_taxonomy.py`.
+- [x] Stratified train/val/test embedding extraction and cache validation run deterministically with `seed=42`.
+- [x] `notebooks/01_data_and_embeddings.ipynb` is versioned, valid, and invokes `src/` APIs cleanly for remote JupyterHub execution.

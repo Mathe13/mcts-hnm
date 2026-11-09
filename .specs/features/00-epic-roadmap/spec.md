@@ -160,7 +160,7 @@ Each requirement maps to a unique ID across the Epic Roadmap and its child featu
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| EPIC-01 | P1: F1 Project, Data Pipeline & Setup Notebook (`01_data_and_embeddings.ipynb`) | Specify | Pending |
+| EPIC-01 | P1: F1 Project, Data Pipeline & Setup Notebook (`01_data_and_embeddings.ipynb`) | Execute | Verified |
 | EPIC-02 | P1: F2 Dual Hierarchy Construction (`02_tree_construction.ipynb`) | Specify | Pending |
 | EPIC-03 | P1: F3 Core MCTS-HNM Agent (Strict vs. Enhanced UCB1, Momentum & Dual-Stream) | Specify | Pending |
 | EPIC-04 | P1: F4 Classifiers, Baselines & Tier-1 Benchmark Notebook (`03_tier1_benchmarks.ipynb`) | Specify | Pending |

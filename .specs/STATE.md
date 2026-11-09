@@ -69,10 +69,17 @@
 ## Handoff
 
 - **Feature**: `01-data-and-embeddings` (`.specs/features/01-data-and-embeddings/`)
-- **Phase / Task**: Tasks — awaiting user approval of `tasks.md`
-- **Completed**: `spec.md` approved (`2026-11-08 - user: "prossiga"`); `design.md` and `tasks.md` created and validated (`validate_spec.py` and `validate_tasks.py` exited 0 with 0 errors, 0 warnings)
-- **In-progress**: Waiting for user approval of `tasks.md` before executing tasks `T1`–`T6`
-- **Next step**: Upon user approval of `tasks.md`, record `**Approved**: ...`, run `validate_tasks.py 01-data-and-embeddings --execute`, implement `T1` through `T6` with atomic commits, run `check_proofs.py`, and run the independent Verifier
+- **Phase / Task**: Done & Verified (`validate_verification.py --strict` exited 0)
+- **Completed**:
+  - `T1` (`6b36d03`): `pyproject.toml`, `src/` layout, `.gitignore` root-anchored `/data/` fix
+  - `T2` (`0560fee`): `src/utils/seed.py` (`set_global_seed`, `get_torch_generator`)
+  - `T3` (`64216ad`): `src/data/cifar100_taxonomy.py` (`CIFAR100Taxonomy`, `fine_to_coarse_tensor`)
+  - `T4` (`645c460`): `src/data/extract_embeddings.py` (stratified 45k/5k split, frozen ResNet-18 extractor, atomic `.pt` cache)
+  - `T5` (`ec6f986`): `src/data/splits.py` (`Scenario1Split` 1:10/1:50/1:100 & `Scenario2Split` 100-class pools)
+  - `T6` (`c1e031a`): `notebooks/01_data_and_embeddings.ipynb` end-to-end JupyterHub orchestrator
+  - Independent Verifier (`838a6c52-70ba-4178-b2f0-ba32cfd05045`): `PASS` across all 14 checks (`C1`–`C14`)
+- **In-progress**: None
+- **Next step**: Specify, Design, Tasks, and Execute for Feature `F2` (`02-dual-hierarchy-trees`)
 - **Blockers**: None
-- **Uncommitted files**: `.specs/features/01-data-and-embeddings/{spec.md,design.md,tasks.md}`, `.specs/STATE.md`
+- **Uncommitted files**: None (clean working tree)
 - **Branch**: `main`

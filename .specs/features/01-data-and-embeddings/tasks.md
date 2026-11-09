@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/01-data-and-embeddings/design.md`
-**Status**: In Progress
+**Status**: Done
 **Approved**: 2026-11-08 - user: "prossiga"
 **Build**: `.venv/bin/python -m compileall -q src tests`
 **Run unit**: `.venv/bin/pytest -v`
@@ -255,8 +255,8 @@ Proof: run unit | tests/test_splits_and_notebook.py::test_notebook_01_structure_
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none
-**Dispatched:** none
-**Walked:** pending
+**Dispatched:** Independent Verifier (`838a6c52-70ba-4178-b2f0-ba32cfd05045`) at `c1e031a` - returned `PASS`
+**Walked:** Executed all 3 independent test suites (`pytest tests/test_seed_and_taxonomy.py tests/test_extract_embeddings.py tests/test_splits_and_notebook.py`, 17 passed) and validated `notebooks/01_data_and_embeddings.ipynb` structure and imports.
 
 ---
 
