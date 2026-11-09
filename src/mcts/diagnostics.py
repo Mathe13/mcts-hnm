@@ -79,7 +79,8 @@ def compute_superclass_visit_distribution(
     for raw_nid in leaf_ids:
         nid = int(raw_nid)
         cls_id = int(tree.leaf_to_class_id[nid])
-        coarse_id = int(tax.fine_to_coarse_idx[cls_id])
+        base_cls_id = int(cls_id % 1000)
+        coarse_id = int(tax.fine_to_coarse_idx[base_cls_id])
         coarse_name = tax.coarse_names[coarse_id]
         superclass_counts[coarse_name] += float(tree.visits[nid])
 

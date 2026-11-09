@@ -135,6 +135,20 @@ def test_mcts_agent_sampler_and_diagnostics_on_expanded_tree(toy_tree: FastHiera
     assert tree.visits[leaf_id] == 1
     assert tree.visits[tree.root_id] == 1
 
+    # Diagnostics and superclass distribution
+    dist = compute_superclass_visit_distribution(tree)
+    assert len(dist) == 20
+    assert np.isclose(sum(dist.values()), 1.0)
+    tax = get_cifar100_taxonomy()
+    expected_coarse = tax.coarse_names[tax.fine_to_coarse_idx[0]]
+    assert dist[expected_coarse] == 1.0
+
+    tracker = MCTSDiagnosticsTracker(tree=tree)
+    snap = tracker.record_step(1, selected_leaf, reward=1.0)
+    assert snap.leaf_class_id == tree.leaf_to_class_id[selected_leaf]
+    summary = tracker.summary()
+    assert summary["total_leaf_visits"] == 1
+
 
 # --- C4 Tests ---
 def test_expansion_invalid_arguments_raise(toy_tree: FastHierarchyTree) -> None:

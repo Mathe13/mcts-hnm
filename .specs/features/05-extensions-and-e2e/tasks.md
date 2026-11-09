@@ -104,9 +104,9 @@ T6
 
 **Done when**:
 
-- [ ] `compute_superclass_visit_distribution()` and `MCTSDiagnosticsTracker.record_step()` / `.summary()` execute without error on dynamically expanded Semantic and Ward Confusion trees
-- [ ] Visit counts on expanded sub-cluster leaves aggregate into the parent fine class's canonical CIFAR-100 coarse superclass
-- [ ] Gate check passes: `.venv/bin/pytest -v`
+- [x] `compute_superclass_visit_distribution()` and `MCTSDiagnosticsTracker.record_step()` / `.summary()` execute without error on dynamically expanded Semantic and Ward Confusion trees
+- [x] Visit counts on expanded sub-cluster leaves aggregate into the parent fine class's canonical CIFAR-100 coarse superclass
+- [x] Gate check passes: `.venv/bin/pytest -v`
 
 **Tests**: unit
 **Gate**: quick
