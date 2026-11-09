@@ -171,11 +171,11 @@ T5 → T6
 
 **Done when**:
 
-- [ ] `build_scenario1_split()` deterministically subsamples target class positives ($\max(1, \lfloor \text{pos\_fraction} \times N_{\text{target}} \rfloor)$), retains all 99 negative classes in `negative_class_to_indices`, and raises `ValueError` on invalid `target_class` or `pos_fraction`
-- [ ] `build_scenario2_split()` maps all 100 fine classes (`0..99`) to their sample index arrays
-- [ ] Unit tests in `tests/test_splits_and_notebook.py` cover `DATA-03` ACs 1–3 and clamping edge cases
-- [ ] Gate check passes: `uv run pytest -v`
-- [ ] Test count: 16 tests pass (no silent deletions)
+- [x] `build_scenario1_split()` deterministically subsamples target class positives ($\max(1, \lfloor \text{pos\_fraction} \times N_{\text{target}} \rfloor)$), retains all 99 negative classes in `negative_class_to_indices`, and raises `ValueError` on invalid `target_class` or `pos_fraction`
+- [x] `build_scenario2_split()` maps all 100 fine classes (`0..99`) to their sample index arrays
+- [x] Unit tests in `tests/test_splits_and_notebook.py` cover `DATA-03` ACs 1–3 and clamping edge cases
+- [x] Gate check passes: `.venv/bin/pytest -v`
+- [x] Test count: 16 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick

@@ -114,9 +114,9 @@ Each requirement maps to a unique ID for tracking across design, tasks, and veri
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| DATA-01 | P1: Project Environment, Seed Control & CIFAR-100 Taxonomy (`ISS-01`, `ISS-02a`) | Execute | Implementing |
-| DATA-02 | P1: Frozen ResNet-18 Embedding Extractor & Cache Manager (`ISS-02b`) | Execute | Implementing |
-| DATA-03 | P1: Imbalanced Scenario Splitters & Notebook 01 Orchestration (`ISS-03`) | Tasks | In Tasks |
+| DATA-01 | P1: Project Environment, Seed Control & CIFAR-100 Taxonomy (`ISS-01`, `ISS-02a`) | Execute | Verified |
+| DATA-02 | P1: Frozen ResNet-18 Embedding Extractor & Cache Manager (`ISS-02b`) | Execute | Verified |
+| DATA-03 | P1: Imbalanced Scenario Splitters & Notebook 01 Orchestration (`ISS-03`) | Execute | Implementing |
 
 **Coverage:** 3 total requirements mapped to `EPIC-01`.
 
