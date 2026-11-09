@@ -197,7 +197,7 @@ Proof: run unit | tests/test_trees.py::test_notebook_02_structure_and_execution 
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none
-**Dispatched:** none
+**Dispatched:** Independent Verifier (`6be1ce0e-a49c-4a65-9002-4b6c20ed04da`) at `efac279` - returned `PASS`
 **Walked:** Executed all 12 checks in `tests/test_trees.py` (29 total tests passing across repository) and ran `notebooks/02_tree_construction.ipynb` end-to-end to verify Semantic (`121`/`120` nodes) and Ward Confusion (`199`/`197` nodes) tree construction and `.npz` export.
 
 ---

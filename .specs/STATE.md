@@ -69,12 +69,16 @@
 ## Handoff
 
 - **Feature**: `02-dual-hierarchy-trees` (`.specs/features/02-dual-hierarchy-trees/`)
-- **Phase / Task**: Tasks (`validate_tasks.py` passed with 0 errors, awaiting user approval of `tasks.md`)
+- **Phase / Task**: Done & Verified (`validate_verification.py --strict` exited 0)
 - **Completed**:
-  - Feature `F1` (`01-data-and-embeddings`): Done & Verified (`T1`–`T6`, 17 unit/integration tests passing, Verifier `PASS`)
-  - Feature `F2` (`02-dual-hierarchy-trees`): Approved `spec.md`, generated `design.md` and `tasks.md` (`T1`–`T4`, `C1`–`C12`), validated with `validate_tasks.py` (`0 error(s), 0 warning(s)`)
-- **In-progress**: Awaiting user approval on `.specs/features/02-dual-hierarchy-trees/tasks.md`
-- **Next step**: Upon approval, run `validate_tasks.py 02-dual-hierarchy-trees --execute`, execute `T1`–`T4` sequentially with atomic commits, run `check_proofs.py`, and run the independent Verifier
+  - Feature `F1` (`01-data-and-embeddings`): Done & Verified (`T1`–`T6`, 17 tests passing)
+  - `T1` (`a59e241`): `src/trees/base_tree.py` (`FastHierarchyTree` contiguous arrays, `validate_tree()`, `reset_mcts_state()`, `.npz` serialization)
+  - `T2` (`e51414a`): `src/trees/semantic_tree.py` (`build_semantic_tree` for Scenario 1 99-leaf & Scenario 2 100-leaf hierarchies)
+  - `T3` (`22b6207`): `src/trees/confusion_tree.py` (`validate_confusion_matrix`, `compute_confusion_distance_matrix`, `build_confusion_tree`, `estimate_validation_confusion_matrix`)
+  - `T4` (`efac279`): `notebooks/02_tree_construction.ipynb` end-to-end JupyterHub orchestrator + integration test
+  - Independent Verifier (`6be1ce0e-a49c-4a65-9002-4b6c20ed04da`): `PASS` across all 12 checks (`C1`–`C12`)
+- **In-progress**: None
+- **Next step**: Specify, Design, Tasks, and Execute for Feature `F3` (`03-mcts-hnm-agent`)
 - **Blockers**: None
-- **Uncommitted files**: `.specs/features/02-dual-hierarchy-trees/spec.md`, `.specs/features/02-dual-hierarchy-trees/design.md`, `.specs/features/02-dual-hierarchy-trees/tasks.md`, `.specs/STATE.md`
+- **Uncommitted files**: None (clean working tree)
 - **Branch**: `main`
