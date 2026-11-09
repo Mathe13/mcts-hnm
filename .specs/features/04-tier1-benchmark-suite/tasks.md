@@ -192,14 +192,14 @@ T5 → T6 → T7
 
 **Done when**:
 
-- [ ] `run_benchmark()` executes multi-seed runs deterministically, aggregates `mean ± std`, runs paired statistical tests against `mcts_enhanced`, and saves atomic `.json` and `.csv` files
-- [ ] Raises `ValueError` on invalid configuration options
-- [ ] Unit/integration tests verify multi-seed execution and atomic file saving on a synthetic fixture
-- [ ] Gate check passes: `.venv/bin/pytest -v`
+- [x] `run_benchmark()` executes multi-seed runs deterministically, aggregates `mean ± std`, runs paired statistical tests against `mcts_enhanced`, and saves atomic `.json` and `.csv` files
+- [x] Raises `ValueError` on invalid configuration options
+- [x] Unit/integration tests verify multi-seed execution and atomic file saving on a synthetic fixture
+- [x] Gate check passes: `.venv/bin/pytest -v`
 
 **Tests**: integration
 **Gate**: quick
-**Commit**: `feat(benchmarks): implement multi-seed benchmark runner and atomic exporter`
+**Commit**: `feat(benchmarks): implement multi-seed benchmark runner and exporter`
 
 ---
 

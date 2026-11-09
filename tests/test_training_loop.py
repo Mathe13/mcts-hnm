@@ -15,7 +15,36 @@ from src.training.trainer import (
     train_scenario2,
 )
 from src.trees.semantic_tree import build_semantic_tree
+from src.training.benchmark_runner import run_benchmark
 from src.utils.statistics import compute_paired_statistical_tests
+
+
+def test_run_benchmark_multi_seed_and_export(tmp_path) -> None:
+    torch.manual_seed(42)
+    np.random.seed(42)
+    features = torch.randn(60, 8)
+    labels = np.repeat(np.arange(3, dtype=np.int64), 20)
+
+    res = run_benchmark(
+        scenario="scenario1",
+        train_features=features,
+        train_labels=labels,
+        test_features=features,
+        test_labels=labels,
+        strategies=("uniform", "mcts_enhanced"),
+        tree_types=("semantic",),
+        seeds=(42, 43),
+        output_dir=tmp_path,
+        benchmark_name="test_bench",
+        num_steps=10,
+        eval_every=5,
+        target_class_scenario1=0,
+    )
+
+    assert res["scenario"] == "scenario1"
+    assert len(res["runs"]) == 4  # 2 strategies * 1 tree_type * 2 seeds
+    assert (tmp_path / "test_bench.json").is_file()
+    assert (tmp_path / "test_bench.csv").is_file()
 
 
 def test_compute_paired_statistical_tests() -> None:

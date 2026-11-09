@@ -1,6 +1,7 @@
 """Training package for supervised classifiers, baselines, and MCTS training loops."""
 
 from src.training.baselines import OHEMSampler, UniformSampler
+from src.training.benchmark_runner import BenchmarkRunResult, run_benchmark
 from src.training.trainer import (
     evaluate_scenario1_metrics,
     evaluate_scenario2_metrics,
@@ -15,4 +16,6 @@ __all__ = [
     "evaluate_scenario2_metrics",
     "train_scenario1",
     "train_scenario2",
+    "BenchmarkRunResult",
+    "run_benchmark",
 ]
