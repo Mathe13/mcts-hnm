@@ -268,8 +268,8 @@ Proof: run unit | tests/test_training_loop.py::test_notebook_03_execution PASSED
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none  
-**Dispatched:** none  
-**Walked:** none  
+**Dispatched:** Independent Verifier (`eb05d787-b4fa-4568-b0d1-d831cdd98fdd`) at `e0ae07d` - returned `PASS`  
+**Walked:** Executed all 12 checks in `tests/test_training_loop.py` (54 total tests passing across repository) covering Tier1MLPHead, Uniform/OHEM samplers, Scenario 1 & 2 metric evaluators and training loops, paired statistical tests with zero-diff fallback, multi-seed benchmark runner, and Notebook 03 execution.  
 
 ---
 
