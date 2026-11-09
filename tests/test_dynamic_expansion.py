@@ -170,7 +170,91 @@ def test_expansion_invalid_arguments_raise(toy_tree: FastHierarchyTree) -> None:
         expand_leaf_by_entropy(tree, leaf_node_id=1, entropies=np.zeros(5), k_sub=2)
 
 
-# --- C5 Tests ---
+# --- C6 Tests ---
+def test_tier1_trainers_with_dynamic_leaf_expansion(toy_tree: FastHierarchyTree) -> None:
+    from src.training.trainer import train_scenario1, train_scenario2
+
+    torch.manual_seed(42)
+    features = torch.randn(30, 16)
+    labels = np.array([0] * 10 + [1] * 10 + [2] * 10, dtype=np.int64)
+
+    # Scenario 1 (binary: class 0 is positive, classes 1 and 2 are negatives)
+    pos_idx = np.arange(0, 10, dtype=np.int64)
+    neg_idx = np.arange(10, 30, dtype=np.int64)
+    bin_labels = (labels == 0).astype(np.int64)
+
+    tree1 = FastHierarchyTree(
+        tree_type="toy1",
+        root_id=0,
+        parents=toy_tree.parents.copy(),
+        children=toy_tree.children.copy(),
+        child_counts=toy_tree.child_counts.copy(),
+        is_leaf=toy_tree.is_leaf.copy(),
+        depths=toy_tree.depths.copy(),
+        leaf_to_class_id=toy_tree.leaf_to_class_id.copy(),
+        instance_counts=toy_tree.instance_counts.copy(),
+        visits=toy_tree.visits.copy(),
+        q_values=toy_tree.q_values.copy(),
+        node_names=toy_tree.node_names,
+        class_to_indices={k: v.copy() for k, v in toy_tree.class_to_indices.items()},
+    )
+
+    res1 = train_scenario1(
+        train_features=features,
+        train_binary_labels=bin_labels,
+        positive_indices=pos_idx,
+        negative_indices=neg_idx,
+        test_features=features,
+        test_binary_labels=bin_labels,
+        strategy="mcts_enhanced",
+        tree=tree1,
+        num_steps=30,
+        eval_every=10,
+        pos_batch_size=2,
+        neg_batch_size=4,
+        enable_leaf_expansion=True,
+        split_threshold=5,
+        k_sub=2,
+        seed=42,
+    )
+    assert res1["final_num_leaves"] is not None
+    assert res1["final_num_leaves"] >= 3  # at least initial 3 leaves
+
+    # Scenario 2 (multi-class: 3 classes)
+    tree2 = FastHierarchyTree(
+        tree_type="toy2",
+        root_id=0,
+        parents=toy_tree.parents.copy(),
+        children=toy_tree.children.copy(),
+        child_counts=toy_tree.child_counts.copy(),
+        is_leaf=toy_tree.is_leaf.copy(),
+        depths=toy_tree.depths.copy(),
+        leaf_to_class_id=toy_tree.leaf_to_class_id.copy(),
+        instance_counts=toy_tree.instance_counts.copy(),
+        visits=toy_tree.visits.copy(),
+        q_values=toy_tree.q_values.copy(),
+        node_names=toy_tree.node_names,
+        class_to_indices={k: v.copy() for k, v in toy_tree.class_to_indices.items()},
+    )
+
+    res2 = train_scenario2(
+        train_features=features,
+        train_labels=labels,
+        test_features=features,
+        test_labels=labels,
+        strategy="mcts_enhanced",
+        tree=tree2,
+        num_classes=3,
+        num_steps=30,
+        eval_every=10,
+        batch_size=4,
+        enable_leaf_expansion=True,
+        split_threshold=5,
+        k_sub=2,
+        seed=42,
+    )
+    assert res2["final_num_leaves"] is not None
+    assert res2["final_num_leaves"] >= 3
 def test_expansion_edge_cases_noop_bmax_and_ties(toy_tree: FastHierarchyTree) -> None:
     tree = toy_tree
     # Dummy model

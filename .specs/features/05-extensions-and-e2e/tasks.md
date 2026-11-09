@@ -124,10 +124,10 @@ T6
 
 **Done when**:
 
-- [ ] `train_scenario1()` and `train_scenario2()` accept `enable_leaf_expansion`, `split_threshold`, and `k_sub`, expanding high-visit leaves dynamically during training and logging `num_expanded_leaves` and `final_num_leaves` in the returned dictionary
-- [ ] Existing `DualStreamBatchSampler` and `MCTSHNMAgent` instances seamlessly traverse and sample from newly created sub-cluster leaves
-- [ ] Integration tests pass in `tests/test_dynamic_expansion.py`
-- [ ] Gate check passes: `.venv/bin/pytest -v`
+- [x] `train_scenario1()` and `train_scenario2()` accept `enable_leaf_expansion`, `split_threshold`, and `k_sub`, expanding high-visit leaves dynamically during training and logging `num_expanded_leaves` and `final_num_leaves` in the returned dictionary
+- [x] Existing `DualStreamBatchSampler` and `MCTSHNMAgent` instances seamlessly traverse and sample from newly created sub-cluster leaves
+- [x] Integration tests pass in `tests/test_dynamic_expansion.py`
+- [x] Gate check passes: `.venv/bin/pytest -v`
 
 **Tests**: integration
 **Gate**: full

@@ -13,6 +13,7 @@ import torch.nn.functional as F
 
 from src.mcts.agent import MCTSHNMAgent, compute_mcts_reward
 from src.mcts.diagnostics import MCTSDiagnosticsTracker, compute_visitation_entropy
+from src.mcts.expansion import maybe_expand_leaf
 from src.mcts.sampler import DualStreamBatchSampler
 from src.models.mlp_head import Tier1MLPHead, create_mlp_optimizer
 from src.training.baselines import OHEMSampler, UniformSampler
@@ -214,6 +215,9 @@ def train_scenario1(
     exploration_c: float = 2.0,
     momentum_alpha: float = 0.3,
     dual_stream_ratio: float = 0.5,
+    enable_leaf_expansion: bool = False,
+    split_threshold: int = 50,
+    k_sub: int = 3,
     seed: int = 42,
     device: torch.device | None = None,
 ) -> dict[str, object]:
@@ -328,6 +332,18 @@ def train_scenario1(
             agent.update(mcts_leaf_id, reward)
             diagnostics_tracker.record_step(step, mcts_leaf_id, reward)
 
+            if enable_leaf_expansion and tree is not None:
+                maybe_expand_leaf(
+                    tree=tree,
+                    leaf_node_id=mcts_leaf_id,
+                    model=model,
+                    train_inputs=train_features,
+                    is_binary=True,
+                    split_threshold=split_threshold,
+                    k_sub=k_sub,
+                    device=dev,
+                )
+
         if step % eval_every == 0 or step == num_steps:
             metrics = evaluate_scenario1_metrics(
                 model=model,
@@ -349,6 +365,7 @@ def train_scenario1(
         "final_metrics": final_eval,
         "model": model,
         "diagnostics": diagnostics_tracker.summary() if diagnostics_tracker is not None else None,
+        "final_num_leaves": tree.num_leaves if tree is not None else None,
     }
 
 
@@ -368,6 +385,9 @@ def train_scenario2(
     exploration_c: float = 2.0,
     momentum_alpha: float = 0.3,
     dual_stream_ratio: float = 0.5,
+    enable_leaf_expansion: bool = False,
+    split_threshold: int = 50,
+    k_sub: int = 3,
     seed: int = 42,
     device: torch.device | None = None,
 ) -> dict[str, object]:
@@ -483,6 +503,18 @@ def train_scenario2(
             agent.update(mcts_leaf_id, reward)
             diagnostics_tracker.record_step(step, mcts_leaf_id, reward)
 
+            if enable_leaf_expansion and tree is not None:
+                maybe_expand_leaf(
+                    tree=tree,
+                    leaf_node_id=mcts_leaf_id,
+                    model=model,
+                    train_inputs=train_features,
+                    is_binary=False,
+                    split_threshold=split_threshold,
+                    k_sub=k_sub,
+                    device=dev,
+                )
+
         if step % eval_every == 0 or step == num_steps:
             metrics = evaluate_scenario2_metrics(
                 model=model,
@@ -505,4 +537,5 @@ def train_scenario2(
         "final_metrics": final_eval,
         "model": model,
         "diagnostics": diagnostics_tracker.summary() if diagnostics_tracker is not None else None,
+        "final_num_leaves": tree.num_leaves if tree is not None else None,
     }
