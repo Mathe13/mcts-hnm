@@ -104,11 +104,11 @@ T5 → T6 → T7
 
 **Done when**:
 
-- [ ] `UniformSampler.sample_batch()` samples `pos_batch_size` positives and `neg_batch_size` negatives uniformly at random (or `neg_batch_size` across all classes for Scenario 2)
-- [ ] `OHEMSampler.sample_batch()` draws $M_{\text{cand}} = \min(|\text{pool}|, \, r_{\text{ohem}} \cdot B_{\text{neg}})$ candidate negative samples, computes per-sample loss with `torch.no_grad()`, and returns the top-$B_{\text{neg}}$ highest loss negative indices
-- [ ] `UniformSampler` and `OHEMSampler` raise `ValueError` on invalid batch sizes or `ohem_ratio < 1`
-- [ ] Unit tests verify that `OHEMSampler` selects the highest loss samples deterministically on synthetic features
-- [ ] Gate check passes: `.venv/bin/pytest -v`
+- [x] `UniformSampler.sample_batch()` samples `pos_batch_size` positives and `neg_batch_size` negatives uniformly at random (or `neg_batch_size` across all classes for Scenario 2)
+- [x] `OHEMSampler.sample_batch()` draws $M_{\text{cand}} = \min(|\text{pool}|, \, r_{\text{ohem}} \cdot B_{\text{neg}})$ candidate negative samples, computes per-sample loss with `torch.no_grad()`, and returns the top-$B_{\text{neg}}$ highest loss negative indices
+- [x] `UniformSampler` and `OHEMSampler` raise `ValueError` on invalid batch sizes or `ohem_ratio < 1`
+- [x] Unit tests verify that `OHEMSampler` selects the highest loss samples deterministically on synthetic features
+- [x] Gate check passes: `.venv/bin/pytest -v`
 
 **Tests**: unit
 **Gate**: quick
