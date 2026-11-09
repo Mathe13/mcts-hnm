@@ -96,11 +96,11 @@ T3 → T4
 
 **Done when**:
 
-- [ ] `build_semantic_tree(class_to_indices)` constructs a 3-level `FastHierarchyTree` with `121` nodes (`1` root, `20` superclasses, `100` leaves) for Scenario 2 and `120` nodes (`1` root, `20` superclasses, `99` leaves) for Scenario 1
-- [ ] Empty superclasses are omitted when a subset of classes is provided, and invalid class IDs or empty index arrays raise `ValueError`
-- [ ] Unit tests `test_semantic_tree_scenario2_100_classes`, `test_semantic_tree_scenario1_99_negative_classes`, and `test_semantic_tree_invalid_inputs_and_empty_superclass` pass in `tests/test_trees.py`
-- [ ] Gate check passes: `.venv/bin/pytest -v`
-- [ ] Test count: 25 tests pass (no silent deletions)
+- [x] `build_semantic_tree(class_to_indices)` constructs a 3-level `FastHierarchyTree` with `121` nodes (`1` root, `20` superclasses, `100` leaves) for Scenario 2 and `120` nodes (`1` root, `20` superclasses, `99` leaves) for Scenario 1
+- [x] Empty superclasses are omitted when a subset of classes is provided, and invalid class IDs or empty index arrays raise `ValueError`
+- [x] Unit tests `test_semantic_tree_scenario2_100_classes`, `test_semantic_tree_scenario1_99_negative_classes`, and `test_semantic_tree_invalid_inputs_and_empty_superclass` pass in `tests/test_trees.py`
+- [x] Gate check passes: `.venv/bin/pytest -v`
+- [x] Test count: 25 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick

@@ -195,3 +195,86 @@ def test_base_tree_save_and_load_roundtrip(tmp_path: Path) -> None:
     assert set(loaded.class_to_indices.keys()) == set(tree.class_to_indices.keys())
     for k in tree.class_to_indices:
         assert np.array_equal(loaded.class_to_indices[k], tree.class_to_indices[k])
+
+
+def test_semantic_tree_scenario2_100_classes() -> None:
+    """C6: build_semantic_tree() on Scenario 2 (100 classes) builds a 3-level tree with 121 nodes."""
+    from src.data.cifar100_taxonomy import get_cifar100_taxonomy
+    from src.data.splits import build_scenario2_split
+    from src.trees.semantic_tree import build_semantic_tree
+
+    labels = np.repeat(np.arange(100, dtype=np.int64), 450)
+    s2 = build_scenario2_split(labels)
+    tree = build_semantic_tree(s2.class_to_indices)
+
+    assert tree.tree_type == "semantic"
+    assert tree.root_id == 0
+    assert tree.num_nodes == 121
+    assert tree.num_leaves == 100
+    assert int(np.count_nonzero(tree.depths == 0)) == 1
+    assert int(np.count_nonzero(tree.depths == 1)) == 20
+    assert int(np.count_nonzero(tree.depths == 2)) == 100
+    assert int(tree.instance_counts[0]) == 45000
+
+    taxonomy = get_cifar100_taxonomy()
+    root_children = tree.get_children(0)
+    assert root_children.size == 20
+
+    for idx, sc_node in enumerate(root_children):
+        sc_children = tree.get_children(int(sc_node))
+        assert sc_children.size == 5
+        leaf_classes = tuple(sorted(int(tree.leaf_to_class_id[c]) for c in sc_children))
+        assert leaf_classes == taxonomy.coarse_to_fine_ids[idx]
+        assert int(tree.instance_counts[sc_node]) == 5 * 450
+
+
+def test_semantic_tree_scenario1_99_negative_classes() -> None:
+    """C7: build_semantic_tree() on Scenario 1 (99 negative classes) builds a 3-level tree with 120 nodes."""
+    from src.data.cifar100_taxonomy import get_cifar100_taxonomy
+    from src.data.splits import build_scenario1_split
+    from src.trees.semantic_tree import build_semantic_tree
+
+    labels = np.repeat(np.arange(100, dtype=np.int64), 450)
+    s1 = build_scenario1_split(labels, target_class="shark", pos_fraction=0.02, seed=42)
+    tree = build_semantic_tree(s1.negative_class_to_indices)
+
+    assert tree.num_nodes == 120
+    assert tree.num_leaves == 99
+    assert int(tree.instance_counts[0]) == 99 * 450
+    assert s1.target_class_id not in tree.class_id_to_leaf_node_id()
+
+    taxonomy = get_cifar100_taxonomy()
+    target_coarse = int(taxonomy.fine_to_coarse_idx[s1.target_class_id])
+    root_children = tree.get_children(0)
+    assert root_children.size == 20
+
+    child_counts_at_depth1 = [int(tree.child_counts[sc]) for sc in root_children]
+    assert child_counts_at_depth1.count(4) == 1
+    assert child_counts_at_depth1.count(5) == 19
+    assert int(tree.child_counts[root_children[target_coarse]]) == 4
+
+
+def test_semantic_tree_invalid_inputs_and_empty_superclass() -> None:
+    """C8: build_semantic_tree() raises ValueError on invalid inputs and omits empty superclasses."""
+    from src.trees.semantic_tree import build_semantic_tree
+
+    with pytest.raises(ValueError, match="non-empty"):
+        build_semantic_tree({})
+
+    with pytest.raises(ValueError, match="range"):
+        build_semantic_tree({100: np.array([0, 1], dtype=np.int64)})
+
+    with pytest.raises(ValueError, match="empty"):
+        build_semantic_tree({0: np.array([], dtype=np.int64)})
+
+    # Subset covering only 2 fine classes from superclass 0 ("beaver"=4, "dolphin"=30)
+    subset_tree = build_semantic_tree(
+        {
+            4: np.array([0, 1, 2], dtype=np.int64),
+            30: np.array([3, 4], dtype=np.int64),
+        }
+    )
+    assert subset_tree.num_nodes == 4  # 1 root + 1 active superclass + 2 leaves
+    assert subset_tree.num_leaves == 2
+    assert int(subset_tree.instance_counts[0]) == 5
+
