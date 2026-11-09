@@ -6,8 +6,11 @@ from src.mcts.agent import (
     compute_ucb1_scores,
     normalize_sibling_q_values,
 )
+from src.mcts.sampler import DualStreamBatch, DualStreamBatchSampler
 
 __all__ = [
+    "DualStreamBatch",
+    "DualStreamBatchSampler",
     "MCTSHNMAgent",
     "compute_mcts_reward",
     "compute_ucb1_scores",

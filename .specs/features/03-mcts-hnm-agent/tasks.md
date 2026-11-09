@@ -119,11 +119,11 @@ T3 → T4
 
 **Done when**:
 
-- [ ] `DualStreamBatchSampler` assembles negative batches with exact sizes $K_{\text{mcts}} = \lfloor (1 - \beta) B_{\text{neg}} \rfloor$ and $K_{\text{uni}} = \lceil \beta B_{\text{neg}} \rceil$ ($K_{\text{mcts}} + K_{\text{uni}} == B_{\text{neg}}$) across $\beta \in [0.0, 1.0]$ and optional positive samples
-- [ ] When a leaf has fewer instances than $K_{\text{mcts}}$, `sample_batch()` samples with replacement and emits a warning once per sampler instance; invalid sampler arguments raise `ValueError`
-- [ ] Unit tests `test_dual_stream_batch_sampler_ratios_and_positives` and `test_dual_stream_sampler_small_leaf_replacement_and_validation` pass in `tests/test_mcts_agent.py`
-- [ ] Gate check passes: `.venv/bin/pytest -v`
-- [ ] Test count: 39 tests pass (no silent deletions)
+- [x] `DualStreamBatchSampler` assembles negative batches with exact sizes $K_{\text{mcts}} = \lfloor (1 - \beta) B_{\text{neg}} \rfloor$ and $K_{\text{uni}} = \lceil \beta B_{\text{neg}} \rceil$ ($K_{\text{mcts}} + K_{\text{uni}} == B_{\text{neg}}$) across $\beta \in [0.0, 1.0]$ and optional positive samples
+- [x] When a leaf has fewer instances than $K_{\text{mcts}}$, `sample_batch()` samples with replacement and emits a warning once per sampler instance; invalid sampler arguments raise `ValueError`
+- [x] Unit tests `test_dual_stream_batch_sampler_ratios_and_positives` and `test_dual_stream_sampler_small_leaf_replacement_and_validation` pass in `tests/test_mcts_agent.py`
+- [x] Gate check passes: `.venv/bin/pytest -v`
+- [x] Test count: 39 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick

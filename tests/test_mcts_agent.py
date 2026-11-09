@@ -12,6 +12,7 @@ from src.mcts.agent import (
     compute_ucb1_scores,
     normalize_sibling_q_values,
 )
+from src.mcts.sampler import DualStreamBatchSampler
 from src.trees.confusion_tree import build_confusion_tree
 from src.trees.semantic_tree import build_semantic_tree
 
@@ -318,4 +319,93 @@ def test_backpropagation_invalid_inputs_raise() -> None:
 
     with pytest.raises(ValueError, match="target_labels"):
         compute_mcts_reward(np.ones((4, 3)), is_binary=False, target_labels=None)
+
+
+def test_dual_stream_batch_sampler_ratios_and_positives() -> None:
+    """Verify `DualStreamBatchSampler` enforces K_mcts = floor((1-beta)B_neg) and K_uni = ceil(beta B_neg) across ratios (MCTS-03, AC 1)."""
+    class_to_indices, tree = _make_small_semantic_tree()
+    cls_to_leaf = tree.class_id_to_leaf_node_id()
+    # Leaf for class 73 (shark) has 40 instances [100..139]
+    leaf_shark = cls_to_leaf[73]
+    shark_pool = set(class_to_indices[73].tolist())
+    global_neg_pool = set(np.concatenate(list(class_to_indices.values())).tolist())
+    pos_pool = np.arange(500, 520, dtype=np.int64)
+
+    for beta, b_neg, expected_mcts, expected_uni in (
+        (0.0, 25, 25, 0),   # Strict GiantHunter: 100% MCTS
+        (0.5, 24, 12, 12),  # Enhanced 50/50 Dual-Stream (even B_neg)
+        (0.5, 25, 12, 13),  # Enhanced 50/50 Dual-Stream (odd B_neg: floor(12.5)=12, ceil(12.5)=13)
+        (0.3, 25, 17, 8),   # floor(0.7*25=17.5)=17, ceil(0.3*25=7.5)=8
+        (1.0, 25, 0, 25),   # 100% Uniform anchor
+    ):
+        sampler = DualStreamBatchSampler(
+            tree=tree,
+            neg_batch_size=b_neg,
+            dual_stream_ratio=beta,
+            positive_indices=pos_pool,
+            pos_batch_size=8,
+            seed=42,
+        )
+        assert sampler.mcts_sub_batch_size == expected_mcts
+        assert sampler.uniform_sub_batch_size == expected_uni
+
+        batch = sampler.sample_batch(leaf_shark)
+        assert batch.leaf_node_id == leaf_shark
+        assert batch.leaf_class_id == 73
+        assert batch.mcts_indices.shape == (expected_mcts,)
+        assert batch.uniform_indices.shape == (expected_uni,)
+        assert batch.negative_indices.shape == (b_neg,)
+        assert batch.positive_indices.shape == (8,)
+        assert batch.all_indices.shape == (8 + b_neg,)
+        assert batch.sampled_with_replacement is False
+
+        # All MCTS indices come strictly from the selected leaf's class pool without replacement
+        assert len(set(batch.mcts_indices.tolist())) == expected_mcts
+        assert set(batch.mcts_indices.tolist()).issubset(shark_pool)
+        assert set(batch.uniform_indices.tolist()).issubset(global_neg_pool)
+        assert set(batch.positive_indices.tolist()).issubset(set(pos_pool.tolist()))
+
+
+def test_dual_stream_sampler_small_leaf_replacement_and_validation() -> None:
+    """Verify replacement fallback with single warning when leaf size < K_mcts and parameter validation (MCTS-03, AC 2)."""
+    _, tree = _make_small_semantic_tree()
+    cls_to_leaf = tree.class_id_to_leaf_node_id()
+    # Class 1 (aquarium_fish) has only 10 instances [0..9]
+    leaf_small = cls_to_leaf[1]
+
+    # Request B_neg = 30 with beta = 0.0 -> K_mcts = 30 > 10 leaf instances
+    sampler = DualStreamBatchSampler(
+        tree=tree,
+        neg_batch_size=30,
+        dual_stream_ratio=0.0,
+        seed=99,
+    )
+
+    with pytest.warns(UserWarning, match="sampling with replacement") as record:
+        batch1 = sampler.sample_batch(leaf_small)
+        batch2 = sampler.sample_batch(leaf_small)
+
+    # Warning must be emitted exactly once per sampler instance
+    assert len(record) == 1
+    assert batch1.sampled_with_replacement is True
+    assert batch2.sampled_with_replacement is True
+    assert batch1.mcts_indices.shape == (30,)
+    assert set(batch1.mcts_indices.tolist()).issubset(set(range(10)))
+
+    # Parameter validation checks
+    with pytest.raises(ValueError, match="neg_batch_size"):
+        DualStreamBatchSampler(tree=tree, neg_batch_size=0)
+
+    with pytest.raises(ValueError, match="dual_stream_ratio"):
+        DualStreamBatchSampler(tree=tree, neg_batch_size=16, dual_stream_ratio=-0.1)
+
+    with pytest.raises(ValueError, match="dual_stream_ratio"):
+        DualStreamBatchSampler(tree=tree, neg_batch_size=16, dual_stream_ratio=1.1)
+
+    with pytest.raises(ValueError, match="positive_indices"):
+        DualStreamBatchSampler(tree=tree, neg_batch_size=16, pos_batch_size=4, positive_indices=None)
+
+    with pytest.raises(ValueError, match="internal node"):
+        sampler.sample_batch(tree.root_id)
+
 
