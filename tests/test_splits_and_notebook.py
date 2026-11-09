@@ -86,3 +86,45 @@ def test_build_scenario2_split_missing_class_raises() -> None:
     incomplete_labels = np.repeat(np.arange(99, dtype=np.int64), 10)
     with pytest.raises(ValueError, match="Fine class 99 is missing"):
         build_scenario2_split(incomplete_labels)
+
+
+def test_notebook_01_structure_and_imports() -> None:
+    """Verify DATA-03 AC 4 & AD-008: valid nbformat v4 structure, modular src.* imports, and thin cells."""
+    import ast
+    from pathlib import Path
+
+    import nbformat
+
+    repo_root = Path(__file__).resolve().parent.parent
+    nb_path = repo_root / "notebooks" / "01_data_and_embeddings.ipynb"
+    assert nb_path.is_file(), "notebooks/01_data_and_embeddings.ipynb must exist"
+
+    nb = nbformat.read(nb_path, as_version=4)
+    nbformat.validate(nb)
+
+    code_cells = [cell.source for cell in nb.cells if cell.cell_type == "code"]
+    assert len(code_cells) >= 4, "Notebook 01 must contain orchestration code cells"
+
+    combined_source = "\n\n".join(code_cells)
+    tree = ast.parse(combined_source, filename=str(nb_path))
+
+    # Enforce AD-008: No class definitions or complex function definitions inside notebook cells
+    defined_classes = [node.name for node in ast.walk(tree) if isinstance(node, ast.ClassDef)]
+    defined_funcs = [node.name for node in ast.walk(tree) if isinstance(node, ast.FunctionDef)]
+    assert defined_classes == [], f"AD-008 violation: classes defined in notebook: {defined_classes}"
+    assert defined_funcs == [], f"AD-008 violation: functions defined in notebook: {defined_funcs}"
+
+    required_symbols = (
+        "set_global_seed",
+        "get_cifar100_taxonomy",
+        "fine_to_coarse_tensor",
+        "extract_cifar100_embeddings",
+        "load_embedding_cache",
+        "build_scenario1_split",
+        "build_scenario2_split",
+        "DEFAULT_SCENARIO1_TARGETS",
+        "IMBALANCE_RATIOS",
+    )
+    for symbol in required_symbols:
+        assert symbol in combined_source, f"Notebook 01 must import and use '{symbol}' from src/"
+

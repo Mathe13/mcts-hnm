@@ -193,10 +193,10 @@ T5 → T6
 
 **Done when**:
 
-- [ ] `notebooks/01_data_and_embeddings.ipynb` is a valid `nbformat` v4 notebook with markdown documentation and modular `src.*` code cells
-- [ ] Integration test `test_notebook_01_structure_and_imports` in `tests/test_splits_and_notebook.py` verifies `nbformat` validity, required `src.*` imports, and thin-orchestration compliance (`AD-008`)
-- [ ] Gate check passes: `uv run python -m compileall -q src tests && uv run pytest -v`
-- [ ] Test count: 17 tests pass (no silent deletions)
+- [x] `notebooks/01_data_and_embeddings.ipynb` is a valid `nbformat` v4 notebook with markdown documentation and modular `src.*` code cells
+- [x] Integration test `test_notebook_01_structure_and_imports` in `tests/test_splits_and_notebook.py` verifies `nbformat` validity, required `src.*` imports, and thin-orchestration compliance (`AD-008`)
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v`
+- [x] Test count: 17 tests pass (no silent deletions)
 
 **Tests**: integration
 **Gate**: full
