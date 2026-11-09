@@ -198,7 +198,7 @@ Proof: run unit | tests/test_mcts_agent.py::test_superclass_visit_distribution_a
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none
-**Dispatched:** none
+**Dispatched:** Independent Verifier (`93c94bc5-3fbd-41a4-b3cc-77abf2d9c56c`) at `73433f7` - returned `PASS`
 **Walked:** Executed all 12 checks in `tests/test_mcts_agent.py` (41 total tests passing across repository) verifying Strict vs. Enhanced UCB1 selection, unvisited-node priority, momentum leaf updates, instance-weighted ancestor backpropagation, Dual-Stream batch sampling, and Tree Visitation Entropy diagnostics across Semantic and Ward Confusion trees.
 
 ---

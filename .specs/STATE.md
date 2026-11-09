@@ -69,14 +69,17 @@
 ## Handoff
 
 - **Feature**: `03-mcts-hnm-agent` (`.specs/features/03-mcts-hnm-agent/`)
-- **Phase / Task**: Tasks — `design.md` and `tasks.md` validated (`validate_tasks.py` exited 0), awaiting user approval
+- **Phase / Task**: Done & Verified (`validate_verification.py --strict` exited 0)
 - **Completed**:
   - Feature `F1` (`01-data-and-embeddings`): Done & Verified (`T1`–`T6`, 17 tests passing)
   - Feature `F2` (`02-dual-hierarchy-trees`): Done & Verified (`T1`–`T4`, 12 checks passing)
-  - Approved `.specs/features/03-mcts-hnm-agent/spec.md` (`user: "prossiga"`)
-  - Created `.specs/features/03-mcts-hnm-agent/design.md` and `.specs/features/03-mcts-hnm-agent/tasks.md` (`T1`–`T4`, 12 checks `C1`–`C12`)
-- **In-progress**: Awaiting user approval on `.specs/features/03-mcts-hnm-agent/tasks.md`
-- **Next step**: After user approves `tasks.md`, run `validate_tasks.py 03-mcts-hnm-agent --execute` and implement `T1` through `T4` inline (4 tasks ≤ 8-task single-batch threshold)
+  - `T1` (`e0a0ab7`): `src/mcts/agent.py` (`normalize_sibling_q_values`, `compute_ucb1_scores`, `MCTSHNMAgent` UCB1 selection & unvisited-node priority)
+  - `T2` (`cf7ffc8`): `src/mcts/agent.py` (`MCTSHNMAgent.update` momentum leaf updates & instance-weighted ancestor backpropagation, `compute_mcts_reward`)
+  - `T3` (`8756d04`): `src/mcts/sampler.py` (`DualStreamBatch` & `DualStreamBatchSampler` with replacement fallback and single-warning emission)
+  - `T4` (`73433f7`): `src/mcts/diagnostics.py` (`compute_visitation_entropy`, `compute_leaf_visit_distribution`, `compute_superclass_visit_distribution`, `MCTSDiagnosticsTracker`)
+  - Independent Verifier (`93c94bc5-3fbd-41a4-b3cc-77abf2d9c56c`): `PASS` across all 12 checks (`C1`–`C12`, 41 total tests passing)
+- **In-progress**: None
+- **Next step**: Specify, Design, Tasks, and Execute for Feature `F4` (`04-tier1-benchmark-suite`)
 - **Blockers**: None
-- **Uncommitted files**: `.specs/features/03-mcts-hnm-agent/spec.md`, `.specs/features/03-mcts-hnm-agent/design.md`, `.specs/features/03-mcts-hnm-agent/tasks.md`, `.specs/STATE.md`
+- **Uncommitted files**: None (clean working tree)
 - **Branch**: `main`
