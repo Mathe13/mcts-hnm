@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import numpy as np
+import torch
+import torch.nn.functional as F
 
 from src.trees.base_tree import FastHierarchyTree
 
@@ -92,6 +94,81 @@ def compute_ucb1_scores(
     return exploitation + exploration
 
 
+def compute_mcts_reward(
+    logits: torch.Tensor | np.ndarray,
+    is_binary: bool = True,
+    target_labels: torch.Tensor | np.ndarray | int | None = None,
+) -> float:
+    r"""Compute the scalar MCTS batch reward $r$ from model logits on the MCTS-mined leaf sub-batch.
+
+    - **Scenario 1 (`is_binary=True`)**: `logits` represents raw binary logits $z_j$ for negative
+      samples (ground-truth label `0`). Computes GiantHunter Eq. (2):
+      $$r = \frac{1}{K_{\text{mcts}}} \sum_{j=1}^{K_{\text{mcts}}} -\log(1 - \sigma(z_j))$$
+      via `F.binary_cross_entropy_with_logits(z, zeros)`.
+    - **Scenario 2 (`is_binary=False`)**: `logits` has shape `[K_mcts, num_classes]` and
+      `target_labels` provides the ground-truth class ID(s). Computes mean multi-class
+      cross-entropy loss.
+    """
+    if not isinstance(is_binary, bool):
+        raise ValueError(f"is_binary must be a bool, got {is_binary!r}.")
+
+    if isinstance(logits, np.ndarray):
+        logits_t = torch.as_tensor(logits, dtype=torch.float64)
+    elif isinstance(logits, torch.Tensor):
+        logits_t = logits.detach().to(dtype=torch.float64)
+    else:
+        raise ValueError(f"logits must be a torch.Tensor or np.ndarray, got {type(logits).__name__}.")
+
+    if logits_t.numel() == 0:
+        raise ValueError("logits must be non-empty.")
+    if not bool(torch.isfinite(logits_t).all()):
+        raise ValueError("logits must contain only finite values (no NaN or Inf).")
+
+    if is_binary:
+        if logits_t.ndim == 2 and logits_t.shape[1] == 1:
+            logits_1d = logits_t.squeeze(1)
+        elif logits_t.ndim == 1:
+            logits_1d = logits_t
+        else:
+            raise ValueError(
+                f"Binary logits must have shape (K,) or (K, 1), got {tuple(logits_t.shape)}."
+            )
+        targets_zero = torch.zeros_like(logits_1d, dtype=torch.float64)
+        loss = F.binary_cross_entropy_with_logits(logits_1d, targets_zero, reduction="mean")
+        return float(loss.item())
+
+    if logits_t.ndim != 2 or logits_t.shape[1] < 2:
+        raise ValueError(
+            f"Multi-class logits must have 2D shape (K, num_classes>=2), got {tuple(logits_t.shape)}."
+        )
+    batch_k, num_classes = int(logits_t.shape[0]), int(logits_t.shape[1])
+
+    if target_labels is None:
+        raise ValueError("target_labels is required when is_binary=False.")
+
+    if isinstance(target_labels, (int, np.integer)) and not isinstance(target_labels, bool):
+        cls_id = int(target_labels)
+        targets_t = torch.full((batch_k,), cls_id, dtype=torch.long, device=logits_t.device)
+    elif isinstance(target_labels, np.ndarray):
+        targets_t = torch.as_tensor(target_labels, dtype=torch.long, device=logits_t.device)
+    elif isinstance(target_labels, torch.Tensor):
+        targets_t = target_labels.detach().to(dtype=torch.long, device=logits_t.device)
+    else:
+        raise ValueError(
+            f"target_labels must be an int, np.ndarray, or torch.Tensor, got {type(target_labels).__name__}."
+        )
+
+    if targets_t.ndim != 1 or int(targets_t.shape[0]) != batch_k:
+        raise ValueError(
+            f"target_labels must have shape ({batch_k},), got {tuple(targets_t.shape)}."
+        )
+    if bool((targets_t < 0).any()) or bool((targets_t >= num_classes).any()):
+        raise ValueError(f"target_labels entries must be in [0, {num_classes - 1}].")
+
+    loss = F.cross_entropy(logits_t, targets_t, reduction="mean")
+    return float(loss.item())
+
+
 class MCTSHNMAgent:
     r"""Monte Carlo Tree Search agent for hierarchical hard negative mining (`EPIC-03`).
 
@@ -173,6 +250,50 @@ class MCTSHNMAgent:
             curr, _ = self.select_child(curr)
             path.append(curr)
         return curr, path
+
+    def update(self, leaf_node_id: int, reward: float) -> float:
+        r"""Backpropagate scalar reward $r$ from `leaf_node_id` up to `tree.root_id`.
+
+        1. Increments `tree.visits[l] += 1` and updates the leaf $Q$-value via momentum
+           (GiantHunter Eq. 3):
+           $$Q_l^{(t)} = \alpha r + (1 - \alpha) Q_l^{(t-1)}$$
+        2. Walks upward through every ancestor $p$ along `tree.parents`, incrementing
+           `tree.visits[p] += 1` and updating $Q_p$ via instance-weighted aggregation
+           (GiantHunter Eq. 4):
+           $$Q_p = \frac{1}{M_p} \sum_{c \in \text{Children}(p)} M_c Q_c$$
+        """
+        if isinstance(leaf_node_id, bool) or not isinstance(leaf_node_id, (int, np.integer)):
+            raise ValueError(f"leaf_node_id must be an int, got {leaf_node_id!r}.")
+        lid = int(leaf_node_id)
+        if lid < 0 or lid >= self.tree.num_nodes:
+            raise ValueError(f"leaf_node_id {lid} out of range [0, {self.tree.num_nodes - 1}].")
+        if not bool(self.tree.is_leaf[lid]):
+            raise ValueError(
+                f"update() requires a leaf node ID, but node {lid} is an internal node."
+            )
+
+        if isinstance(reward, bool) or not isinstance(reward, (int, float, np.number)):
+            raise ValueError(f"reward must be a finite float, got {reward!r}.")
+        r_val = float(reward)
+        if not np.isfinite(r_val):
+            raise ValueError(f"reward must be finite (no NaN or Inf), got {r_val}.")
+
+        self.tree.visits[lid] += 1
+        prev_q = float(self.tree.q_values[lid])
+        new_leaf_q = self.momentum_alpha * r_val + (1.0 - self.momentum_alpha) * prev_q
+        self.tree.q_values[lid] = new_leaf_q
+
+        parent_id = int(self.tree.parents[lid])
+        while parent_id != -1:
+            self.tree.visits[parent_id] += 1
+            child_ids = self.tree.get_children(parent_id)
+            m_children = self.tree.instance_counts[child_ids].astype(np.float64)
+            m_parent = float(self.tree.instance_counts[parent_id])
+            q_children = self.tree.q_values[child_ids]
+            self.tree.q_values[parent_id] = float(np.dot(m_children, q_children) / m_parent)
+            parent_id = int(self.tree.parents[parent_id])
+
+        return new_leaf_q
 
     def reset(self) -> None:
         """Reset all MCTS visit counts (`0`) and action-values (`0.0`) on the underlying tree."""

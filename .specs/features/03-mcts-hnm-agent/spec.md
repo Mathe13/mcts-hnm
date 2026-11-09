@@ -113,8 +113,8 @@ Each requirement maps to a unique ID for tracking across design, tasks, and veri
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | MCTS-01 | P1: UCB1 Selection & Min-Max Q-Normalization (`ISS-07`) | Execute | Verified |
-| MCTS-02 | P1: Momentum Backpropagation & Hierarchical Aggregation (`ISS-08`) | Execute | Implementing |
-| MCTS-03 | P1: Dual-Stream Batch Sampler & RL Diagnostics (`ISS-09`) | Tasks | In Tasks |
+| MCTS-02 | P1: Momentum Backpropagation & Hierarchical Aggregation (`ISS-08`) | Execute | Verified |
+| MCTS-03 | P1: Dual-Stream Batch Sampler & RL Diagnostics (`ISS-09`) | Execute | Implementing |
 
 **Coverage:** 3 total requirements mapped to `EPIC-03`.
 

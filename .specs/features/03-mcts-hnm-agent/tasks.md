@@ -96,12 +96,12 @@ T3 → T4
 
 **Done when**:
 
-- [ ] `MCTSHNMAgent.update(leaf_node_id, reward)` increments `tree.visits[l]` by `1`, updates leaf $Q_l^{(t)} = \alpha r + (1 - \alpha) Q_l^{(t-1)}$, and updates every ancestor $p$ up to `root_id` via `tree.visits[p] += 1` and $Q_p = \frac{1}{M_p} \sum_{c \in \text{Children}(p)} M_c Q_c$
-- [ ] `compute_mcts_reward()` computes finite mean binary cross-entropy loss on negative logits (`is_binary=True`) and multi-class cross-entropy loss (`is_binary=False`)
-- [ ] `MCTSHNMAgent.update()` raises `ValueError` on out-of-range node IDs, internal nodes (`is_leaf == False`), or `NaN`/`Inf` rewards without mutating tree state
-- [ ] Unit tests `test_backpropagation_leaf_momentum_update`, `test_backpropagation_weighted_ancestor_aggregation`, `test_compute_mcts_reward_binary_and_multiclass`, and `test_backpropagation_invalid_inputs_raise` pass in `tests/test_mcts_agent.py`
-- [ ] Gate check passes: `.venv/bin/pytest -v`
-- [ ] Test count: 37 tests pass (no silent deletions)
+- [x] `MCTSHNMAgent.update(leaf_node_id, reward)` increments `tree.visits[l]` by `1`, updates leaf $Q_l^{(t)} = \alpha r + (1 - \alpha) Q_l^{(t-1)}$, and updates every ancestor $p$ up to `root_id` via `tree.visits[p] += 1` and $Q_p = \frac{1}{M_p} \sum_{c \in \text{Children}(p)} M_c Q_c$
+- [x] `compute_mcts_reward()` computes finite mean binary cross-entropy loss on negative logits (`is_binary=True`) and multi-class cross-entropy loss (`is_binary=False`)
+- [x] `MCTSHNMAgent.update()` raises `ValueError` on out-of-range node IDs, internal nodes (`is_leaf == False`), or `NaN`/`Inf` rewards without mutating tree state
+- [x] Unit tests `test_backpropagation_leaf_momentum_update`, `test_backpropagation_weighted_ancestor_aggregation`, `test_compute_mcts_reward_binary_and_multiclass`, and `test_backpropagation_invalid_inputs_raise` pass in `tests/test_mcts_agent.py`
+- [x] Gate check passes: `.venv/bin/pytest -v`
+- [x] Test count: 37 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
