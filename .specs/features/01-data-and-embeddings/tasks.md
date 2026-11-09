@@ -127,11 +127,11 @@ T5 → T6
 
 **Done when**:
 
-- [ ] All 100 fine classes (`0..99`) map bijectively to 20 coarse superclasses (`0..19`, 5 fine classes per superclass)
-- [ ] `fine_to_coarse_tensor()` converts both `torch.Tensor` and `np.ndarray` inputs while raising `ValueError` on out-of-range labels (`< 0` or `> 99`)
-- [ ] Unit tests `test_cifar100_taxonomy_bijection`, `test_fine_to_coarse_tensor_conversion`, and `test_fine_to_coarse_out_of_range_raises` pass
-- [ ] Gate check passes: `uv run pytest -v`
-- [ ] Test count: 6 tests pass (no silent deletions)
+- [x] All 100 fine classes (`0..99`) map bijectively to 20 coarse superclasses (`0..19`, 5 fine classes per superclass)
+- [x] `fine_to_coarse_tensor()` converts both `torch.Tensor` and `np.ndarray` inputs while raising `ValueError` on out-of-range labels (`< 0` or `> 99`)
+- [x] Unit tests `test_cifar100_taxonomy_bijection`, `test_fine_to_coarse_tensor_conversion`, and `test_fine_to_coarse_out_of_range_raises` pass
+- [x] Gate check passes: `.venv/bin/pytest -v`
+- [x] Test count: 6 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick

@@ -94,3 +94,97 @@ def test_set_global_seed_invalid_raises() -> None:
         with pytest.raises(ValueError, match="non-negative integer"):
             get_torch_generator(invalid_seed)  # type: ignore[arg-type]
 
+
+def test_cifar100_taxonomy_bijection() -> None:
+    """Verify DATA-01 AC 4: 100 fine classes map bijectively into 20 superclasses of 5 classes each."""
+    import numpy as np
+
+    from src.data.cifar100_taxonomy import (
+        CIFAR100_COARSE_CLASSES,
+        CIFAR100_FINE_CLASSES,
+        get_cifar100_taxonomy,
+    )
+
+    taxonomy = get_cifar100_taxonomy()
+    assert len(taxonomy.fine_names) == 100
+    assert len(taxonomy.coarse_names) == 20
+    assert list(taxonomy.fine_names) == sorted(CIFAR100_FINE_CLASSES)
+    assert len(set(taxonomy.fine_names)) == 100
+    assert len(set(CIFAR100_COARSE_CLASSES)) == 20
+
+    assert taxonomy.fine_to_coarse_idx.shape == (100,)
+    assert taxonomy.fine_to_coarse_idx.min() == 0
+    assert taxonomy.fine_to_coarse_idx.max() == 19
+
+    seen_fine_ids: set[int] = set()
+    for coarse_id in range(20):
+        fine_ids = taxonomy.coarse_to_fine_ids[coarse_id]
+        assert len(fine_ids) == 5, f"Superclass {coarse_id} must have 5 fine classes"
+        for fid in fine_ids:
+            assert taxonomy.fine_to_coarse_idx[fid] == coarse_id
+            seen_fine_ids.add(fid)
+
+    assert seen_fine_ids == set(range(100))
+
+    # Spot-check canonical CIFAR-100 superclass memberships
+    beaver_id = taxonomy.fine_name_to_id["beaver"]
+    shark_id = taxonomy.fine_name_to_id["shark"]
+    rocket_id = taxonomy.fine_name_to_id["rocket"]
+    assert taxonomy.coarse_names[int(taxonomy.fine_to_coarse_idx[beaver_id])] == "aquatic_mammals"
+    assert taxonomy.coarse_names[int(taxonomy.fine_to_coarse_idx[shark_id])] == "fish"
+    assert taxonomy.coarse_names[int(taxonomy.fine_to_coarse_idx[rocket_id])] == "vehicles_2"
+    assert np.bincount(taxonomy.fine_to_coarse_idx).tolist() == [5] * 20
+
+
+def test_fine_to_coarse_tensor_conversion() -> None:
+    """Verify DATA-01 AC 5: fine_to_coarse_tensor maps 1D/2D tensors and arrays preserving shape and device."""
+    import numpy as np
+    import torch
+
+    from src.data.cifar100_taxonomy import fine_to_coarse_tensor, get_cifar100_taxonomy
+
+    tax = get_cifar100_taxonomy()
+    fine_np = np.array([4, 52, 58, 69, 73], dtype=np.int64)  # beaver, oak_tree, pickup_truck, rocket, shark
+    coarse_np = fine_to_coarse_tensor(fine_np)
+    assert isinstance(coarse_np, np.ndarray)
+    assert coarse_np.shape == fine_np.shape
+    expected = [
+        tax.coarse_name_to_id["aquatic_mammals"],
+        tax.coarse_name_to_id["trees"],
+        tax.coarse_name_to_id["vehicles_1"],
+        tax.coarse_name_to_id["vehicles_2"],
+        tax.coarse_name_to_id["fish"],
+    ]
+    assert coarse_np.tolist() == expected
+
+    fine_t = torch.tensor([[4, 52], [58, 73]], dtype=torch.int32)
+    coarse_t = fine_to_coarse_tensor(fine_t)
+    assert isinstance(coarse_t, torch.Tensor)
+    assert coarse_t.shape == (2, 2)
+    assert coarse_t.device == fine_t.device
+    assert coarse_t.dtype == torch.long
+    assert coarse_t.tolist() == [[expected[0], expected[1]], [expected[2], expected[4]]]
+
+
+def test_fine_to_coarse_out_of_range_raises() -> None:
+    """Verify DATA-01 Edge Case 1: out-of-range or non-integer labels raise ValueError."""
+    import numpy as np
+    import pytest
+    import torch
+
+    from src.data.cifar100_taxonomy import fine_to_coarse_tensor
+
+    for bad_arr in (np.array([-1, 0]), np.array([0, 100]), np.array([150])):
+        with pytest.raises(ValueError, match=r"\[0, 99\]"):
+            fine_to_coarse_tensor(bad_arr)
+
+    for bad_tensor in (torch.tensor([-5, 10]), torch.tensor([0, 100])):
+        with pytest.raises(ValueError, match=r"\[0, 99\]"):
+            fine_to_coarse_tensor(bad_tensor)
+
+    with pytest.raises(ValueError, match="integer"):
+        fine_to_coarse_tensor(torch.tensor([1.5, 2.0]))
+    with pytest.raises(ValueError, match="integer"):
+        fine_to_coarse_tensor(np.array([True, False]))
+
+
