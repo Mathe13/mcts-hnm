@@ -149,11 +149,11 @@ T5 → T6
 
 **Done when**:
 
-- [ ] `create_stratified_train_val_indices()` produces disjoint 90/10 stratified train/val index arrays (`45,000` / `5,000` on 50k labels) and raises `ValueError` for invalid `val_fraction`
-- [ ] `extract_cifar100_embeddings()` extracts `float32` `[N, 512]` embeddings, saves atomically via `.tmp` rename, and reuses existing valid caches when `overwrite=False`
-- [ ] `load_embedding_cache()` validates required splits (`train`, `val`, `test`), feature dimension (`512`), and absence of `NaN`/`Inf` values, raising `ValueError` on corruption
-- [ ] Gate check passes: `uv run pytest -v`
-- [ ] Test count: 11 tests pass (no silent deletions)
+- [x] `create_stratified_train_val_indices()` produces disjoint 90/10 stratified train/val index arrays (`45,000` / `5,000` on 50k labels) and raises `ValueError` for invalid `val_fraction`
+- [x] `extract_cifar100_embeddings()` extracts `float32` `[N, 512]` embeddings, saves atomically via `.tmp` rename, and reuses existing valid caches when `overwrite=False`
+- [x] `load_embedding_cache()` validates required splits (`train`, `val`, `test`), feature dimension (`512`), and absence of `NaN`/`Inf` values, raising `ValueError` on corruption
+- [x] Gate check passes: `.venv/bin/pytest -v`
+- [x] Test count: 11 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
