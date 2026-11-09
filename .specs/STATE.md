@@ -68,11 +68,11 @@
 
 ## Handoff
 
-- **Feature**: `00-epic-roadmap` (`.specs/features/00-epic-roadmap/`)
-- **Phase / Task**: Epic Roadmap Specify Approved (`2026-11-08 - user: "aprovado"`)
-- **Completed**: `AD-001` through `AD-008` logged; `.specs/features/00-epic-roadmap/context.md`, `spec.md` (Approved), and `ROADMAP.md` completed and validated (`validate_spec.py --strict` exited 0)
-- **In-progress**: None
-- **Next step**: Specify, Design, and break down Tasks for Feature `F1` (`01-data-and-embeddings`), or scaffold all 6 feature specifications (`F1`–`F6`) as directed by user
+- **Feature**: `01-data-and-embeddings` (`.specs/features/01-data-and-embeddings/`)
+- **Phase / Task**: Tasks — awaiting user approval of `tasks.md`
+- **Completed**: `spec.md` approved (`2026-11-08 - user: "prossiga"`); `design.md` and `tasks.md` created and validated (`validate_spec.py` and `validate_tasks.py` exited 0 with 0 errors, 0 warnings)
+- **In-progress**: Waiting for user approval of `tasks.md` before executing tasks `T1`–`T6`
+- **Next step**: Upon user approval of `tasks.md`, record `**Approved**: ...`, run `validate_tasks.py 01-data-and-embeddings --execute`, implement `T1` through `T6` with atomic commits, run `check_proofs.py`, and run the independent Verifier
 - **Blockers**: None
-- **Uncommitted files**: None (committed on `main`)
+- **Uncommitted files**: `.specs/features/01-data-and-embeddings/{spec.md,design.md,tasks.md}`, `.specs/STATE.md`
 - **Branch**: `main`

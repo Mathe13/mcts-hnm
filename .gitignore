@@ -30,10 +30,11 @@ ENV/
 *.pt
 *.pth
 *.ckpt
-data/
-datasets/
-checkpoints/
-runs/
+/data/
+/datasets/
+/embeddings/
+/checkpoints/
+/runs/
 wandb/
 .tensorboard/
 
