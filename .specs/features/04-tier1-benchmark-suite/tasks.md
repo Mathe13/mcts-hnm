@@ -170,15 +170,15 @@ T5 → T6 → T7
 
 **Done when**:
 
-- [ ] `compute_paired_statistical_tests(scores_a, scores_b)` returns `{"mean_a", "std_a", "mean_b", "std_b", "mean_diff", "t_stat", "t_pvalue", "wilcoxon_stat", "wilcoxon_pvalue"}` for $N \ge 2$ paired scores
-- [ ] When all paired differences are zero, returns `t_stat=0.0`, `t_pvalue=1.0`, `wilcoxon_stat=0.0`, `wilcoxon_pvalue=1.0` without raising an exception
-- [ ] Raises `ValueError` on unequal array lengths, length $< 2$, or non-finite values
-- [ ] Unit tests pass in `tests/test_training_loop.py`
-- [ ] Gate check passes: `.venv/bin/pytest -v`
+- [x] `compute_paired_statistical_tests(scores_a, scores_b)` returns `{"mean_a", "std_a", "mean_b", "std_b", "mean_diff", "t_stat", "t_pvalue", "wilcoxon_stat", "wilcoxon_pvalue"}` for $N \ge 2$ paired scores
+- [x] When all paired differences are zero, returns `t_stat=0.0`, `t_pvalue=1.0`, `wilcoxon_stat=0.0`, `wilcoxon_pvalue=1.0` without raising an exception
+- [x] Raises `ValueError` on unequal array lengths, length $< 2$, or non-finite values
+- [x] Unit tests pass in `tests/test_training_loop.py`
+- [x] Gate check passes: `.venv/bin/pytest -v`
 
 **Tests**: unit
 **Gate**: quick
-**Commit**: `feat(utils): implement compute_paired_statistical_tests with zero-difference guard`
+**Commit**: `feat(utils): add paired statistical tests with zero diff guard`
 
 ---
 

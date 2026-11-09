@@ -15,6 +15,39 @@ from src.training.trainer import (
     train_scenario2,
 )
 from src.trees.semantic_tree import build_semantic_tree
+from src.utils.statistics import compute_paired_statistical_tests
+
+
+def test_compute_paired_statistical_tests() -> None:
+    # 5 paired scores
+    scores_a = [0.85, 0.88, 0.84, 0.87, 0.86]
+    scores_b = [0.80, 0.81, 0.82, 0.79, 0.80]
+
+    stats = compute_paired_statistical_tests(scores_a, scores_b)
+    assert stats["mean_a"] > stats["mean_b"]
+    assert stats["mean_diff"] > 0
+    assert stats["t_stat"] > 0
+    assert 0.0 <= stats["t_pvalue"] <= 1.0
+    assert 0.0 <= stats["wilcoxon_pvalue"] <= 1.0
+
+
+def test_compute_paired_statistical_tests_zero_diff_fallback() -> None:
+    scores_a = [0.85, 0.85, 0.85, 0.85, 0.85]
+    scores_b = [0.85, 0.85, 0.85, 0.85, 0.85]
+
+    stats = compute_paired_statistical_tests(scores_a, scores_b)
+    assert stats["mean_diff"] == 0.0
+    assert stats["t_stat"] == 0.0
+    assert stats["t_pvalue"] == 1.0
+    assert stats["wilcoxon_stat"] == 0.0
+    assert stats["wilcoxon_pvalue"] == 1.0
+
+    with pytest.raises(ValueError, match="match"):
+        compute_paired_statistical_tests([1.0, 2.0], [1.0])
+    with pytest.raises(ValueError, match="At least 2"):
+        compute_paired_statistical_tests([1.0], [1.0])
+    with pytest.raises(ValueError, match="finite"):
+        compute_paired_statistical_tests([1.0, np.nan], [1.0, 2.0])
 
 
 def test_train_scenario1_metrics_and_entropy() -> None:
