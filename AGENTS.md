@@ -38,12 +38,15 @@ This repository follows the **TLC Spec-Driven Development (SDD) v4** standard. A
    - Keep tree node traversal in fast CPU arrays or NumPy structures to avoid Python object overhead.
    - Never allow unbounded loss values to dominate UCB exploration; always employ **Min-Max normalization** or clipping over $Q$-values.
    - Implement the **Dual-Stream Batching** mechanism (50% uniform anchor, 50% MCTS mined) to safeguard against catastrophic forgetting and gradient divergence.
-3. **Modularity:**
+3. **Modularity & Notebook Orchestration (`AD-008`):**
+   - **Strict Separation of Concerns:** All complex business logic, data structures, MCTS search, model definitions, training loops, and statistical calculations MUST reside in modular `.py` files under `src/` and be covered by `pytest` unit tests.
+   - **Notebook Orchestration (`notebooks/*.ipynb`):** Versioned Jupyter notebooks are the primary user-facing entrypoints for running experiments on a remote JupyterHub. Notebooks must stay thin: they configure parameters, invoke high-level functions from `src/`, render inline progress/plots, and persist outputs from CIFAR-100 download through paper artifact generation.
+   - `src/data/`: CIFAR-100 downloading, coarse-to-fine taxonomy maps, embedding extraction, and imbalanced splitters.
    - `src/trees/`: Pure tree representations, building algorithms, and serialization.
-   - `src/mcts/`: Tree search, rollout simulation, and backpropagation independent of vision details.
+   - `src/mcts/`: Tree search, rollout simulation, dynamic leaf expansion, and backpropagation independent of vision details.
    - `src/models/`: Neural network classifiers and feature extractors.
    - `src/training/`: Training loops and baseline comparisons (Uniform, OHEM).
-   - `src/utils/`: Evaluation metrics (F1, AUPRC, tree visit distribution) and LaTeX figure export.
+   - `src/utils/`: Seeding, evaluation metrics (F1, AUPRC, tree visit distribution), statistical tests, and LaTeX figure/table export.
 
 ---
 

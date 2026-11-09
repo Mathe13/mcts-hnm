@@ -119,17 +119,27 @@ $$\mathcal{B} = \mathcal{B}_{\text{pos}} \cup \mathcal{B}_{\text{uniform}} \cup 
 
 ---
 
-## 5. Two-Tier Execution Strategy
+## 5. Two-Tier Execution & Notebook Orchestration (`AD-001`, `AD-008`)
+
+All core logic resides in unit-tested `.py` modules under `src/`, while execution on remote JupyterHub is driven end-to-end by versioned Jupyter notebooks under `notebooks/`:
 
 ```text
-Tier 1: Fast Feature Prototyping
-├── Frozen Backbone (ResNet-18 / ViT pretrained on ImageNet)
-├── Precomputed Feature Cache (512-d or 768-d vectors in RAM/GPU)
-├── Trainable Head: 2-layer MLP (512 -> 128 -> 1 + Sigmoid)
+notebooks/ (Thin Orchestration Layer for Remote JupyterHub)
+├── 00_master_end_to_end.ipynb       -> Runs full pipeline sequentially
+├── 01_data_and_embeddings.ipynb     -> Calls src.data.* (Download CIFAR-100 + Extract ResNet-18 features)
+├── 02_tree_construction.ipynb       -> Calls src.trees.* (Build Semantic & Ward Confusion Trees)
+├── 03_tier1_mcts_benchmarks.ipynb   -> Calls src.training.* (5-seed Tier-1 ablations: Scenario 1 & 2)
+├── 04_tier2_e2e_and_expansion.ipynb -> Calls src.mcts.expansion & src.training.e2e_trainer
+└── 05_paper_artifacts.ipynb         -> Calls src.utils.paper_artifacts (Plots + LaTeX tables)
+
+Tier 1: Fast Feature Prototyping (src/)
+├── Frozen Backbone (ResNet-18 pretrained on ImageNet)
+├── Precomputed Feature Cache (512-d vectors in RAM/GPU)
+├── Trainable Head: 2-layer MLP (512 -> 128 -> num_outputs)
 └── Throughput: > 1,000 MCTS steps/sec; 5 seeds completed in ~15 mins.
 
-Tier 2: End-to-End Vision Pipeline
-├── Trainable CNN Backbone (ResNet-18 / ConvNeXt-Tiny)
+Tier 2: End-to-End Vision Pipeline (src/)
+├── Trainable CNN Backbone (ResNet-18)
 ├── Raw RGB image augmentation (RandomCrop, RandomHorizontalFlip)
 └── Benchmark confirmation of feature adaptation dynamics.
 ```

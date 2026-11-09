@@ -43,29 +43,33 @@ While GiantHunter demonstrated superior F1-score and sample efficiency in metage
 .
 ├── .agents/                    # Agent customizations & TLC Spec-Driven skill
 │   └── skills/tlc-spec-driven/ # Spec-Driven Development engine
-├── docs/                       # Project documentation
-│   ├── ARCHITECTURE.md         # Detailed technical & RL architecture
-│   └── AGENTS.md               # Development rules for AI agents
-├── src/                        # Core source code
-│   ├── trees/                  # Semantic and confusion-based tree builders
-│   ├── mcts/                   # MCTS agent, UCB selection, and backpropagation
-│   ├── models/                 # Classifier heads and feature extractors
+├── .specs/                     # TLC Spec-Driven state, decisions (AD-NNN), and feature specs
+├── notebooks/                  # Versioned Jupyter notebooks for remote JupyterHub execution
+│   ├── 00_master_end_to_end.ipynb
+│   ├── 01_data_and_embeddings.ipynb
+│   ├── 02_tree_construction.ipynb
+│   ├── 03_tier1_mcts_benchmarks.ipynb
+│   ├── 04_tier2_e2e_and_expansion.ipynb
+│   └── 05_paper_artifacts.ipynb
+├── src/                        # Modular core Python library (all complex logic lives here)
+│   ├── data/                   # CIFAR-100 downloader, taxonomy map, and embedding extractor
+│   ├── trees/                  # Semantic and Ward confusion-based tree builders
+│   ├── mcts/                   # MCTS agent, UCB selection, dynamic expansion, and backpropagation
+│   ├── models/                 # Classifier heads and ResNet-18 backbones
 │   ├── training/               # Dual-stream trainer and baseline runners (Uniform, OHEM)
-│   └── utils/                  # Metrics (F1, AUPRC, tree visit entropy) and plotting
-├── experiments/                # Experiment configs and runner scripts
-│   ├── configs/                # YAML configuration files
-│   ├── run_prototype.py        # Fast embedding experiments
-│   └── run_e2e.py              # End-to-end CNN experiments
-├── paper/                      # Scientific paper LaTeX draft (ArXiv / Prime AI template)
-├── tests/                      # Unit and integration test suite
+│   └── utils/                  # Seeding, statistical tests, and paper figure/table generators
+├── paper/                      # Scientific paper LaTeX draft (arXiv / Prime AI template)
+├── tests/                      # Unit and integration test suite (pytest)
 ├── pyproject.toml              # Project dependencies and packaging
-├── README.md                   # This file
-└── ARCHITECTURE.md             # System architecture specification
+├── ROADMAP.md                  # Master Epic breakdown (Features F1-F6, Issues, and Tasks)
+├── AGENTS.md                   # Development rules for AI agents
+├── ARCHITECTURE.md             # System architecture specification
+└── README.md                   # This file
 ```
 
 ---
 
-## Getting Started
+## Getting Started (Local or Remote JupyterHub)
 
 ### Prerequisites
 - Python 3.10 or higher
@@ -77,10 +81,13 @@ While GiantHunter demonstrated superior F1-score and sample efficiency in metage
 # Enter project directory
 cd mcts-hnm
 
-# Create virtual environment and install dependencies
+# Create virtual environment and install dependencies (including Jupyter kernel support)
 uv venv
 source .venv/bin/activate
 uv pip install -e ".[dev]"
+
+# Register the virtualenv as a Jupyter kernel on remote JupyterHub
+python -m ipykernel install --user --name mcts-hnm --display-name "Python (MCTS-HNM)"
 ```
 
 Alternatively, with standard `pip`:
@@ -88,31 +95,22 @@ Alternatively, with standard `pip`:
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
+python -m ipykernel install --user --name mcts-hnm --display-name "Python (MCTS-HNM)"
 ```
 
 ---
 
-## Experimental Workflow
+## Experimental Workflow (Notebook-Driven on JupyterHub)
 
-1. **Extract Embeddings (Fast Mode):**
-   ```bash
-   python src/utils/extract_embeddings.py --dataset cifar100 --backbone resnet18
-   ```
+All complex logic is encapsulated in `src/` and covered by `pytest`, while the end-to-end experimental flow is triggered directly from versioned Jupyter notebooks in `notebooks/`:
 
-2. **Build Confusion Tree:**
-   ```bash
-   python src/trees/build_confusion_tree.py --embeddings-dir data/embeddings
-   ```
-
-3. **Run Comparative Benchmark (MCTS vs. Baselines):**
-   ```bash
-   python experiments/run_prototype.py --config experiments/configs/comparative_study.yaml --seeds 5
-   ```
-
-4. **Generate Paper Figures & LaTeX Tables:**
-   ```bash
-   python src/utils/generate_paper_artifacts.py --results-dir results/
-   ```
+1. **Single-Click Full Pipeline:** Open and run [`notebooks/00_master_end_to_end.ipynb`](notebooks/00_master_end_to_end.ipynb) to execute every stage sequentially.
+2. **Stage-by-Stage Notebooks:**
+   - [`notebooks/01_data_and_embeddings.ipynb`](notebooks/01_data_and_embeddings.ipynb): Download CIFAR-100, extract frozen ResNet-18 embeddings, and inspect Scenario 1 (One-vs-Rest) and Scenario 2 (100-way Multi-class) splits.
+   - [`notebooks/02_tree_construction.ipynb`](notebooks/02_tree_construction.ipynb): Construct and visualize both the Native Semantic Tree and the Data-Driven Ward Confusion Tree.
+   - [`notebooks/03_tier1_mcts_benchmarks.ipynb`](notebooks/03_tier1_mcts_benchmarks.ipynb): Run multi-seed ($N = 5$) benchmarks comparing Uniform, OHEM, Strict GiantHunter, and Enhanced MCTS-HNM.
+   - [`notebooks/04_tier2_e2e_and_expansion.ipynb`](notebooks/04_tier2_e2e_and_expansion.ipynb): Evaluate P2 dynamic entropy leaf expansion and Tier-2 End-to-End ResNet-18 training.
+   - [`notebooks/05_paper_artifacts.ipynb`](notebooks/05_paper_artifacts.ipynb): Compute statistical significance ($t$-test, Wilcoxon) and export publication-ready PDF figures and LaTeX tables into `paper/`.
 
 ---
 
