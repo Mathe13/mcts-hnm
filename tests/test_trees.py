@@ -278,3 +278,137 @@ def test_semantic_tree_invalid_inputs_and_empty_superclass() -> None:
     assert subset_tree.num_leaves == 2
     assert int(subset_tree.instance_counts[0]) == 5
 
+
+def test_confusion_distance_matrix_symmetry_and_zero_off_diag() -> None:
+    """C9: compute_confusion_distance_matrix(C) returns symmetric D in [0, 1] with D_ii=0 and handles zero off-diagonal."""
+    from src.trees.confusion_tree import compute_confusion_distance_matrix
+
+    c_mat = np.array(
+        [
+            [40.0, 10.0, 0.0, 0.0],
+            [6.0, 42.0, 2.0, 0.0],
+            [0.0, 2.0, 45.0, 3.0],
+            [0.0, 0.0, 5.0, 45.0],
+        ],
+        dtype=np.float64,
+    )
+    # Off-diagonal max is 10.0 (at C[0, 1])
+    # D[0, 1] = 1 - (10 + 6) / (2 * 10) = 1 - 16/20 = 0.2
+    # D[2, 3] = 1 - (3 + 5) / (2 * 10) = 1 - 8/20 = 0.6
+    # D[0, 3] = 1 - (0 + 0) / 20 = 1.0
+    dist = compute_confusion_distance_matrix(c_mat)
+    assert dist.shape == (4, 4)
+    assert np.allclose(dist, dist.T)
+    assert np.allclose(np.diag(dist), 0.0)
+    assert np.isclose(dist[0, 1], 0.2)
+    assert np.isclose(dist[2, 3], 0.6)
+    assert np.isclose(dist[0, 3], 1.0)
+    assert np.all((dist >= 0.0) & (dist <= 1.0))
+
+    # Edge case: zero off-diagonal entries (perfect classifier)
+    perfect = np.diag([50.0, 50.0, 50.0])
+    dist_perfect = compute_confusion_distance_matrix(perfect)
+    assert not np.isnan(dist_perfect).any()
+    assert np.allclose(np.diag(dist_perfect), 0.0)
+    off_diag_mask = ~np.eye(3, dtype=bool)
+    assert np.allclose(dist_perfect[off_diag_mask], 1.0)
+
+
+def test_build_confusion_tree_ward_hierarchy_and_slicing() -> None:
+    """C10: build_confusion_tree() builds a binary Ward FastHierarchyTree (2K-1 nodes), slices 100->99, and groups confused pairs."""
+    from src.data.splits import build_scenario1_split
+    from src.trees.confusion_tree import (
+        build_confusion_tree,
+        estimate_validation_confusion_matrix,
+    )
+
+    # 1. Synthetic 4-class confusion where (class 4, class 73) and (class 52, class 58) are strongly confused pairs
+    pools_4 = {
+        4: np.arange(0, 10, dtype=np.int64),
+        52: np.arange(10, 25, dtype=np.int64),
+        58: np.arange(25, 40, dtype=np.int64),
+        73: np.arange(40, 50, dtype=np.int64),
+    }
+    # Sorted active classes: [4, 52, 58, 73] -> local indices 0, 1, 2, 3
+    # Confuse local (0, 3) heavily and local (1, 2) heavily
+    c_4 = np.array(
+        [
+            [30.0, 0.0, 0.0, 20.0],
+            [0.0, 30.0, 18.0, 0.0],
+            [0.0, 18.0, 30.0, 0.0],
+            [20.0, 0.0, 0.0, 30.0],
+        ],
+        dtype=np.float64,
+    )
+    tree_4, linkage_4, dist_4 = build_confusion_tree(c_4, pools_4, return_linkage=True)
+    assert tree_4.tree_type == "confusion_ward"
+    assert tree_4.root_id == 0
+    assert tree_4.num_nodes == 7  # 2*4 - 1
+    assert tree_4.num_leaves == 4
+    assert linkage_4.shape == (3, 4)
+    assert dist_4.shape == (4, 4)
+
+    # Every internal node has exactly 2 children
+    for nid in range(tree_4.num_nodes):
+        if not tree_4.is_leaf[nid]:
+            assert int(tree_4.child_counts[nid]) == 2
+
+    # Verify that classes (4, 73) share the same parent internal node, and (52, 58) share the same parent internal node
+    cls_to_leaf = tree_4.class_id_to_leaf_node_id()
+    assert int(tree_4.parents[cls_to_leaf[4]]) == int(tree_4.parents[cls_to_leaf[73]])
+    assert int(tree_4.parents[cls_to_leaf[52]]) == int(tree_4.parents[cls_to_leaf[58]])
+    assert int(tree_4.parents[cls_to_leaf[4]]) != int(tree_4.parents[cls_to_leaf[52]])
+
+    # 2. Scenario 1: pass a 100x100 confusion matrix with 99 negative classes -> automatically slices to 99x99 (197 nodes)
+    rng = np.random.default_rng(42)
+    train_x = rng.normal(size=(400, 16)).astype(np.float32)
+    train_y = np.repeat(np.arange(100, dtype=np.int64), 4)
+    val_x = rng.normal(size=(200, 16)).astype(np.float32)
+    val_y = np.repeat(np.arange(100, dtype=np.int64), 2)
+
+    c_100 = estimate_validation_confusion_matrix(train_x, train_y, val_x, val_y, num_classes=100, seed=42)
+    assert c_100.shape == (100, 100)
+
+    s1 = build_scenario1_split(train_y, target_class="rocket", pos_fraction=0.5, seed=42)
+    tree_99 = build_confusion_tree(c_100, s1.negative_class_to_indices)
+    assert tree_99.num_leaves == 99
+    assert tree_99.num_nodes == 2 * 99 - 1  # 197 nodes
+    assert s1.target_class_id not in tree_99.class_id_to_leaf_node_id()
+    assert int(tree_99.instance_counts[0]) == 99 * 4
+
+
+def test_confusion_matrix_invalid_inputs_raise() -> None:
+    """C11: compute_confusion_distance_matrix() and build_confusion_tree() raise ValueError on zero-sum rows, NaN, Inf, negative, or non-square matrices."""
+    from src.trees.confusion_tree import build_confusion_tree, compute_confusion_distance_matrix
+
+    # 1. Non-square matrix
+    with pytest.raises(ValueError, match="square"):
+        compute_confusion_distance_matrix(np.ones((3, 4)))
+
+    # 2. NaN entry
+    nan_mat = np.eye(3)
+    nan_mat[0, 1] = np.nan
+    with pytest.raises(ValueError, match="NaN|finite"):
+        compute_confusion_distance_matrix(nan_mat)
+
+    # 3. Negative entry
+    neg_mat = np.eye(3)
+    neg_mat[1, 2] = -0.5
+    with pytest.raises(ValueError, match="negative"):
+        compute_confusion_distance_matrix(neg_mat)
+
+    # 4. Zero-sum row
+    zero_row_mat = np.array([[10.0, 2.0, 0.0], [0.0, 0.0, 0.0], [1.0, 0.0, 9.0]])
+    with pytest.raises(ValueError, match="zero-sum|row"):
+        compute_confusion_distance_matrix(zero_row_mat)
+
+    # 5. Dimension mismatch between confusion_matrix and class_to_indices (neither K nor 100)
+    pools_3 = {
+        0: np.array([0, 1], dtype=np.int64),
+        1: np.array([2, 3], dtype=np.int64),
+        2: np.array([4, 5], dtype=np.int64),
+    }
+    with pytest.raises(ValueError, match="shape|match"):
+        build_confusion_tree(np.eye(5), pools_3)
+
+

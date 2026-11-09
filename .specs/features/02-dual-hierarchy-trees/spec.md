@@ -113,7 +113,7 @@ Each requirement maps to a unique ID for tracking across design, tasks, and veri
 | -------------- | ----- | ----- | ------ |
 | TREE-01 | P1: Vectorized Hierarchy Tree Data Structure (`ISS-04`) | Execute | Implementing |
 | TREE-02 | P1: Mode A — Native CIFAR-100 Semantic Hierarchy Builder (`ISS-05`) | Execute | Implementing |
-| TREE-03 | P1: Mode B — Data-Driven Ward Confusion Tree & Notebook 02 (`ISS-06`) | Tasks | In Tasks |
+| TREE-03 | P1: Mode B — Data-Driven Ward Confusion Tree & Notebook 02 (`ISS-06`) | Execute | Implementing |
 
 **Coverage:** 3 total requirements mapped to `EPIC-02`.
 

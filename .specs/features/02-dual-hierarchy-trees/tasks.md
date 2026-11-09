@@ -118,12 +118,12 @@ T3 → T4
 
 **Done when**:
 
-- [ ] `compute_confusion_distance_matrix(C)` validates $C$ (rejecting non-square, negative, `NaN`/`Inf`, or zero-sum rows with `ValueError`) and returns symmetric $D \in [0, 1]^{K \times K}$ with $D_{i,i} = 0.0$ and zero-off-diagonal fallback $D_{i,j} = 1.0$
-- [ ] `build_confusion_tree()` slices $100 \times 100$ matrices to active classes when $K < 100$, runs `scipy.cluster.hierarchy.linkage(..., method="ward")`, and builds a binary `FastHierarchyTree` (`2K - 1` nodes, `root_id = 0`) that merges confused class pairs at lowest linkage height
-- [ ] `estimate_validation_confusion_matrix()` deterministically estimates a valid confusion matrix from train/val feature embeddings
-- [ ] Unit tests `test_confusion_distance_matrix_symmetry_and_zero_off_diag`, `test_build_confusion_tree_ward_hierarchy_and_slicing`, and `test_confusion_matrix_invalid_inputs_raise` pass in `tests/test_trees.py`
-- [ ] Gate check passes: `.venv/bin/pytest -v`
-- [ ] Test count: 28 tests pass (no silent deletions)
+- [x] `compute_confusion_distance_matrix(C)` validates $C$ (rejecting non-square, negative, `NaN`/`Inf`, or zero-sum rows with `ValueError`) and returns symmetric $D \in [0, 1]^{K \times K}$ with $D_{i,i} = 0.0$ and zero-off-diagonal fallback $D_{i,j} = 1.0$
+- [x] `build_confusion_tree()` slices $100 \times 100$ matrices to active classes when $K < 100$, runs `scipy.cluster.hierarchy.linkage(..., method="ward")`, and builds a binary `FastHierarchyTree` (`2K - 1` nodes, `root_id = 0`) that merges confused class pairs at lowest linkage height
+- [x] `estimate_validation_confusion_matrix()` deterministically estimates a valid confusion matrix from train/val feature embeddings
+- [x] Unit tests `test_confusion_distance_matrix_symmetry_and_zero_off_diag`, `test_build_confusion_tree_ward_hierarchy_and_slicing`, and `test_confusion_matrix_invalid_inputs_raise` pass in `tests/test_trees.py`
+- [x] Gate check passes: `.venv/bin/pytest -v`
+- [x] Test count: 28 tests pass (no silent deletions)
 
 **Tests**: unit
 **Gate**: quick
