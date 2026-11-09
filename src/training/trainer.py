@@ -11,7 +11,17 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+from src.mcts.agent import MCTSHNMAgent, compute_mcts_reward
+from src.mcts.diagnostics import MCTSDiagnosticsTracker, compute_visitation_entropy
+from src.mcts.sampler import DualStreamBatchSampler
+from src.models.mlp_head import Tier1MLPHead, create_mlp_optimizer
+from src.training.baselines import OHEMSampler, UniformSampler
+from src.trees.base_tree import FastHierarchyTree
+from src.utils.seed import set_global_seed
+
 logger = logging.getLogger(__name__)
+
+SUPPORTED_STRATEGIES = ("uniform", "ohem", "mcts_strict", "mcts_enhanced")
 
 
 def evaluate_scenario1_metrics(
@@ -176,7 +186,6 @@ def evaluate_scenario2_metrics(
             recalls.append(0.0)
 
     recalls_arr = np.array(recalls, dtype=np.float64)
-    # 10 worst classes
     worst_k = min(10, num_classes)
     worst_10_recall = float(np.mean(np.sort(recalls_arr)[:worst_k]))
 
@@ -185,4 +194,315 @@ def evaluate_scenario2_metrics(
         "top1_accuracy": top1,
         "macro_f1": macro_f1,
         "worst_10_class_recall": worst_10_recall,
+    }
+
+
+def train_scenario1(
+    train_features: torch.Tensor,
+    train_binary_labels: np.ndarray | torch.Tensor,
+    positive_indices: np.ndarray,
+    negative_indices: np.ndarray,
+    test_features: torch.Tensor,
+    test_binary_labels: np.ndarray | torch.Tensor,
+    strategy: str = "mcts_enhanced",
+    tree: FastHierarchyTree | None = None,
+    num_steps: int = 1000,
+    eval_every: int = 100,
+    pos_batch_size: int = 16,
+    neg_batch_size: int = 48,
+    lr: float = 1e-3,
+    exploration_c: float = 2.0,
+    momentum_alpha: float = 0.3,
+    dual_stream_ratio: float = 0.5,
+    seed: int = 42,
+    device: torch.device | None = None,
+) -> dict[str, object]:
+    """Train downstream MLP classifier under Scenario 1 (Imbalanced Binary One-vs-Rest)."""
+    if strategy not in SUPPORTED_STRATEGIES:
+        raise ValueError(
+            f"Unknown strategy '{strategy}'. Supported: {SUPPORTED_STRATEGIES}."
+        )
+    if num_steps <= 0:
+        raise ValueError(f"num_steps must be > 0, got {num_steps}.")
+    if eval_every <= 0:
+        raise ValueError(f"eval_every must be > 0, got {eval_every}.")
+
+    set_global_seed(seed)
+    dev = device if device is not None else torch.device("cpu")
+
+    input_dim = int(train_features.shape[1])
+    model = Tier1MLPHead(input_dim=input_dim, hidden_dim=128, num_outputs=1, squeeze_binary=True).to(dev)
+    optimizer = create_mlp_optimizer(model, lr=lr)
+
+    pos_idx_arr = np.asarray(positive_indices, dtype=np.int64)
+    neg_idx_arr = np.asarray(negative_indices, dtype=np.int64)
+
+    agent: MCTSHNMAgent | None = None
+    mcts_sampler: DualStreamBatchSampler | None = None
+    diagnostics_tracker: MCTSDiagnosticsTracker | None = None
+    uni_sampler: UniformSampler | None = None
+    ohem_sampler: OHEMSampler | None = None
+
+    if strategy in ("mcts_strict", "mcts_enhanced"):
+        if tree is None:
+            raise ValueError(f"tree is required for MCTS strategy '{strategy}'.")
+        q_norm = (strategy == "mcts_enhanced")
+        beta = dual_stream_ratio if strategy == "mcts_enhanced" else 0.0
+        agent = MCTSHNMAgent(
+            tree=tree,
+            exploration_c=exploration_c,
+            momentum_alpha=momentum_alpha,
+            q_norm=q_norm,
+        )
+        mcts_sampler = DualStreamBatchSampler(
+            tree=tree,
+            neg_batch_size=neg_batch_size,
+            dual_stream_ratio=beta,
+            positive_indices=pos_idx_arr,
+            pos_batch_size=pos_batch_size,
+            seed=seed,
+        )
+        diagnostics_tracker = MCTSDiagnosticsTracker(tree=tree)
+    elif strategy == "uniform":
+        uni_sampler = UniformSampler(
+            negative_indices=neg_idx_arr,
+            neg_batch_size=neg_batch_size,
+            positive_indices=pos_idx_arr,
+            pos_batch_size=pos_batch_size,
+            seed=seed,
+        )
+    elif strategy == "ohem":
+        ohem_sampler = OHEMSampler(
+            negative_indices=neg_idx_arr,
+            neg_batch_size=neg_batch_size,
+            ohem_ratio=4,
+            positive_indices=pos_idx_arr,
+            pos_batch_size=pos_batch_size,
+            seed=seed,
+        )
+
+    history: list[dict[str, float]] = []
+
+    for step in range(1, num_steps + 1):
+        model.train()
+        optimizer.zero_grad()
+
+        mcts_leaf_id: int | None = None
+        mcts_batch_len: int = 0
+
+        if strategy in ("mcts_strict", "mcts_enhanced"):
+            assert agent is not None and mcts_sampler is not None
+            mcts_leaf_id, _ = agent.select_leaf()
+            batch = mcts_sampler.sample_batch(mcts_leaf_id)
+            step_indices = batch.all_indices
+            mcts_batch_len = int(batch.mcts_indices.size)
+        elif strategy == "uniform":
+            assert uni_sampler is not None
+            _, _, step_indices = uni_sampler.sample_batch()
+        elif strategy == "ohem":
+            assert ohem_sampler is not None
+            _, _, step_indices = ohem_sampler.sample_batch(
+                model=model, features=train_features, device=dev, is_binary=True
+            )
+
+        batch_x = train_features[step_indices].to(dev)
+        # binary labels: positives are 1.0, negatives are 0.0
+        batch_y = torch.as_tensor(
+            (train_binary_labels[step_indices] == 1).astype(np.float32), device=dev
+        )
+
+        logits = model(batch_x)
+        loss = F.binary_cross_entropy_with_logits(logits, batch_y)
+        loss.backward()
+        optimizer.step()
+
+        if strategy in ("mcts_strict", "mcts_enhanced") and mcts_leaf_id is not None:
+            assert agent is not None and diagnostics_tracker is not None
+            # Compute MCTS reward on the MCTS sub-batch
+            # In DualStreamBatch, all_indices is concat(positives, negatives), where negatives starts with mcts_indices
+            # Positives count is pos_batch_size. So mcts logits are at [pos_batch_size : pos_batch_size + mcts_batch_len]
+            mcts_start = pos_batch_size
+            mcts_end = pos_batch_size + mcts_batch_len
+            mcts_logits = logits[mcts_start:mcts_end]
+            reward = compute_mcts_reward(mcts_logits, is_binary=True)
+            agent.update(mcts_leaf_id, reward)
+            diagnostics_tracker.record_step(step, mcts_leaf_id, reward)
+
+        if step % eval_every == 0 or step == num_steps:
+            metrics = evaluate_scenario1_metrics(
+                model=model,
+                features=test_features,
+                binary_labels=test_binary_labels,
+                device=dev,
+            )
+            metrics["step"] = step
+            if tree is not None:
+                ent_nats, ent_norm = compute_visitation_entropy(tree)
+                metrics["entropy_nats"] = ent_nats
+                metrics["normalized_entropy"] = ent_norm
+            history.append(metrics)
+
+    final_eval = history[-1] if history else evaluate_scenario1_metrics(model, test_features, test_binary_labels, device=dev)
+    return {
+        "strategy": strategy,
+        "history": history,
+        "final_metrics": final_eval,
+        "model": model,
+        "diagnostics": diagnostics_tracker.summary() if diagnostics_tracker is not None else None,
+    }
+
+
+def train_scenario2(
+    train_features: torch.Tensor,
+    train_labels: np.ndarray | torch.Tensor,
+    test_features: torch.Tensor,
+    test_labels: np.ndarray | torch.Tensor,
+    strategy: str = "mcts_enhanced",
+    tree: FastHierarchyTree | None = None,
+    num_classes: int = 100,
+    num_steps: int = 1000,
+    eval_every: int = 100,
+    batch_size: int = 64,
+    lr: float = 1e-3,
+    label_smoothing: float = 0.1,
+    exploration_c: float = 2.0,
+    momentum_alpha: float = 0.3,
+    dual_stream_ratio: float = 0.5,
+    seed: int = 42,
+    device: torch.device | None = None,
+) -> dict[str, object]:
+    """Train downstream MLP classifier under Scenario 2 (100-way Multi-Class Curriculum)."""
+    if strategy not in SUPPORTED_STRATEGIES:
+        raise ValueError(
+            f"Unknown strategy '{strategy}'. Supported: {SUPPORTED_STRATEGIES}."
+        )
+    if num_steps <= 0:
+        raise ValueError(f"num_steps must be > 0, got {num_steps}.")
+    if eval_every <= 0:
+        raise ValueError(f"eval_every must be > 0, got {eval_every}.")
+
+    set_global_seed(seed)
+    dev = device if device is not None else torch.device("cpu")
+
+    input_dim = int(train_features.shape[1])
+    model = Tier1MLPHead(input_dim=input_dim, hidden_dim=128, num_outputs=num_classes).to(dev)
+    optimizer = create_mlp_optimizer(model, lr=lr)
+
+    train_lbl_arr = (
+        train_labels.detach().cpu().numpy()
+        if isinstance(train_labels, torch.Tensor)
+        else np.asarray(train_labels)
+    ).astype(np.int64)
+
+    all_indices = np.arange(train_lbl_arr.size, dtype=np.int64)
+
+    agent: MCTSHNMAgent | None = None
+    mcts_sampler: DualStreamBatchSampler | None = None
+    diagnostics_tracker: MCTSDiagnosticsTracker | None = None
+    uni_sampler: UniformSampler | None = None
+    ohem_sampler: OHEMSampler | None = None
+
+    if strategy in ("mcts_strict", "mcts_enhanced"):
+        if tree is None:
+            raise ValueError(f"tree is required for MCTS strategy '{strategy}'.")
+        q_norm = (strategy == "mcts_enhanced")
+        beta = dual_stream_ratio if strategy == "mcts_enhanced" else 0.0
+        agent = MCTSHNMAgent(
+            tree=tree,
+            exploration_c=exploration_c,
+            momentum_alpha=momentum_alpha,
+            q_norm=q_norm,
+        )
+        mcts_sampler = DualStreamBatchSampler(
+            tree=tree,
+            neg_batch_size=batch_size,
+            dual_stream_ratio=beta,
+            pos_batch_size=0,
+            seed=seed,
+        )
+        diagnostics_tracker = MCTSDiagnosticsTracker(tree=tree)
+    elif strategy == "uniform":
+        uni_sampler = UniformSampler(
+            negative_indices=all_indices,
+            neg_batch_size=batch_size,
+            pos_batch_size=0,
+            seed=seed,
+        )
+    elif strategy == "ohem":
+        ohem_sampler = OHEMSampler(
+            negative_indices=all_indices,
+            neg_batch_size=batch_size,
+            ohem_ratio=4,
+            pos_batch_size=0,
+            seed=seed,
+        )
+
+    history: list[dict[str, float]] = []
+
+    for step in range(1, num_steps + 1):
+        model.train()
+        optimizer.zero_grad()
+
+        mcts_leaf_id: int | None = None
+        mcts_batch_len: int = 0
+        leaf_cls_id: int | None = None
+
+        if strategy in ("mcts_strict", "mcts_enhanced"):
+            assert agent is not None and mcts_sampler is not None
+            mcts_leaf_id, _ = agent.select_leaf()
+            batch = mcts_sampler.sample_batch(mcts_leaf_id)
+            step_indices = batch.all_indices
+            mcts_batch_len = int(batch.mcts_indices.size)
+            leaf_cls_id = batch.leaf_class_id
+        elif strategy == "uniform":
+            assert uni_sampler is not None
+            _, _, step_indices = uni_sampler.sample_batch()
+        elif strategy == "ohem":
+            assert ohem_sampler is not None
+            _, _, step_indices = ohem_sampler.sample_batch(
+                model=model,
+                features=train_features,
+                device=dev,
+                is_binary=False,
+                target_labels=train_lbl_arr,
+            )
+
+        batch_x = train_features[step_indices].to(dev)
+        batch_y = torch.as_tensor(train_lbl_arr[step_indices], dtype=torch.long, device=dev)
+
+        logits = model(batch_x)
+        loss = F.cross_entropy(logits, batch_y, label_smoothing=label_smoothing)
+        loss.backward()
+        optimizer.step()
+
+        if strategy in ("mcts_strict", "mcts_enhanced") and mcts_leaf_id is not None:
+            assert agent is not None and diagnostics_tracker is not None
+            mcts_logits = logits[:mcts_batch_len]
+            mcts_targets = batch_y[:mcts_batch_len]
+            reward = compute_mcts_reward(mcts_logits, is_binary=False, target_labels=mcts_targets)
+            agent.update(mcts_leaf_id, reward)
+            diagnostics_tracker.record_step(step, mcts_leaf_id, reward)
+
+        if step % eval_every == 0 or step == num_steps:
+            metrics = evaluate_scenario2_metrics(
+                model=model,
+                features=test_features,
+                labels=test_labels,
+                num_classes=num_classes,
+                device=dev,
+            )
+            metrics["step"] = step
+            if tree is not None:
+                ent_nats, ent_norm = compute_visitation_entropy(tree)
+                metrics["entropy_nats"] = ent_nats
+                metrics["normalized_entropy"] = ent_norm
+            history.append(metrics)
+
+    final_eval = history[-1] if history else evaluate_scenario2_metrics(model, test_features, test_labels, num_classes=num_classes, device=dev)
+    return {
+        "strategy": strategy,
+        "history": history,
+        "final_metrics": final_eval,
+        "model": model,
+        "diagnostics": diagnostics_tracker.summary() if diagnostics_tracker is not None else None,
     }

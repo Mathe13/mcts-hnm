@@ -147,12 +147,12 @@ T5 → T6 → T7
 
 **Done when**:
 
-- [ ] `train_scenario1()` optimizes `Tier1MLPHead(num_outputs=1)` with `BCEWithLogitsLoss()`, logging evaluation metrics and tree visitation entropy at `eval_every` steps
-- [ ] `train_scenario2()` optimizes `Tier1MLPHead(num_outputs=num_classes)` with `CrossEntropyLoss(label_smoothing=0.1)`, logging evaluation metrics and tree visitation entropy at `eval_every` steps
-- [ ] MCTS runs update leaf $Q$-values and visit counts using the MCTS leaf sub-batch reward and shift visits toward high-loss classes
-- [ ] Invalid parameters or unknown strategy names raise `ValueError`
-- [ ] Unit tests pass in `tests/test_training_loop.py`
-- [ ] Gate check passes: `.venv/bin/pytest -v`
+- [x] `train_scenario1()` optimizes `Tier1MLPHead(num_outputs=1)` with `BCEWithLogitsLoss()`, logging evaluation metrics and tree visitation entropy at `eval_every` steps
+- [x] `train_scenario2()` optimizes `Tier1MLPHead(num_outputs=num_classes)` with `CrossEntropyLoss(label_smoothing=0.1)`, logging evaluation metrics and tree visitation entropy at `eval_every` steps
+- [x] MCTS runs update leaf $Q$-values and visit counts using the MCTS leaf sub-batch reward and shift visits toward high-loss classes
+- [x] Invalid parameters or unknown strategy names raise `ValueError`
+- [x] Unit tests pass in `tests/test_training_loop.py`
+- [x] Gate check passes: `.venv/bin/pytest -v`
 
 **Tests**: integration
 **Gate**: quick

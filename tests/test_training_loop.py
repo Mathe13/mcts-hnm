@@ -8,7 +8,138 @@ import torch
 
 from src.models.mlp_head import Tier1MLPHead, create_mlp_optimizer
 from src.training.baselines import OHEMSampler, UniformSampler
-from src.training.trainer import evaluate_scenario1_metrics, evaluate_scenario2_metrics
+from src.training.trainer import (
+    evaluate_scenario1_metrics,
+    evaluate_scenario2_metrics,
+    train_scenario1,
+    train_scenario2,
+)
+from src.trees.semantic_tree import build_semantic_tree
+
+
+def test_train_scenario1_metrics_and_entropy() -> None:
+    # 4 classes, 20 samples per class = 80 samples
+    torch.manual_seed(42)
+    np.random.seed(42)
+    features = torch.randn(80, 16)
+    labels = np.repeat(np.arange(4, dtype=np.int64), 20)
+
+    # Positive class is 0 (first 5 samples)
+    pos_idx = np.arange(5, dtype=np.int64)
+    neg_idx = np.arange(20, 80, dtype=np.int64)
+    binary_labels = (labels == 0).astype(np.int64)
+
+    class_to_idx = {c: np.flatnonzero(labels == c).astype(np.int64) for c in range(1, 4)}
+    tree = build_semantic_tree(class_to_idx)
+
+    res = train_scenario1(
+        train_features=features,
+        train_binary_labels=binary_labels,
+        positive_indices=pos_idx,
+        negative_indices=neg_idx,
+        test_features=features,
+        test_binary_labels=binary_labels,
+        strategy="mcts_enhanced",
+        tree=tree,
+        num_steps=20,
+        eval_every=10,
+        pos_batch_size=4,
+        neg_batch_size=8,
+        lr=1e-2,
+    )
+
+    assert res["strategy"] == "mcts_enhanced"
+    assert len(res["history"]) == 2
+    for h in res["history"]:
+        assert "loss" in h and "f1" in h and "auprc" in h and "fpr_at_95_recall" in h
+        assert "entropy_nats" in h and "normalized_entropy" in h
+
+
+def test_train_scenario2_metrics_and_entropy() -> None:
+    torch.manual_seed(42)
+    np.random.seed(42)
+    features = torch.randn(100, 16)
+    labels = np.repeat(np.arange(5, dtype=np.int64), 20)
+
+    class_to_idx = {c: np.flatnonzero(labels == c).astype(np.int64) for c in range(5)}
+    tree = build_semantic_tree(class_to_idx)
+
+    res = train_scenario2(
+        train_features=features,
+        train_labels=labels,
+        test_features=features,
+        test_labels=labels,
+        strategy="mcts_strict",
+        tree=tree,
+        num_classes=5,
+        num_steps=20,
+        eval_every=10,
+        batch_size=16,
+        lr=1e-2,
+    )
+
+    assert res["strategy"] == "mcts_strict"
+    assert len(res["history"]) == 2
+    for h in res["history"]:
+        assert "loss" in h and "top1_accuracy" in h and "macro_f1" in h and "worst_10_class_recall" in h
+        assert "entropy_nats" in h
+
+
+def test_mcts_updates_and_shifts_leaf_visits() -> None:
+    # Verify that MCTS updates visits and shifts towards high-loss leaf
+    torch.manual_seed(42)
+    np.random.seed(42)
+    features = torch.randn(60, 8)
+    labels = np.repeat(np.arange(3, dtype=np.int64), 20)
+    pos_idx = np.arange(5, dtype=np.int64)
+    neg_idx = np.arange(20, 60, dtype=np.int64)
+    binary_labels = (labels == 0).astype(np.int64)
+
+    class_to_idx = {c: np.flatnonzero(labels == c).astype(np.int64) for c in range(1, 3)}
+    tree = build_semantic_tree(class_to_idx)
+
+    # Artificially modify class 2 features to produce huge logits/loss
+    features[labels == 2, :] = 10.0
+
+    res = train_scenario1(
+        train_features=features,
+        train_binary_labels=binary_labels,
+        positive_indices=pos_idx,
+        negative_indices=neg_idx,
+        test_features=features,
+        test_binary_labels=binary_labels,
+        strategy="mcts_enhanced",
+        tree=tree,
+        num_steps=30,
+        eval_every=15,
+        pos_batch_size=2,
+        neg_batch_size=6,
+        exploration_c=0.1,  # high exploitation
+        lr=1e-3,
+    )
+
+    # Leaf nodes visit counts
+    leaf_ids = tree.leaf_node_ids()
+    visits = tree.visits[leaf_ids]
+    assert np.sum(visits) == 30
+    # Q-values must be non-zero
+    assert np.any(tree.q_values[leaf_ids] > 0.0)
+
+
+def test_trainer_invalid_arguments_raise() -> None:
+    features = torch.randn(10, 4)
+    labels = np.zeros(10, dtype=np.int64)
+
+    with pytest.raises(ValueError, match="Unknown strategy"):
+        train_scenario1(features, labels, np.array([0]), np.array([1]), features, labels, strategy="unknown")
+    with pytest.raises(ValueError, match="num_steps"):
+        train_scenario1(features, labels, np.array([0]), np.array([1]), features, labels, num_steps=0)
+    with pytest.raises(ValueError, match="tree is required"):
+        train_scenario1(features, labels, np.array([0]), np.array([1]), features, labels, strategy="mcts_enhanced", tree=None)
+    with pytest.raises(ValueError, match="Unknown strategy"):
+        train_scenario2(features, labels, features, labels, strategy="unknown")
+    with pytest.raises(ValueError, match="tree is required"):
+        train_scenario2(features, labels, features, labels, strategy="mcts_strict", tree=None)
 
 
 def test_evaluate_scenario1_and_scenario2_metrics() -> None:
