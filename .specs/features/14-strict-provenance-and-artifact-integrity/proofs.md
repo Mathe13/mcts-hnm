@@ -1,6 +1,6 @@
 # 14-strict-provenance-and-artifact-integrity proofs
 
-**HEAD**: c5c081e
+**HEAD**: c003236
 **Tree**: clean
 **Shell**: /bin/sh
 **Result**: 9 pass, 0 fail
@@ -36,5 +36,5 @@ tests/test_training_loop.py::test_run_benchmark_multi_seed_and_export
     batch = mcts_sampler.sample_batch(mcts_leaf_id)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-================= 155 passed, 31 warnings in 76.71s (0:01:16) ==================
+================= 155 passed, 31 warnings in 76.74s (0:01:16) ==================
 ```
