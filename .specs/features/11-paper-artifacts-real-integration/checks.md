@@ -2,6 +2,7 @@
 
 Profile: light
 Plan: `.specs/features/11-paper-artifacts-real-integration/plan.md`
+Commit: cc96588
 
 ## Intent
 
