@@ -2,6 +2,7 @@
 
 Profile: light
 Plan: `.specs/features/09-tier1-benchmarks-real-data/plan.md`
+Commit: 422ad7f
 
 ## Intent
 
