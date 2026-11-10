@@ -2,6 +2,7 @@
 
 Profile: light
 Plan: `.specs/features/12-automated-testing-suite/plan.md`
+Commit: 5996e58
 
 ## Intent
 
