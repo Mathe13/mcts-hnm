@@ -172,22 +172,22 @@ T6
 ## Checks
 
 **C1** - `validate_provenance_metadata()` mandates `.meta.json` sidecars in both SMOKE and REAL modes, raising `FileNotFoundError` when absent and `ValueError` on cross-mode mismatch (PROV-01, AC 1–3)  
-Proof: run unit | tests/test_experiment_config.py::test_provenance_metadata_roundtrip PASSED
+Proof: run unit | tests/test_experiment_config.py::test_validate_provenance_rejects_synthetic_in_real PASSED
 
 **C2** - `load_real_benchmark_results()` strictly validates provenance sidecars for benchmark JSON files (PROV-01, AC 4)  
 Proof: run unit | tests/test_paper_artifacts_real.py::test_load_real_benchmark_results_provenance_validation PASSED
 
 **C3** - `generate_ablation_table()` and table generators raise `ValueError` when required metrics are missing rather than substituting silent defaults (NUM-01, AC 1–3)  
-Proof: run unit | tests/test_paper_artifacts.py::test_latex_tables_generation PASSED
+Proof: run unit | tests/test_paper_artifacts.py::test_latex_tables_raise_on_missing_metrics PASSED
 
 **C4** - `validate_artifact_completeness()` validates complete strategies and configurations for Scenario 1, Scenario 2, and figures (ART-01, AC 1–3)  
-Proof: run unit | tests/test_paper_artifacts_real.py::test_scenario1_table_generation_with_real_results PASSED
+Proof: run unit | tests/test_paper_artifacts_real.py::test_validate_artifact_completeness PASSED
 
 **C5** - `load_cifar100_raw_images()` in SMOKE mode yields multi-sample classes and enables dynamic leaf expansion without sampling replacement warnings (FIX-01, AC 1–2)  
 Proof: run unit | tests/test_tier2_e2e_real.py::test_load_cifar100_raw_images_smoke_synthetic PASSED
 
 **C6** - I/O paths for results, embeddings, and paper artifacts are confined to mode-segregated directories (IO-01, AC 1–2)  
-Proof: run unit | tests/test_experiment_config.py::test_isolated_paths_creation PASSED
+Proof: run unit | tests/test_experiment_config.py::test_validate_mode_isolated_path PASSED
 
 **C7** - All six notebooks execute end-to-end in SMOKE mode without errors and outputs are confined to smoke directories (E2E-01, AC 1)  
 Proof: run unit | tests/test_automated_suite_real.py::test_notebook_00_smoke_e2e PASSED
