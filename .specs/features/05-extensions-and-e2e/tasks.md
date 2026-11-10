@@ -167,10 +167,10 @@ T6
 
 **Done when**:
 
-- [ ] `run_e2e_experiment()` executes multi-seed runs deterministically across strategies, aggregates `mean ± std`, computes paired Student's $t$-test and Wilcoxon signed-rank statistics against `mcts_enhanced`, and atomically writes `.json` and `.csv` files to `output_dir`
-- [ ] Invalid `E2EExperimentConfig` parameters raise `ValueError`
-- [ ] Integration tests pass in `tests/test_dynamic_expansion.py`
-- [ ] Gate check passes: `.venv/bin/pytest -v`
+- [x] `run_e2e_experiment()` executes multi-seed runs deterministically across strategies, aggregates `mean ± std`, computes paired Student's $t$-test and Wilcoxon signed-rank statistics against `mcts_enhanced`, and atomically writes `.json` and `.csv` files to `output_dir`
+- [x] Invalid `E2EExperimentConfig` parameters raise `ValueError`
+- [x] Integration tests pass in `tests/test_dynamic_expansion.py`
+- [x] Gate check passes: `.venv/bin/pytest -v`
 
 **Tests**: integration
 **Gate**: full
