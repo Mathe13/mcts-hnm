@@ -13,6 +13,7 @@ from src.utils.experiment_config import (
     reset_active_session_mode,
     save_provenance_metadata,
     set_active_session_mode,
+    validate_mode_isolated_path,
     validate_provenance_metadata,
 )
 from src.utils.paper_artifacts import (
@@ -47,6 +48,7 @@ __all__ = [
     "save_provenance_metadata",
     "set_active_session_mode",
     "validate_provenance_metadata",
+    "validate_mode_isolated_path",
     "get_torch_generator",
     "set_global_seed",
     "compute_paired_statistical_tests",

@@ -19,6 +19,7 @@ from src.utils.experiment_config import (
     reset_active_session_mode,
     save_provenance_metadata,
     set_active_session_mode,
+    validate_mode_isolated_path,
     validate_provenance_metadata,
 )
 
@@ -209,3 +210,38 @@ def test_validate_provenance_missing_file_in_real(tmp_path):
     missing_meta = tmp_path / "non_existent.meta.json"
     with pytest.raises(FileNotFoundError, match="Missing mandatory provenance metadata in REAL mode"):
         validate_provenance_metadata(missing_meta, expected_mode=ExecutionMode.REAL)
+
+
+def test_validate_mode_isolated_path(tmp_path):
+    """C6: validate_mode_isolated_path confines I/O paths and rejects unsegregated or cross-mode paths."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "results").mkdir()
+    (repo / "results" / "smoke").mkdir(parents=True)
+    (repo / "results" / "real").mkdir(parents=True)
+    (repo / "paper").mkdir()
+
+    # 1. Unsegregated root results/ is rejected
+    with pytest.raises(ValueError, match="Direct unsegregated I/O"):
+        validate_mode_isolated_path(repo / "results", mode=ExecutionMode.SMOKE, root=repo)
+
+    with pytest.raises(ValueError, match="Direct unsegregated I/O"):
+        validate_mode_isolated_path(repo / "results", mode=ExecutionMode.REAL, root=repo)
+
+    # 2. SMOKE mode rejects root paper/ and REAL results
+    with pytest.raises(ValueError, match="SMOKE mode prohibited from reading or writing root paper"):
+        validate_mode_isolated_path(repo / "paper", mode=ExecutionMode.SMOKE, root=repo)
+
+    with pytest.raises(ValueError, match="SMOKE mode prohibited from accessing REAL results"):
+        validate_mode_isolated_path(repo / "results" / "real", mode=ExecutionMode.SMOKE, root=repo)
+
+    # 3. REAL mode rejects SMOKE results
+    with pytest.raises(ValueError, match="REAL mode prohibited from accessing SMOKE results"):
+        validate_mode_isolated_path(repo / "results" / "smoke", mode=ExecutionMode.REAL, root=repo)
+
+    # 4. Valid mode paths pass
+    p_smoke = validate_mode_isolated_path(repo / "results" / "smoke", mode=ExecutionMode.SMOKE, root=repo)
+    assert p_smoke == (repo / "results" / "smoke").resolve()
+
+    p_real = validate_mode_isolated_path(repo / "results" / "real", mode=ExecutionMode.REAL, root=repo)
+    assert p_real == (repo / "results" / "real").resolve()

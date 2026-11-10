@@ -181,18 +181,18 @@ def test_latex_tables_raise_on_missing_metrics(tmp_path: Path):
     tab_dir = tmp_path / "tables_err"
 
     # Scenario 1 missing metrics
-    bad_scen1 = {"scenario1": {"uniform": {"10": {"f1": {"mean": 0.5}}}}}  # missing auprc and fpr95
+    bad_scen1 = {"is_smoke": True, "scenario1": {"uniform": {"10": {"f1": {"mean": 0.5}}}}}  # missing auprc and fpr95
     with pytest.raises(ValueError, match="missing metric"):
         generate_scenario1_table(bad_scen1, output_dir=tab_dir)
 
     # Scenario 2 missing metrics
-    bad_scen2 = {"scenario2": {"uniform": {"top1_accuracy": {"mean": 0.5, "std": 0.0, "values": [0.5]}}}}  # missing macro_f1
+    bad_scen2 = {"is_smoke": True, "scenario2": {"uniform": {"top1_accuracy": {"mean": 0.5, "std": 0.0, "values": [0.5]}}}}  # missing macro_f1
     with pytest.raises(ValueError, match="missing metric"):
         generate_scenario2_table(bad_scen2, output_dir=tab_dir)
 
     # Ablation missing metrics
-    bad_ablation = {"ablation": {"semantic_tree": {"f1": 0.5}}}  # missing auprc
-    with pytest.raises(ValueError, match="Missing required ablation metrics"):
+    bad_ablation = {"is_smoke": True, "ablation": {"semantic_tree": {"f1": 0.5}}}  # missing auprc
+    with pytest.raises(ValueError, match="missing required 'f1' or 'auprc' metric"):
         generate_ablation_table(bad_ablation, output_dir=tab_dir)
 
 

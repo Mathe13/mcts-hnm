@@ -143,9 +143,9 @@ T6
 **Requirement**: IO-01  
 
 **Done when**:
-- [ ] File operations outside isolated mode paths are rejected with `ValueError`
-- [ ] Paper artifacts in SMOKE mode are saved strictly to `results/smoke/paper/`
-- [ ] Unit tests pass: `.venv/bin/pytest -v tests/test_experiment_config.py`
+- [x] File operations outside isolated mode paths are rejected with `ValueError`
+- [x] Paper artifacts in SMOKE mode are saved strictly to `results/smoke/paper/`
+- [x] Unit tests pass: `.venv/bin/pytest -v tests/test_experiment_config.py`
 
 **Tests**: unit  
 **Gate**: quick  

@@ -211,6 +211,46 @@ def get_isolated_paths(
     )
 
 
+def validate_mode_isolated_path(
+    path: Union[str, Path],
+    mode: ExecutionMode,
+    root: Optional[Path] = None,
+) -> Path:
+    """Validate that path is properly segregated and does not cross execution mode boundaries.
+
+    Raises:
+        ValueError: If a SMOKE run attempts to access root paper/ or REAL paths, or if unisolated results/ is targeted.
+    """
+    repo = root or find_repo_root()
+    resolved = Path(path).resolve()
+
+    # Reject unsegregated root results/ (must be results/smoke or results/real or results/legacy)
+    if resolved == (repo / "results").resolve():
+        raise ValueError(
+            f"Direct unsegregated I/O at '{path}' is prohibited. Use mode-segregated paths ('results/{mode.value}')."
+        )
+
+    # In SMOKE mode, reject root paper/ directory
+    if mode == ExecutionMode.SMOKE:
+        if resolved == (repo / "paper").resolve() or (repo / "paper").resolve() in resolved.parents:
+            raise ValueError(
+                f"SMOKE mode prohibited from reading or writing root paper/ directory: '{path}'. Use 'results/smoke/paper/'."
+            )
+        if resolved == (repo / "results" / "real").resolve() or (repo / "results" / "real").resolve() in resolved.parents:
+            raise ValueError(
+                f"SMOKE mode prohibited from accessing REAL results directory: '{path}'."
+            )
+
+    # In REAL mode, reject smoke results directory
+    if mode == ExecutionMode.REAL:
+        if resolved == (repo / "results" / "smoke").resolve() or (repo / "results" / "smoke").resolve() in resolved.parents:
+            raise ValueError(
+                f"REAL mode prohibited from accessing SMOKE results directory: '{path}'."
+            )
+
+    return resolved
+
+
 def print_execution_banner(config: ExperimentConfig, notebook_name: str = "") -> str:
     """Print and return a standardized prominent warning banner."""
     paths = get_isolated_paths(config)
