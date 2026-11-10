@@ -183,8 +183,7 @@ def load_real_benchmark_results(
 
     def _validate_meta(json_f: Path) -> None:
         meta_f = json_f.parent / f"{json_f.name}.meta.json"
-        if meta_f.exists():
-            validate_provenance_metadata(meta_f, expected_mode=expected_mode)
+        validate_provenance_metadata(meta_f, expected_mode=expected_mode)
 
     tier1_file = res_path / "tier1_benchmark_summary.json"
     if tier1_file.exists():

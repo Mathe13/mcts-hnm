@@ -9,6 +9,7 @@ from src.utils.experiment_config import (
     ExecutionMode,
     ExperimentConfig,
     reset_active_session_mode,
+    save_provenance_metadata,
 )
 from src.utils.paper_artifacts import (
     DEFAULT_PAPER_METADATA,
@@ -99,6 +100,7 @@ def test_benchmark_results_loader_and_synthesizer(tmp_path: Path):
     }
     with open(real_results / "tier1_benchmark_summary.json", "w", encoding="utf-8") as f:
         json.dump(real_data, f)
+    save_provenance_metadata(real_results / "tier1_benchmark_summary.json", ExperimentConfig(execution_mode=ExecutionMode.REAL))
     loaded_real = load_or_synthesize_benchmark_results(real_results)
     assert loaded_real == real_data
 

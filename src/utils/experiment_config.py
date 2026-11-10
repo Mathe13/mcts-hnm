@@ -309,12 +309,21 @@ def validate_provenance_metadata(
     """Validate that artifact metadata matches expectations and prohibits synthetic data in REAL mode."""
     path = Path(metadata_path).resolve()
     if not path.is_file():
-        if expected_mode and str(expected_mode).lower().endswith("real"):
-            raise FileNotFoundError(f"Missing mandatory provenance metadata in REAL mode: {path}")
-        return {}
+        mode_suffix = (
+            f" in {expected_mode.value.upper()} mode"
+            if expected_mode and isinstance(expected_mode, ExecutionMode)
+            else (f" in {str(expected_mode).upper()} mode" if expected_mode else "")
+        )
+        raise FileNotFoundError(f"Missing mandatory provenance metadata{mode_suffix}: {path}")
 
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
+
+    if not isinstance(data, dict):
+        raise ValueError(f"Invalid provenance metadata content (expected dict): {path}")
+
+    if "execution_mode" not in data:
+        raise ValueError(f"Provenance metadata missing 'execution_mode': {path}")
 
     if expected_mode is not None:
         exp_mode_str = expected_mode.value if isinstance(expected_mode, ExecutionMode) else str(expected_mode).lower()
@@ -327,5 +336,12 @@ def validate_provenance_metadata(
                 )
             if actual_mode_str != ExecutionMode.REAL.value:
                 raise ValueError(f"Expected REAL mode in metadata but found: {actual_mode_str}")
+        elif exp_mode_str == ExecutionMode.SMOKE.value:
+            if actual_mode_str == ExecutionMode.REAL.value:
+                raise ValueError(
+                    f"SMOKE mode rejected REAL artifact: {path} (mode={actual_mode_str})"
+                )
+            if actual_mode_str != ExecutionMode.SMOKE.value:
+                raise ValueError(f"Expected SMOKE mode in metadata but found: {actual_mode_str}")
 
     return data

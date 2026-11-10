@@ -12,6 +12,7 @@ from src.utils.experiment_config import (
     find_repo_root,
     get_isolated_paths,
     reset_active_session_mode,
+    save_provenance_metadata,
 )
 from src.utils.paper_artifacts import (
     compile_paper,
@@ -118,10 +119,35 @@ def test_load_real_benchmark_parsing(tmp_path: Path):
     summary_path = results_dir / "tier1_benchmark_summary.json"
     with open(summary_path, "w", encoding="utf-8") as f:
         json.dump(summary_data, f)
+    save_provenance_metadata(summary_path, ExperimentConfig(execution_mode=ExecutionMode.REAL))
 
     parsed = load_real_benchmark_results(results_dir)
     assert parsed["scenario1"]["uniform"]["10"]["f1"]["mean"] == 0.42
     assert parsed["scenario2"]["mcts_enhanced"]["top1_accuracy"]["mean"] == 0.70
+
+
+def test_load_real_benchmark_results_provenance_validation(tmp_path: Path):
+    """C2: load_real_benchmark_results strictly validates provenance sidecars for benchmark JSON files."""
+    results_dir = tmp_path / "provenance_test"
+    results_dir.mkdir(parents=True, exist_ok=True)
+    summary_path = results_dir / "tier1_benchmark_summary.json"
+    with open(summary_path, "w", encoding="utf-8") as f:
+        json.dump({"scenario1": {"uniform": {"10": {"f1": [0.5]}}}}, f)
+
+    # 1. Missing sidecar -> FileNotFoundError
+    with pytest.raises(FileNotFoundError, match="Missing mandatory provenance metadata in REAL mode"):
+        load_real_benchmark_results(results_dir, expected_mode=ExecutionMode.REAL)
+
+    # 2. SMOKE sidecar loaded in REAL mode -> ValueError
+    save_provenance_metadata(summary_path, ExperimentConfig(execution_mode=ExecutionMode.SMOKE))
+    with pytest.raises(ValueError, match="REAL mode rejected synthetic/smoke artifact"):
+        load_real_benchmark_results(results_dir, expected_mode=ExecutionMode.REAL)
+
+    # 3. REAL sidecar loaded in SMOKE mode -> ValueError
+    reset_active_session_mode()
+    save_provenance_metadata(summary_path, ExperimentConfig(execution_mode=ExecutionMode.REAL))
+    with pytest.raises(ValueError, match="SMOKE mode rejected REAL artifact"):
+        load_real_benchmark_results(results_dir, expected_mode=ExecutionMode.SMOKE)
 
 
 def test_notebook_05_structure_and_banner():
