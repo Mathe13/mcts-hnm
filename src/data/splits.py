@@ -125,7 +125,12 @@ def build_scenario1_split(
 
     negative_class_to_indices: dict[int, np.ndarray] = {}
     neg_parts: list[np.ndarray] = []
-    for cls_id in range(100):
+    classes_to_check = (
+        range(100)
+        if (int(labels_np.max()) >= 100 or len(np.unique(labels_np)) == 100)
+        else [int(c) for c in np.unique(labels_np) if int(c) != target_id]
+    )
+    for cls_id in classes_to_check:
         if cls_id == target_id:
             continue
         cls_indices = np.flatnonzero(labels_np == cls_id).astype(np.int64)
