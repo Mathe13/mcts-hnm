@@ -69,6 +69,60 @@ While GiantHunter demonstrated superior F1-score and sample efficiency in metage
 
 ---
 
+## Execution Modes & Directory Layout
+
+To eliminate silent synthetic fallbacks and enforce scientific reproducibility, the repository implements a strict two-tier execution contract managed by `ExecutionMode`:
+
+- **`ExecutionMode.SMOKE`**: Uses deterministic synthetic data and small fixtures for ultra-fast pipeline verification, test runs, and continuous integration. Outputs are strictly confined to `results/smoke/`, `embeddings/smoke/`, and `checkpoints/smoke/`. Smoke figures carry visible `[SMOKE TEST — NOT FOR PUBLICATION]` watermarks.
+- **`ExecutionMode.REAL`**: Executes scientific experiments on genuine **CIFAR-100** data. If raw datasets or caches are missing, execution halts with an explicit `FileNotFoundError` rather than silently generating random prototypes. Outputs are saved to `results/real/`, `embeddings/real/`, `checkpoints/real/`, and `paper/`.
+
+All exported result files (`.json`, `.csv`, `.pt`) are accompanied by a `.meta.json` provenance sidecar recording dataset fingerprints, execution mode, git commit SHA, and UTC timestamps.
+
+### Directory Layout
+
+```text
+.
+├── checkpoints/
+│   ├── real/                   # Checkpoints from genuine CIFAR-100 training
+│   └── smoke/                  # Checkpoints from smoke test passes
+├── embeddings/
+│   ├── real/                   # Pre-extracted frozen ResNet-18 embeddings (cifar100_resnet18.pt)
+│   ├── smoke/                  # Fast deterministic synthetic embedding bundles
+│   └── trees/                  # Serialized semantic and confusion hierarchies (.npz)
+├── results/
+│   ├── legacy/                 # Historical results pre-dating the execution contract
+│   ├── real/                   # Production scientific benchmark metrics and sidecars
+│   └── smoke/                  # Smoke test run metrics and demonstrative artifacts
+├── paper/
+│   ├── figures/                # Publication-grade vector PDF and 300 DPI PNG figures
+│   ├── tables/                 # LaTeX booktabs tables (.tex)
+│   ├── artifact_manifest.json  # Cryptographic SHA-256 provenance manifest
+│   ├── main.tex                # Paper manuscript draft
+│   └── main.pdf                # Compiled publication PDF
+├── notebooks/                  # Versioned Jupyter notebooks for remote JupyterHub execution
+│   ├── 00_master_end_to_end.ipynb
+│   ├── 01_data_and_embeddings.ipynb
+│   ├── 02_tree_construction.ipynb
+│   ├── 03_tier1_mcts_benchmarks.ipynb
+│   ├── 04_tier2_e2e_and_expansion.ipynb
+│   └── 05_paper_artifacts.ipynb
+├── docs/                       # Detailed scientific and reproducibility documentation
+│   └── experimental_reproducibility.md
+├── src/                        # Modular core Python library
+├── tests/                      # Automated unit, integration, and regression test suite
+└── pyproject.toml              # Build metadata and dependencies
+```
+
+---
+
+## Dataset Requirements
+
+For scientific runs in `ExecutionMode.REAL`:
+- **CIFAR-100**: Downloaded automatically by torchvision into `data/` on first execution, or pre-cached into `embeddings/real/cifar100_resnet18.pt` via `notebooks/01_data_and_embeddings.ipynb`.
+- Total storage required: ~170 MB for raw CIFAR-100; ~120 MB for cached ResNet-18 embedding bundles.
+
+---
+
 ## Getting Started (Local or Remote JupyterHub)
 
 ### Prerequisites
@@ -81,7 +135,7 @@ While GiantHunter demonstrated superior F1-score and sample efficiency in metage
 # Enter project directory
 cd mcts-hnm
 
-# Create virtual environment and install dependencies (including Jupyter kernel support)
+# Create virtual environment and install dependencies
 uv venv
 source .venv/bin/activate
 uv pip install -e ".[dev]"
@@ -98,19 +152,57 @@ pip install -e ".[dev]"
 python -m ipykernel install --user --name mcts-hnm --display-name "Python (MCTS-HNM)"
 ```
 
+### Running the Regression Test Suite
+
+All 142+ unit, integration, and end-to-end notebook tests run in under 60 seconds:
+
+```bash
+pytest -v
+```
+
 ---
 
-## Experimental Workflow (Notebook-Driven on JupyterHub)
+## How to Run Experiments and Reproduce Results
 
-All complex logic is encapsulated in `src/` and covered by `pytest`, while the end-to-end experimental flow is triggered directly from versioned Jupyter notebooks in `notebooks/`:
+### 1. Fast Pipeline Validation (SMOKE Mode)
+Set environment variable `EXECUTION_MODE=smoke` or execute pytest:
+```bash
+EXECUTION_MODE=smoke pytest tests/test_automated_suite_real.py -v
+```
 
-1. **Single-Click Full Pipeline:** Open and run [`notebooks/00_master_end_to_end.ipynb`](notebooks/00_master_end_to_end.ipynb) to execute every stage sequentially.
-2. **Stage-by-Stage Notebooks:**
-   - [`notebooks/01_data_and_embeddings.ipynb`](notebooks/01_data_and_embeddings.ipynb): Download CIFAR-100, extract frozen ResNet-18 embeddings, and inspect Scenario 1 (One-vs-Rest) and Scenario 2 (100-way Multi-class) splits.
-   - [`notebooks/02_tree_construction.ipynb`](notebooks/02_tree_construction.ipynb): Construct and visualize both the Native Semantic Tree and the Data-Driven Ward Confusion Tree.
-   - [`notebooks/03_tier1_mcts_benchmarks.ipynb`](notebooks/03_tier1_mcts_benchmarks.ipynb): Run multi-seed ($N = 5$) benchmarks comparing Uniform, OHEM, Strict GiantHunter, and Enhanced MCTS-HNM.
-   - [`notebooks/04_tier2_e2e_and_expansion.ipynb`](notebooks/04_tier2_e2e_and_expansion.ipynb): Evaluate P2 dynamic entropy leaf expansion and Tier-2 End-to-End ResNet-18 training.
-   - [`notebooks/05_paper_artifacts.ipynb`](notebooks/05_paper_artifacts.ipynb): Compute statistical significance ($t$-test, Wilcoxon) and export publication-ready PDF figures and LaTeX tables into `paper/`.
+### 2. Full Scientific Benchmark (REAL Mode)
+On JupyterHub or a local workstation with CIFAR-100 available:
+1. Open [`notebooks/01_data_and_embeddings.ipynb`](notebooks/01_data_and_embeddings.ipynb) and run all cells to extract real embeddings.
+2. Open [`notebooks/02_tree_construction.ipynb`](notebooks/02_tree_construction.ipynb) to construct both semantic and confusion-driven trees.
+3. Open [`notebooks/03_tier1_mcts_benchmarks.ipynb`](notebooks/03_tier1_mcts_benchmarks.ipynb) to execute Tier-1 multi-seed benchmarks across Uniform, OHEM, Strict GiantHunter, and Enhanced MCTS-HNM.
+4. Open [`notebooks/04_tier2_e2e_and_expansion.ipynb`](notebooks/04_tier2_e2e_and_expansion.ipynb) to run Tier-2 ResNet-18 end-to-end vision training and dynamic leaf expansion.
+5. Open [`notebooks/05_paper_artifacts.ipynb`](notebooks/05_paper_artifacts.ipynb) to ingest real benchmark outputs, render publication figures and tables into `paper/`, and compile `paper/main.pdf`.
+
+Or execute the complete master pipeline sequentially in one click via [`notebooks/00_master_end_to_end.ipynb`](notebooks/00_master_end_to_end.ipynb).
+
+### 3. Reproducing Publication Figures & Tables Programmatically
+```python
+from src.utils.experiment_config import ExecutionMode, ExperimentConfig
+from src.utils.paper_artifacts import generate_all_paper_artifacts, compile_paper
+
+config = ExperimentConfig(execution_mode=ExecutionMode.REAL)
+artifacts = generate_all_paper_artifacts(
+    results_dir="results/real",
+    paper_dir="paper",
+    metadata_path="paper_metadata.yaml",
+    config=config,
+)
+pdf_path = compile_paper("paper")
+print(f"Compiled paper: {pdf_path}")
+```
+
+---
+
+## Experimental Limitations & Reproducibility Guide
+
+For an in-depth scientific audit of historical vs verified results, budget equivalence ($K_{\text{neg}} = 48$), tree linkage analysis (Ward vs Average linkage), and known limitations, consult the detailed guide:
+
+👉 **[Experimental Reproducibility Guide](docs/experimental_reproducibility.md)**
 
 ---
 
