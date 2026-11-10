@@ -136,12 +136,12 @@ T6
 
 **Done when**:
 
-- [ ] `generate_scenario1_table()` exports `tab_scenario1_imbalanced.tex` with clean `booktabs` format, mean $\pm$ std metrics, and paired test $p$-values
-- [ ] `generate_scenario2_table()` exports `tab_scenario2_multiclass.tex` for 100-way multi-class curriculum evaluation
-- [ ] `generate_ablation_table()` exports `tab_ablation_study.tex` covering tree geometry, $Q$-normalization, and dynamic expansion
-- [ ] `generate_all_paper_artifacts()` orchestrates all figures and tables into `paper/figures/` and `paper/tables/`, creating directories automatically if absent
-- [ ] Unit tests verify valid LaTeX table syntax (`\begin{tabular}`, `\toprule`, `\bottomrule`) and correct file generation
-- [ ] Gate check passes: `.venv/bin/pytest -v`
+- [x] `generate_scenario1_table()` exports `tab_scenario1_imbalanced.tex` with clean `booktabs` format, mean $\pm$ std metrics, and paired test $p$-values
+- [x] `generate_scenario2_table()` exports `tab_scenario2_multiclass.tex` for 100-way multi-class curriculum evaluation
+- [x] `generate_ablation_table()` exports `tab_ablation_study.tex` covering tree geometry, $Q$-normalization, and dynamic expansion
+- [x] `generate_all_paper_artifacts()` orchestrates all figures and tables into `paper/figures/` and `paper/tables/`, creating directories automatically if absent
+- [x] Unit tests verify valid LaTeX table syntax (`\begin{tabular}`, `\toprule`, `\bottomrule`) and correct file generation
+- [x] Gate check passes: `.venv/bin/pytest -v`
 
 **Tests**: unit
 **Gate**: quick

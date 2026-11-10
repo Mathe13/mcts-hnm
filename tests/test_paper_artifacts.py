@@ -7,8 +7,12 @@ import yaml
 
 from src.utils.paper_artifacts import (
     DEFAULT_PAPER_METADATA,
+    generate_ablation_table,
+    generate_all_paper_artifacts,
     generate_convergence_plot,
     generate_hyperparameter_sensitivity_plot,
+    generate_scenario1_table,
+    generate_scenario2_table,
     generate_tree_visitation_heatmap,
     load_or_synthesize_benchmark_results,
     load_paper_metadata,
@@ -96,4 +100,64 @@ def test_publication_figures_generation(tmp_path: Path):
     sens_pdf, sens_png = generate_hyperparameter_sensitivity_plot(data, output_dir=fig_dir)
     assert sens_pdf.exists() and sens_pdf.stat().st_size > 0
     assert sens_png.exists() and sens_png.stat().st_size > 0
+
+
+def test_latex_tables_generation(tmp_path: Path):
+    tab_dir = tmp_path / "paper" / "tables"
+    data = load_or_synthesize_benchmark_results(tmp_path, seed=42)
+
+    # 1. Scenario 1 table
+    t1 = generate_scenario1_table(data, output_dir=tab_dir)
+    assert t1.exists() and t1.stat().st_size > 0
+    with open(t1, "r", encoding="utf-8") as f:
+        content1 = f.read()
+    assert r"\begin{tabular}" in content1
+    assert r"\toprule" in content1
+    assert r"\bottomrule" in content1
+    assert "Enhanced MCTS-HNM" in content1
+    assert "1:10" in content1 and "1:50" in content1 and "1:100" in content1
+
+    # 2. Scenario 2 table
+    t2 = generate_scenario2_table(data, output_dir=tab_dir)
+    assert t2.exists() and t2.stat().st_size > 0
+    with open(t2, "r", encoding="utf-8") as f:
+        content2 = f.read()
+    assert r"\begin{tabular}" in content2
+    assert "Top-1 Accuracy" in content2
+    assert "Worst-10 Recall" in content2
+
+    # 3. Ablation table
+    t3 = generate_ablation_table(data, output_dir=tab_dir)
+    assert t3.exists() and t3.stat().st_size > 0
+    with open(t3, "r", encoding="utf-8") as f:
+        content3 = f.read()
+    assert r"\begin{tabular}" in content3
+    assert "Native Semantic Tree" in content3
+    assert "Ward Confusion Tree" in content3
+    assert "Min-Max" in content3
+
+
+def test_generate_all_paper_artifacts_directory_creation(tmp_path: Path):
+    paper_dir = tmp_path / "custom_paper_dir"
+    results_dir = tmp_path / "custom_results_dir"
+
+    # Ensure paper_dir does not exist beforehand
+    assert not paper_dir.exists()
+
+    res = generate_all_paper_artifacts(
+        results_dir=results_dir,
+        paper_dir=paper_dir,
+        metadata_path="paper_metadata.yaml",
+    )
+
+    assert paper_dir.exists()
+    assert (paper_dir / "figures").exists()
+    assert (paper_dir / "tables").exists()
+
+    assert len(res["figures"]) == 6  # 3 pdfs + 3 pngs
+    assert len(res["tables"]) == 3  # 3 tex files
+
+    for p in res["figures"] + res["tables"]:
+        assert p.exists() and p.stat().st_size > 0
+
 
