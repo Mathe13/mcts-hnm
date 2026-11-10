@@ -113,12 +113,12 @@ T6
 
 **Done when**:
 
-- [ ] `load_or_synthesize_benchmark_results()` parses real `results/*.json` or deterministically synthesizes complete 5-seed benchmark metric distributions matching Scenario 1, Scenario 2, and ablation schemas
-- [ ] `generate_convergence_plot()` exports `fig_convergence_curves.pdf` and `.png` displaying F1/AUPRC and loss convergence across training steps
-- [ ] `generate_tree_visitation_heatmap()` exports `fig_tree_visitation_heatmap.pdf` and `.png` illustrating UCB1 exploration-to-exploitation transitions across superclasses
-- [ ] `generate_hyperparameter_sensitivity_plot()` exports `fig_hyperparameter_sensitivity.pdf` and `.png` mapping F1/AUPRC across exploration constant $c$ and momentum $\alpha$
-- [ ] Unit tests verify file creation, PDF/PNG formats, non-empty file sizes, and deterministic generation
-- [ ] Gate check passes: `.venv/bin/pytest -v`
+- [x] `load_or_synthesize_benchmark_results()` parses real `results/*.json` or deterministically synthesizes complete 5-seed benchmark metric distributions matching Scenario 1, Scenario 2, and ablation schemas
+- [x] `generate_convergence_plot()` exports `fig_convergence_curves.pdf` and `.png` displaying F1/AUPRC and loss convergence across training steps
+- [x] `generate_tree_visitation_heatmap()` exports `fig_tree_visitation_heatmap.pdf` and `.png` illustrating UCB1 exploration-to-exploitation transitions across superclasses
+- [x] `generate_hyperparameter_sensitivity_plot()` exports `fig_hyperparameter_sensitivity.pdf` and `.png` mapping F1/AUPRC across exploration constant $c$ and momentum $\alpha$
+- [x] Unit tests verify file creation, PDF/PNG formats, non-empty file sizes, and deterministic generation
+- [x] Gate check passes: `.venv/bin/pytest -v`
 
 **Tests**: unit
 **Gate**: quick
