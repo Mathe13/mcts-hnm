@@ -82,18 +82,27 @@
 - **Date**: 2026-11-10
 - **Status**: active (AD-010)
 
+### AD-011
+- **Decision**: Standardize notebooks 00, 01, and 02 under the `ExecutionMode` contract with prominent banners, eliminate silent fallbacks to `torch.randn` in REAL mode via `extract_or_generate_embeddings`, isolate trees into `embeddings/{mode}/trees/`, and parameterize `build_confusion_tree` with configurable linkage (`linkage_method="ward"` default vs `"average"`).
+- **Reason**: Preserves exact historical Ward clustering results while addressing the methodological review of confusion distances and ensuring clean isolation between test fixtures and scientific artifacts.
+- **Trade-off**: In REAL mode, execution halts with `FileNotFoundError` if CIFAR-100 or real embeddings are absent instead of continuing on random prototypes.
+- **Scope**: `notebooks/00_master_end_to_end.ipynb`, `notebooks/01_data_and_embeddings.ipynb`, `notebooks/02_tree_construction.ipynb`, `src/data/`, `src/trees/`
+- **Date**: 2026-11-10
+- **Status**: active (AD-011)
+
 ## Handoff
 
-- **Feature**: `07-global-execution-contract` (`.specs/features/07-global-execution-contract/`)
+- **Feature**: `08-notebooks-00-01-02-reproducibility` (`.specs/features/08-notebooks-00-01-02-reproducibility/`)
 - **Phase / Task**: Done & Verified (`validate_verification.py` exited 0)
 - **Completed**:
   - Phase 0 (Baseline Audit) completed and documented.
   - Feature `07-global-execution-contract` (Phase 1): Done & Verified (`C1`–`C13`, 87 repository tests passing)
-    - `ef98cca`: `src/utils/experiment_config.py` with `ExecutionMode(SMOKE, REAL)`, `ExperimentConfig`, `print_execution_banner`, `get_isolated_paths`, `save_provenance_metadata`, `validate_provenance_metadata`.
-    - `tests/test_experiment_config.py`: 13 isolated unit tests verifying mode enforcement, banners, path anchoring, legacy directory preservation, and metadata validation.
-    - `e192399`: Independent Verifier report (`verification.md`) confirming `PASS` on all checks C1–C13.
+  - Feature `08-notebooks-00-01-02-reproducibility` (Phase 2): Done & Verified (`C1`–`C12`, 99 repository tests passing)
+    - `7296939`: Standardized notebooks 00, 01, 02; added `extract_or_generate_embeddings` in `src/data/extract_embeddings.py`; added configurable linkage in `src/trees/confusion_tree.py`.
+    - `tests/test_notebooks_00_01_02.py`: 12 automated tests covering mode enforcement, banner emission, synthetic rejection, Ward vs Average linkage, and tree serialization integrity.
+    - `401d212`: Independent Verifier report (`verification.md`) confirming `PASS` on all checks C1–C12.
 - **In-progress**: None
-- **Next step**: Phase 2 of `ROADMAP_Improvements.md` — Fix Notebooks 00, 01, and 02 with the new execution contract and directory isolation.
+- **Next step**: Phase 3 of `ROADMAP_Improvements.md` — Fix Notebook 03: Tier-1 Benchmarks (P1: eliminate synthetic fallback, configure negative samplers/hierarchies/seeds, verify Scenario 1 1:50 ratio and budget equivalence, instrument Scenario 2 multiclass coverage and recall, export individual multi-seed results).
 - **Blockers**: None
 - **Uncommitted files**: None (after commit)
 - **Branch**: `main`
