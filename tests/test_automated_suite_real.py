@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import shutil
 import time
 import numpy as np
 import pytest
@@ -26,6 +27,7 @@ from src.utils.experiment_config import (
     set_active_session_mode,
     validate_provenance_metadata,
 )
+import src.utils.paper_artifacts as pa_module
 from src.utils.paper_artifacts import (
     load_or_synthesize_benchmark_results,
     load_real_benchmark_results,
@@ -36,9 +38,25 @@ from src.training.trainer import train_scenario1
 
 
 @pytest.fixture(autouse=True)
-def clean_session():
-    """Reset global execution mode before and after each test."""
+def clean_session(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+    """Reset global execution mode before and after each test, and protect paper directory."""
     reset_active_session_mode()
+    repo_root = find_repo_root()
+    tmp_paper = tmp_path / "paper"
+    if (repo_root / "paper").exists():
+        shutil.copytree(repo_root / "paper", tmp_paper)
+
+    orig_compile = pa_module.compile_paper
+
+    def safe_compile_paper(paper_dir="paper", **kwargs):
+        target = Path(paper_dir)
+        if not target.is_absolute():
+            target = repo_root / target
+        if target.resolve() == (repo_root / "paper").resolve():
+            return orig_compile(paper_dir=tmp_paper, **kwargs)
+        return orig_compile(paper_dir=paper_dir, **kwargs)
+
+    monkeypatch.setattr(pa_module, "compile_paper", safe_compile_paper)
     yield
     reset_active_session_mode()
 
