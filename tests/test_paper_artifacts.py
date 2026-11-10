@@ -218,12 +218,17 @@ def test_manuscript_syntax_and_citations():
         assert img_path.exists(), f"Figure file '{img_path}' referenced in main.tex does not exist"
 
 
-def test_compile_paper_pdf():
-    paper_dir = Path("paper")
-    pdf_path = compile_paper(paper_dir=paper_dir, runs=2)
+def test_compile_paper_pdf(tmp_path: Path):
+    import shutil
+
+    # Copy paper directory to tmp_path to prevent modifying tracked files in the repo
+    work_dir = tmp_path / "paper_build"
+    shutil.copytree("paper", work_dir)
+    pdf_path = compile_paper(paper_dir=work_dir, runs=2)
     assert pdf_path.exists()
     assert pdf_path.name == "main.pdf"
     assert pdf_path.stat().st_size > 50000  # Multi-page scientific paper PDF
+    assert Path("paper/main.pdf").exists()
 
 
 def test_notebook_05_execution():
