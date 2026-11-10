@@ -66,6 +66,14 @@
 - **Date**: 2026-11-08
 - **Status**: active (AD-008)
 
+### AD-009
+- **Decision**: Configure paper manuscript metadata (title, authors list, affiliation, contact email, and abstract) via a root YAML file (`paper_metadata.yaml`) loaded dynamically during paper compilation and artifact generation, targeting PPGC UFRGS.
+- **Reason**: User specified: "múltiplos autores, informados posteriormente; PPGC UFRGS; MCTS-HNM: Monte Carlo Tree Search for Hierarchical Hard Negative Mining in Class-Imbalanced Learning; idealmente estes dados devem vir de um yaml na raiz do projeto".
+- **Trade-off**: Requires PyYAML (or lightweight stdlib YAML parser) to dynamically inject authors and metadata into the LaTeX manuscript template and paper artifact headers.
+- **Scope**: `paper_metadata.yaml`, `src/utils/paper_artifacts.py`, `paper/`
+- **Date**: 2026-11-09
+- **Status**: active (AD-009)
+
 ## Handoff
 
 - **Feature**: `05-extensions-and-e2e` (`.specs/features/05-extensions-and-e2e/`)

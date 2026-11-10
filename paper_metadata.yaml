@@ -1,0 +1,25 @@
+# MCTS-HNM Scientific Paper Metadata
+# Used by src/utils/paper_artifacts.py and paper/main.tex
+
+title: "MCTS-HNM: Monte Carlo Tree Search for Hierarchical Hard Negative Mining in Class-Imbalanced Learning"
+
+authors:
+  - name: "Matheus Santos"
+    affiliation: "PPGC - Universidade Federal do Rio Grande do Sul (UFRGS)"
+    email: "matheus@inf.ufrgs.br"
+  - name: "Co-Author Placeholder"
+    affiliation: "PPGC - Universidade Federal do Rio Grande do Sul (UFRGS)"
+    email: "coauthor@inf.ufrgs.br"
+
+institution: "Postgraduate Program in Computer Science (PPGC)\nUniversidade Federal do Rio Grande do Sul (UFRGS)\nPorto Alegre, RS, Brazil"
+
+abstract: >
+  Deep image classification under severe class imbalance and hierarchical label structures presents significant challenges for standard training regimes. Uniform negative sampling is statistically inefficient when rare positive classes must be discriminated from hundreds of negative categories, while naive batch-level hard negative mining (OHEM) suffers from high variance and gradient instability. In this work, we investigate Monte Carlo Tree Search (MCTS) as an active reinforcement learning agent for hierarchical hard negative mining (MCTS-HNM). Formulating negative selection as sequential tree traversal under Upper Confidence Bound (UCB1), our agent navigates semantic and empirical confusion taxonomies to mine informative, high-loss negatives. We introduce two key algorithmic innovations: sibling Min-Max Q-value normalization to stabilize UCB1 exploration across heterogeneous hierarchy depths, and a Dual-Stream batching mechanism combining MCTS hard negatives with uniform anchors to prevent representational collapse. Evaluated across Imbalanced Binary One-vs-Rest and 100-way Multi-Class curriculum settings on CIFAR-100 across 5 random seeds, MCTS-HNM statistically significantly outperforms Uniform Sampling, OHEM, and strict unnormalized MCTS, improving minority AUPRC by up to 8.4% and worst-class recall by 11.2%.
+
+keywords:
+  - "Monte Carlo Tree Search"
+  - "Hard Negative Mining"
+  - "Hierarchical Classification"
+  - "Class Imbalance"
+  - "Curriculum Learning"
+  - "Reinforcement Learning"
