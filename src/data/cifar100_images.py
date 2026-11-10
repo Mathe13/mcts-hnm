@@ -21,7 +21,8 @@ def load_cifar100_raw_images(
     split: Literal["train", "test", "val"] = "train",
     download: bool = True,
     config: ExperimentConfig | None = None,
-    num_smoke_samples: int = 100,
+    num_smoke_samples: int = 500,
+    samples_per_class: int | None = None,
 ) -> tuple[torch.Tensor, np.ndarray]:
     """Load raw 32x32 CIFAR-100 images and label arrays adhering to ExecutionMode contract.
 
@@ -30,7 +31,8 @@ def load_cifar100_raw_images(
         split: One of "train", "test", or "val".
         download: Whether to allow torchvision to download if missing.
         config: Centralized experiment config enforcing REAL vs SMOKE mode.
-        num_smoke_samples: Number of synthetic instances in SMOKE mode.
+        num_smoke_samples: Number of synthetic instances in SMOKE mode (defaults to 500: 5/class).
+        samples_per_class: Optional explicit number of instances per fine class in SMOKE mode.
 
     Returns:
         Tuple of `(images_tensor, labels_array)` where images have shape `[N, 3, 32, 32]`.
@@ -74,7 +76,9 @@ def load_cifar100_raw_images(
                 f"Real CIFAR-100 dataset not found or failed to load from {path}: {exc}"
             ) from exc
 
-    # ExecutionMode.SMOKE: Return deterministic synthetic fixture
+    # ExecutionMode.SMOKE: Return deterministic synthetic fixture with multiple samples per class
+    if samples_per_class is not None:
+        num_smoke_samples = max(100, samples_per_class * 100)
     seed = active_config.seed
     rng = np.random.default_rng(seed)
     synthetic_imgs = rng.normal(size=(num_smoke_samples, 3, 32, 32)).astype(np.float32)

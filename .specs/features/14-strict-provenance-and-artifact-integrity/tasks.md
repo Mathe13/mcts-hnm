@@ -126,9 +126,9 @@ T6
 **Requirement**: FIX-01  
 
 **Done when**:
-- [ ] `load_cifar100_raw_images()` produces 500 samples in SMOKE mode (5 per class)
-- [ ] Dynamic entropy leaf expansion executes and partitions multi-instance leaf nodes without replacement sampling warnings
-- [ ] Unit tests pass: `.venv/bin/pytest -v tests/test_tier2_e2e_real.py tests/test_dynamic_expansion.py`
+- [x] `load_cifar100_raw_images()` produces 500 samples in SMOKE mode (5 per class)
+- [x] Dynamic entropy leaf expansion executes and partitions multi-instance leaf nodes without replacement sampling warnings
+- [x] Unit tests pass: `.venv/bin/pytest -v tests/test_tier2_e2e_real.py tests/test_dynamic_expansion.py`
 
 **Tests**: unit  
 **Gate**: quick  

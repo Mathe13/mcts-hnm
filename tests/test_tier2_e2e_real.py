@@ -67,6 +67,25 @@ def test_load_cifar100_smoke_synthetic_images():
     assert labels.shape == (50,)
 
 
+def test_load_cifar100_raw_images_smoke_synthetic():
+    """C5: load_cifar100_raw_images in SMOKE mode yields multi-sample classes (>=5/class)."""
+    config = ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
+    images, labels = load_cifar100_raw_images(
+        data_dir=Path("data"),
+        split="train",
+        download=False,
+        config=config,
+    )
+
+    assert isinstance(images, torch.Tensor)
+    assert images.shape == (500, 3, 32, 32)
+    assert isinstance(labels, np.ndarray)
+    assert labels.shape == (500,)
+    assert len(np.unique(labels)) == 100
+    counts = np.bincount(labels)
+    assert np.all(counts >= 5), f"Expected at least 5 instances per class, got min count: {np.min(counts)}"
+
+
 def test_notebook_04_structure_and_banner():
     """C3: Notebook 04 initial cell declares EXECUTION_MODE = ExecutionMode.REAL and outputs banner."""
     root = find_repo_root()
