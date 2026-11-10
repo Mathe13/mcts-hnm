@@ -79,3 +79,7 @@ Proof: `pytest tests/test_notebooks_00_01_02.py::test_mid_pipeline_mode_mutation
 ## Handoff
 
 - S1-S3 = 84 KB total across data, trees, notebooks, and tests; estimate ~29k tokens, well under the 150k budget - one builder
+
+- **Boundary:** C1-C12 closed at `7296939`
+- **Settled mid-build:** none
+- **Abandoned:** none
