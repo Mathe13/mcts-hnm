@@ -52,7 +52,9 @@ def test_load_paper_metadata(tmp_path: Path):
 
 
 def test_benchmark_results_loader_and_synthesizer(tmp_path: Path):
-    # Test synthetic fallback
+    import json
+
+    # 1. Test synthetic fallback on empty directory
     empty_results = tmp_path / "results_empty"
     data = load_or_synthesize_benchmark_results(empty_results, seed=42)
     assert "scenario1" in data
@@ -79,6 +81,19 @@ def test_benchmark_results_loader_and_synthesizer(tmp_path: Path):
         assert "top1_accuracy" in scen2_entry
         assert "macro_f1" in scen2_entry
         assert "worst_10_recall" in scen2_entry
+
+    # 2. Test real JSON loading from disk (F3)
+    real_results = tmp_path / "results_real"
+    real_results.mkdir(parents=True)
+    real_data = {
+        "scenario1": {
+            "mcts_enhanced": {"10": {"f1": {"mean": 0.585, "std": 0.008, "values": [0.585] * 5}}}
+        }
+    }
+    with open(real_results / "tier1_benchmark_summary.json", "w", encoding="utf-8") as f:
+        json.dump(real_data, f)
+    loaded_real = load_or_synthesize_benchmark_results(real_results)
+    assert loaded_real == real_data
 
 
 def test_publication_figures_generation(tmp_path: Path):
@@ -117,6 +132,8 @@ def test_latex_tables_generation(tmp_path: Path):
     assert r"\bottomrule" in content1
     assert "Enhanced MCTS-HNM" in content1
     assert "1:10" in content1 and "1:50" in content1 and "1:100" in content1
+    assert "$p$-value" in content1
+    assert "p <" in content1 or "p =" in content1
 
     # 2. Scenario 2 table
     t2 = generate_scenario2_table(data, output_dir=tab_dir)
@@ -126,6 +143,8 @@ def test_latex_tables_generation(tmp_path: Path):
     assert r"\begin{tabular}" in content2
     assert "Top-1 Accuracy" in content2
     assert "Worst-10 Recall" in content2
+    assert "$p$-value" in content2
+    assert "p <" in content2 or "p =" in content2
 
     # 3. Ablation table
     t3 = generate_ablation_table(data, output_dir=tab_dir)
@@ -231,9 +250,10 @@ def test_compile_paper_pdf(tmp_path: Path):
     assert Path("paper/main.pdf").exists()
 
 
-def test_notebook_05_execution():
+def test_notebook_05_execution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     import ast
     import nbformat
+    import shutil
 
     repo_root = Path(__file__).resolve().parent.parent
     nb_path = repo_root / "notebooks" / "05_paper_artifacts.ipynb"
@@ -259,10 +279,34 @@ def test_notebook_05_execution():
     ):
         assert required_ref in joined_code, f"Notebook 05 missing reference to {required_ref}"
 
+    # Isolate paper directory to prevent dirtying git working tree during tests
+    tmp_paper = tmp_path / "paper"
+    shutil.copytree(repo_root / "paper", tmp_paper)
 
-def test_notebook_00_execution():
+    orig_compile = compile_paper
+    orig_generate = generate_all_paper_artifacts
+
+    def safe_compile_paper(paper_dir="paper", **kwargs):
+        p_dir = str(tmp_paper) if str(paper_dir) == "paper" else paper_dir
+        return orig_compile(paper_dir=p_dir, **kwargs)
+
+    def safe_generate_all(results_dir="results", paper_dir="paper", **kwargs):
+        p_dir = str(tmp_paper) if str(paper_dir) == "paper" else paper_dir
+        return orig_generate(results_dir=results_dir, paper_dir=p_dir, **kwargs)
+
+    monkeypatch.setattr("src.utils.paper_artifacts.compile_paper", safe_compile_paper)
+    monkeypatch.setattr("src.utils.paper_artifacts.generate_all_paper_artifacts", safe_generate_all)
+
+    # F2: Execute notebook cells at runtime
+    exec_env: dict[str, object] = {"__name__": "__main__"}
+    for cell in code_cells:
+        exec(cell.source, exec_env)
+
+
+def test_notebook_00_execution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     import ast
     import nbformat
+    import shutil
 
     repo_root = Path(__file__).resolve().parent.parent
     nb_path = repo_root / "notebooks" / "00_master_end_to_end.ipynb"
@@ -282,7 +326,7 @@ def test_notebook_00_execution():
 
     for required_ref in (
         "FAST_MODE",
-        "CIFAR100Taxonomy",
+        "get_cifar100_taxonomy",
         "build_semantic_tree",
         "build_confusion_tree",
         "train_scenario1",
@@ -291,6 +335,30 @@ def test_notebook_00_execution():
         "compile_paper",
     ):
         assert required_ref in joined_code, f"Notebook 00 missing reference to {required_ref}"
+
+    # Isolate paper directory to prevent dirtying git working tree during tests
+    tmp_paper = tmp_path / "paper"
+    shutil.copytree(repo_root / "paper", tmp_paper)
+
+    orig_compile = compile_paper
+    orig_generate = generate_all_paper_artifacts
+
+    def safe_compile_paper(paper_dir="paper", **kwargs):
+        p_dir = str(tmp_paper) if str(paper_dir) == "paper" else paper_dir
+        return orig_compile(paper_dir=p_dir, **kwargs)
+
+    def safe_generate_all(results_dir="results", paper_dir="paper", **kwargs):
+        p_dir = str(tmp_paper) if str(paper_dir) == "paper" else paper_dir
+        return orig_generate(results_dir=results_dir, paper_dir=p_dir, **kwargs)
+
+    monkeypatch.setattr("src.utils.paper_artifacts.compile_paper", safe_compile_paper)
+    monkeypatch.setattr("src.utils.paper_artifacts.generate_all_paper_artifacts", safe_generate_all)
+
+    # F1: Execute notebook cells at runtime with FAST_MODE = True
+    exec_env: dict[str, object] = {"__name__": "__main__"}
+    for cell in code_cells:
+        exec(cell.source, exec_env)
+
 
 
 

@@ -249,8 +249,8 @@ Proof: run unit | tests/test_paper_artifacts.py::test_compile_paper_pdf PASSED
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none  
-**Dispatched:** none  
-**Walked:** none  
+**Dispatched:** Independent Verifier (`955c66ff-288b-4cf6-afb1-c2ce5254833a`) at `79f3c79`  
+**Walked:** Executed all 9 checks in `tests/test_paper_artifacts.py` (74 total tests passing across repository) covering paper metadata loading, publication figure generation (PDF/PNG), LaTeX table generation (.tex), dual-mode benchmark synthesizer, directory creation, manuscript syntax & citation resolution, clean PDF compilation via pdflatex, and versioned notebooks 05 and 00 execution.  
 
 ---
 
