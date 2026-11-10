@@ -8,10 +8,10 @@ The P1 MVP (`F1`–`F4`) keeps MCTS hierarchy leaves fixed at the 100 fine class
 
 ## Goals
 
-- [ ] Implement dynamic prediction-entropy leaf expansion (`src/mcts/expansion.py`) that partitions a leaf node's instance pool into $K_{\text{sub}}$ entropy quantiles when its visit count reaches $n_l \ge N_{\text{split}}$, mutating `FastHierarchyTree` in-place while preserving all structural and instance-count invariants (`ISS-13`, `AD-006`).
-- [ ] Integrate optional dynamic leaf expansion (`enable_leaf_expansion`, `split_threshold`, `k_sub`) into MCTS training loops and `MCTSDiagnosticsTracker` so sub-clustered leaves map cleanly back to their canonical CIFAR-100 fine class (`0..99`) and coarse superclass (`0..19`) (`ISS-13`).
-- [ ] Implement the Tier-2 end-to-end trainable ResNet-18 vision pipeline (`src/training/e2e_trainer.py`) operating on $32 \times 32$ RGB image tensors across `uniform`, `ohem`, `mcts_strict`, and `mcts_enhanced` strategies, with support for periodic Ward confusion-tree rebuilds (`refresh_tree_every`) and atomic JSON/CSV result export (`ISS-14`, `AD-001`).
-- [ ] Deliver versioned notebook `notebooks/04_tier2_e2e_and_expansion.ipynb` executing the P2 dynamic leaf expansion ablation and the Tier-2 end-to-end ResNet-18 validation experiment (`ISS-14`, `AD-008`).
+- [x] Implement dynamic prediction-entropy leaf expansion (`src/mcts/expansion.py`) that partitions a leaf node's instance pool into $K_{\text{sub}}$ entropy quantiles when its visit count reaches $n_l \ge N_{\text{split}}$, mutating `FastHierarchyTree` in-place while preserving all structural and instance-count invariants (`ISS-13`, `AD-006`).
+- [x] Integrate optional dynamic leaf expansion (`enable_leaf_expansion`, `split_threshold`, `k_sub`) into MCTS training loops and `MCTSDiagnosticsTracker` so sub-clustered leaves map cleanly back to their canonical CIFAR-100 fine class (`0..99`) and coarse superclass (`0..19`) (`ISS-13`).
+- [x] Implement the Tier-2 end-to-end trainable ResNet-18 vision pipeline (`src/training/e2e_trainer.py`) operating on $32 \times 32$ RGB image tensors across `uniform`, `ohem`, `mcts_strict`, and `mcts_enhanced` strategies, with support for periodic Ward confusion-tree rebuilds (`refresh_tree_every`) and atomic JSON/CSV result export (`ISS-14`, `AD-001`).
+- [x] Deliver versioned notebook `notebooks/04_tier2_e2e_and_expansion.ipynb` executing the P2 dynamic leaf expansion ablation and the Tier-2 end-to-end ResNet-18 validation experiment (`ISS-14`, `AD-008`).
 
 ## Out of Scope
 
@@ -108,9 +108,9 @@ Each requirement maps to a unique ID for tracking across design, tasks, and veri
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| EXP-01 | P1: Dynamic Leaf Sub-Clustering by Prediction Entropy (`ISS-13`) | Tasks | In Tasks |
-| EXP-02 | P1: Tier-2 End-to-End ResNet-18 Trainer & Confusion Tree Refresh (`ISS-14`) | Tasks | In Tasks |
-| EXP-03 | P2: Versioned Notebook 04 for Dynamic Expansion & Tier-2 E2E Validation (`ISS-14`) | Tasks | In Tasks |
+| EXP-01 | P1: Dynamic Leaf Sub-Clustering by Prediction Entropy (`ISS-13`) | Execute | Verified |
+| EXP-02 | P1: Tier-2 End-to-End ResNet-18 Trainer & Confusion Tree Refresh (`ISS-14`) | Execute | Verified |
+| EXP-03 | P2: Versioned Notebook 04 for Dynamic Expansion & Tier-2 E2E Validation (`ISS-14`) | Execute | Verified |
 
 **Coverage:** 3 total requirements mapped to `EPIC-05`.
 
@@ -137,7 +137,7 @@ Every departure from the original *GiantHunter* paper (`btaf239.pdf`) and offici
 
 ## Success Criteria
 
-- [ ] `.venv/bin/pytest -v tests/test_dynamic_expansion.py` passes 100% of unit and integration checks covering `EXP-01`, `EXP-02`, and `EXP-03`.
-- [ ] `expand_leaf_by_entropy()` and `maybe_expand_leaf()` deterministically split eligible leaves ($n_l \ge N_{\text{split}}$) into $K_{\text{sub}}$ entropy quantile child leaves while preserving total instance counts and `FastHierarchyTree.validate_tree()` invariants.
-- [ ] `train_e2e_scenario1()`, `train_e2e_scenario2()`, and `run_e2e_experiment()` fine-tune `Tier2ResNet18` end-to-end on $32 \times 32$ RGB images across baselines and MCTS-HNM, supporting both dynamic leaf expansion and periodic Ward confusion-tree refreshes.
-- [ ] `notebooks/04_tier2_e2e_and_expansion.ipynb` executes cleanly from top to bottom via `nbclient` and saves structured JSON/CSV artifacts under `results/`.
+- [x] `.venv/bin/pytest -v tests/test_dynamic_expansion.py` passes 100% of unit and integration checks covering `EXP-01`, `EXP-02`, and `EXP-03`.
+- [x] `expand_leaf_by_entropy()` and `maybe_expand_leaf()` deterministically split eligible leaves ($n_l \ge N_{\text{split}}$) into $K_{\text{sub}}$ entropy quantile child leaves while preserving total instance counts and `FastHierarchyTree.validate_tree()` invariants.
+- [x] `train_e2e_scenario1()`, `train_e2e_scenario2()`, and `run_e2e_experiment()` fine-tune `Tier2ResNet18` end-to-end on $32 \times 32$ RGB images across baselines and MCTS-HNM, supporting both dynamic leaf expansion and periodic Ward confusion-tree refreshes.
+- [x] `notebooks/04_tier2_e2e_and_expansion.ipynb` executes cleanly from top to bottom via `nbclient` and saves structured JSON/CSV artifacts under `results/`.

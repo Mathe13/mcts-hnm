@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/05-extensions-and-e2e/design.md`  
-**Status**: In Progress  
+**Status**: Done  
 **Approved**: 2026-11-09 - user: "prossiga"  
 **Build**: `.venv/bin/python -m compileall -q src tests`  
 **Run unit**: `.venv/bin/pytest -v`  
@@ -240,8 +240,8 @@ Proof: run unit | tests/test_dynamic_expansion.py::test_notebook_04_execution PA
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none  
-**Dispatched:** none  
-**Walked:** pending  
+**Dispatched:** Independent Verifier (`65d830bd-1a42-4132-9997-6d67d97a26c7`) at `58f3471`  
+**Walked:** Executed all 11 checks in `tests/test_dynamic_expansion.py` (65 total tests passing across repository) covering entropy calculation, leaf splitting, sub-cluster superclass mapping, trainer expansion hooks, Tier2ResNet18 forward & features, e2e training loops with confusion tree refresh, multi-seed run_e2e_experiment, and notebook 04 execution.  
 
 ---
 

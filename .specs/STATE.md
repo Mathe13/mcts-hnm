@@ -69,16 +69,21 @@
 ## Handoff
 
 - **Feature**: `05-extensions-and-e2e` (`.specs/features/05-extensions-and-e2e/`)
-- **Phase / Task**: Tasks (`design.md` and `tasks.md` validated via `validate_tasks.py`, awaiting user approval)
+- **Phase / Task**: Done & Verified (`validate_verification.py` exited 0)
 - **Completed**:
   - Feature `F1` (`01-data-and-embeddings`): Done & Verified (`T1`–`T6`, 17 tests passing)
   - Feature `F2` (`02-dual-hierarchy-trees`): Done & Verified (`T1`–`T4`, 12 checks passing)
   - Feature `F3` (`03-mcts-hnm-agent`): Done & Verified (`T1`–`T4`, 12 checks passing)
-  - Feature `F4` (`04-tier1-benchmark-suite`): Done & Verified (`T1`–`T7`, 12 checks passing, 54 total tests)
-  - Approved `.specs/features/05-extensions-and-e2e/spec.md` (`EXP-01`, `EXP-02`, `EXP-03`)
-  - Created and validated `.specs/features/05-extensions-and-e2e/design.md` and `.specs/features/05-extensions-and-e2e/tasks.md` (`T1`–`T6`, 11 checks `C1`–`C11`)
-- **In-progress**: Awaiting user approval of `05-extensions-and-e2e/tasks.md`
-- **Next step**: Upon task approval, run `validate_tasks.py --execute` and implement `T1`–`T6` sequentially with atomic commits
+  - Feature `F4` (`04-tier1-benchmark-suite`): Done & Verified (`T1`–`T7`, 12 checks passing)
+  - `T1` (`4baabdb`): `src/mcts/expansion.py` (`compute_prediction_entropy`, `expand_leaf_by_entropy`, `maybe_expand_leaf`)
+  - `T2` (`7486fa2`): `src/mcts/diagnostics.py` (`compute_superclass_visit_distribution` sub-cluster mapping `cls_id % 1000`)
+  - `T3` (`7afbd33`): `src/training/trainer.py` (`enable_leaf_expansion`, `split_threshold`, `k_sub` hooks in `train_scenario1` and `train_scenario2`)
+  - `T4` (`a2b3e30`): `src/training/e2e_trainer.py` (`Tier2ResNet18`, `refresh_confusion_tree_from_model`, `train_e2e_scenario1`, `train_e2e_scenario2`)
+  - `T5` (`c38da54`): `src/training/e2e_trainer.py` (`E2EExperimentConfig`, `run_e2e_experiment` multi-seed runner with atomic JSON/CSV persistence)
+  - `T6` (`58f3471`): `notebooks/04_tier2_e2e_and_expansion.ipynb` (versioned JupyterHub orchestration notebook)
+  - Independent Verifier (`65d830bd-1a42-4132-9997-6d67d97a26c7`): `PASS` across all 11 checks (`C1`–`C11`, 65 total tests passing)
+- **In-progress**: None
+- **Next step**: Feature `F6` (`06-paper-and-artifacts`: automated paper artifacts, master notebook 00, and LaTeX manuscript)
 - **Blockers**: None
-- **Uncommitted files**: `.specs/features/05-extensions-and-e2e/{spec.md,design.md,tasks.md}`, `.specs/STATE.md`
+- **Uncommitted files**: None (after commit)
 - **Branch**: `main`
