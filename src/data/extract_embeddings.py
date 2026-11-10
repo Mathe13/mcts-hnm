@@ -19,6 +19,7 @@ from src.utils.experiment_config import (
     ExperimentConfig,
     get_isolated_paths,
     save_provenance_metadata,
+    validate_provenance_metadata,
 )
 
 EMBEDDING_DIM: int = 512
@@ -343,6 +344,11 @@ def extract_or_generate_embeddings(
     resolved_cache = Path(cache_path) if cache_path is not None else (paths.embeddings_dir / "cifar100_resnet18.pt")
 
     if resolved_cache.is_file() and not overwrite:
+        meta_file = resolved_cache.parent / f"{resolved_cache.name}.meta.json"
+        if meta_file.exists():
+            validate_provenance_metadata(meta_file, expected_mode=config.execution_mode)
+        elif config.execution_mode == ExecutionMode.REAL:
+            raise FileNotFoundError(f"Missing mandatory provenance metadata in REAL mode: {meta_file}")
         bundle = load_embedding_cache(resolved_cache)
         return bundle
 
