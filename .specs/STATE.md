@@ -130,23 +130,30 @@
 - **Date**: 2026-11-10
 - **Status**: active (AD-016)
 
+### AD-017
+- **Decision**: Mandate `.meta.json` provenance sidecars unconditionally in both SMOKE and REAL modes, reject cross-mode artifacts with explicit `ValueError`, eliminate silent numeric defaults in LaTeX table and figure generators, enforce complete artifact validation (`validate_artifact_completeness`), expand Tier-2 synthetic fixtures to multiple samples per class, and strictly confine I/O paths to mode-segregated directories (`results/smoke`, `results/real`).
+- **Reason**: Fixes P0 and P1 audit vulnerabilities: prevents unverified artifacts from silently being used, eliminates synthetic metric fabrication in paper deliverables, prevents sample-with-replacement warnings during dynamic entropy leaf expansion in smoke mode, and guarantees strict I/O path isolation.
+- **Trade-off**: Requires every generated result file to carry a sidecar `.meta.json` even in smoke mode; attempting to access unsegregated `results/` without mode prefix raises `ValueError`.
+- **Scope**: `src/utils/experiment_config.py`, `src/utils/paper_artifacts.py`, `src/data/cifar100_images.py`, `tests/`
+- **Date**: 2026-11-10
+- **Status**: active (AD-017)
+
 ## Handoff
 
-- **Feature**: `13-documentation-and-reproducibility` (`.specs/features/13-documentation-and-reproducibility/`)
-- **Phase / Task**: All Phases (Phase 0 through Phase 7) of `ROADMAP_Improvements.md` are Done & Verified (`validate_verification.py` exited 0 for all features).
+- **Feature**: `14-strict-provenance-and-artifact-integrity` (`.specs/features/14-strict-provenance-and-artifact-integrity/`)
+- **Phase / Task**: Done & Verified (`validate_verification.py` exited 0 with 0 errors and 0 warnings).
 - **Completed**:
-  - Phase 0: Baseline Audit & Historical Preservation (COMPLETED)
-  - Feature `07-global-execution-contract` (Phase 1): Done & Verified (`C1`–`C13`, 87 repository tests passing)
-  - Feature `08-notebooks-00-01-02-reproducibility` (Phase 2): Done & Verified (`C1`–`C12`, 99 repository tests passing)
-  - Feature `09-tier1-benchmarks-real-data` (Phase 3): Done & Verified (`C1`–`C11`, 110 repository tests passing)
-  - Feature `10-tier2-e2e-real-cifar` (Phase 4): Done & Verified (`C1`–`C10`, 120 repository tests passing)
-  - Feature `11-paper-artifacts-real-integration` (Phase 5): Done & Verified (`C1`–`C10`, 130 repository tests passing)
-  - Feature `12-automated-testing-suite` (Phase 6): Done & Verified (`C1`–`C12`, 142 repository tests passing)
-  - Feature `13-documentation-and-reproducibility` (Phase 7): Done & Verified (`C1`–`C8`, 150 repository tests passing)
-    - `9cadae2`: Comprehensive reproducibility guide in `docs/experimental_reproducibility.md`, updated `README.md`, and 8 automated tests in `tests/test_documentation_and_reproducibility.py`.
-    - `abe8667`: Independent Verifier report (`verification.md`) confirming `PASS` on all checks C1–C8.
+  - `298d92f`: [P0] Mandatory provenance metadata validation (`PROV-01`).
+  - `0b61739`: [P0] Elimination of silent numeric defaults in tables/figures (`NUM-01`).
+  - `5275fc6`: [P0] Artifact completeness validation (`ART-01`).
+  - `fbcaf52`: [P1] Multi-sample synthetic fixtures for Tier-2 dynamic leaf expansion (`FIX-01`).
+  - `df73a65`: [P1] I/O path confinement to mode-isolated directories (`IO-01`).
+  - `e521a5b`: [P1] End-to-end regression validation and clean-slate testing (`E2E-01`).
+  - `3a7db46` & `c5c081e`: Isolated paper PDF compilation in regression tests to ensure pristine git tree.
+  - Automated check proofs verified (9/9 pass, clean tree at HEAD `c5c081e`).
+  - Independent verification complete (`verification.md` PASS).
 - **In-progress**: None
-- **Next step**: All tasks and Definition of Done in `ROADMAP_Improvements.md` are 100% completed. Codebase is clean, fully verified, and ready for full-scale cluster experiments or publication artifact generation.
+- **Next step**: User instructions or submission ready. All 155 tests passing in ~40s.
 - **Blockers**: None
 - **Uncommitted files**: None
 - **Branch**: `main`
