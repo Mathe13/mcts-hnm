@@ -84,3 +84,7 @@ Proof: `pytest tests/test_experiment_config.py::test_validate_provenance_missing
 ## Handoff
 
 - S1-S3 = 49 KB total across config, utils, and tests; estimate ~17k tokens, well under the 150k budget - one builder
+
+- **Boundary:** C1-C13 closed at `ef98cca`
+- **Settled mid-build:** none
+- **Abandoned:** none
