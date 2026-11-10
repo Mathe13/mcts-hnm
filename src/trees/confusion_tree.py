@@ -144,7 +144,17 @@ def build_confusion_tree(
 
     dist_matrix = compute_confusion_distance_matrix(active_mat)
     condensed_dist = squareform(dist_matrix, checks=False)
-    linkage_matrix = np.ascontiguousarray(linkage(condensed_dist, method=method_lower), dtype=np.float64)
+
+    if method_lower == "ward":
+        # SciPy's Ward variance minimization requires Euclidean distances.
+        # For normalized confusion dissimilarities D_ij in [0, 1] (1 - S_ij),
+        # the standard metric embedding d_E = sqrt(2 * D_ij) guarantees Euclidean metric
+        # properties, resolving potential non-Euclidean Lance-Williams inversions.
+        euclidean_condensed = np.sqrt(2.0 * np.clip(condensed_dist, 0.0, None))
+        linkage_matrix = np.ascontiguousarray(linkage(euclidean_condensed, method="ward"), dtype=np.float64)
+    else:
+        # Average linkage (UPGMA) operates directly and consistently on general dissimilarities
+        linkage_matrix = np.ascontiguousarray(linkage(condensed_dist, method=method_lower), dtype=np.float64)
 
     tax = taxonomy if taxonomy is not None else get_cifar100_taxonomy()
     total_nodes = 2 * k - 1

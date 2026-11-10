@@ -146,9 +146,27 @@ class IsolatedPaths:
     legacy_dir: Path
 
 
+def migrate_legacy_results(repo_root: Optional[Union[str, Path]] = None) -> int:
+    """Explicitly move unsegregated legacy files from results/ to results/legacy/."""
+    root = Path(repo_root).resolve() if repo_root is not None else find_repo_root()
+    base_results = root / "results"
+    legacy_dir = base_results / "legacy"
+    legacy_dir.mkdir(parents=True, exist_ok=True)
+    moved_count = 0
+    if base_results.is_dir():
+        for item in base_results.iterdir():
+            if item.is_file():
+                dest = legacy_dir / item.name
+                if not dest.exists():
+                    shutil.move(str(item), str(dest))
+                    moved_count += 1
+    return moved_count
+
+
 def get_isolated_paths(
     config: ExperimentConfig,
-    repo_root: Optional[Union[str, Path]] = None
+    repo_root: Optional[Union[str, Path]] = None,
+    migrate_legacy: bool = True,
 ) -> IsolatedPaths:
     """Resolve and create isolated directory paths anchored to repository root."""
     root = Path(repo_root).resolve() if repo_root is not None else find_repo_root()
@@ -178,13 +196,8 @@ def get_isolated_paths(
         d.mkdir(parents=True, exist_ok=True)
 
     # Migrate any legacy files located directly under results/ to results/legacy/
-    base_results = root / "results"
-    if base_results.is_dir():
-        for item in base_results.iterdir():
-            if item.is_file():
-                dest = legacy_dir / item.name
-                if not dest.exists():
-                    shutil.move(str(item), str(dest))
+    if migrate_legacy:
+        migrate_legacy_results(root)
 
     return IsolatedPaths(
         mode=mode,

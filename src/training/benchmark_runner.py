@@ -21,6 +21,8 @@ from src.trees.semantic_tree import build_semantic_tree
 from src.utils.experiment_config import (
     ExecutionMode,
     ExperimentConfig,
+    get_active_session_mode,
+    get_isolated_paths,
     save_provenance_metadata,
 )
 from src.utils.seed import set_global_seed
@@ -34,14 +36,16 @@ def audit_scenario1_imbalance(
     pos_batch_size: int = 16,
     neg_batch_size: int = 48,
     num_steps: int = 500,
+    selected_pos_indices: np.ndarray | None = None,
+    selected_neg_indices: np.ndarray | None = None,
 ) -> dict[str, Any]:
-    """Audit available vs effective sampling ratios for Scenario 1 imbalanced regime."""
+    """Audit available vs effective sampling ratios and coverage for Scenario 1 imbalanced regime."""
     avail_pos = len(split.positive_indices)
     avail_neg = len(split.negative_indices)
     eff_ratio = float(pos_batch_size / neg_batch_size) if neg_batch_size > 0 else 0.0
     cum_ratio = float((pos_batch_size * num_steps) / (neg_batch_size * num_steps)) if (neg_batch_size * num_steps) > 0 else 0.0
 
-    return {
+    res: dict[str, Any] = {
         "available_positives": avail_pos,
         "available_negatives": avail_neg,
         "pos_batch_size": pos_batch_size,
@@ -49,6 +53,21 @@ def audit_scenario1_imbalance(
         "effective_batch_ratio": eff_ratio,
         "cumulative_ratio": cum_ratio,
     }
+
+    if selected_pos_indices is not None and selected_neg_indices is not None:
+        total_pos = len(selected_pos_indices)
+        total_neg = len(selected_neg_indices)
+        uniq_pos = len(np.unique(selected_pos_indices))
+        uniq_neg = len(np.unique(selected_neg_indices))
+        res["empirical_positives_selected"] = total_pos
+        res["empirical_negatives_selected"] = total_neg
+        res["empirical_selected_ratio"] = float(total_pos / total_neg) if total_neg > 0 else 0.0
+        res["unique_positives_covered"] = uniq_pos
+        res["unique_negatives_covered"] = uniq_neg
+        res["positive_coverage_pct"] = float(uniq_pos / avail_pos * 100.0) if avail_pos > 0 else 0.0
+        res["negative_coverage_pct"] = float(uniq_neg / avail_neg * 100.0) if avail_neg > 0 else 0.0
+
+    return res
 
 
 @dataclass
@@ -110,9 +129,21 @@ def run_benchmark(
     if len(seeds) < 1:
         raise ValueError("At least 1 seed required.")
 
-    active_config = config if config is not None else ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
-    out_path = Path(output_dir)
+    if config is not None:
+        active_config = config
+    elif get_active_session_mode() is not None:
+        active_config = ExperimentConfig(execution_mode=get_active_session_mode())
+    else:
+        active_config = ExperimentConfig(execution_mode=ExecutionMode.REAL)
+
+    paths = get_isolated_paths(active_config)
+    if str(output_dir) == "results" or Path(output_dir) == Path("results"):
+        out_path = paths.results_dir
+    else:
+        out_path = Path(output_dir)
+
     runs: list[BenchmarkRunResult] = []
+    convergence_history: dict[str, Any] = {}
 
     train_lbl_np = (
         train_labels.detach().cpu().numpy()
@@ -286,6 +317,13 @@ def run_benchmark(
                         }
 
                 final_metrics = res["final_metrics"]
+                if "history" in res and res["history"] and f"{strat}_f1" not in convergence_history:
+                    steps_seq = [int(h.get("step", 0)) for h in res["history"]]
+                    convergence_history["steps"] = steps_seq
+                    primary_key = "f1" if scenario == "scenario1" else "macro_f1"
+                    convergence_history[f"{strat}_f1"] = [float(h.get(primary_key, h.get("f1", 0.0))) for h in res["history"]]
+                    convergence_history[f"{strat}_loss"] = [float(h.get("loss", 0.0)) for h in res["history"]]
+
                 runs.append(
                     BenchmarkRunResult(
                         scenario=scenario,
@@ -380,6 +418,8 @@ def run_benchmark(
         json_export["imbalance_audit"] = imbalance_audit
     if diagnostics_per_strat:
         json_export["diagnostics"] = diagnostics_per_strat
+    if convergence_history:
+        json_export["convergence"] = convergence_history
 
     json_path = out_path / f"{benchmark_name}.json"
     csv_path = out_path / f"{benchmark_name}.csv"
@@ -409,8 +449,18 @@ def run_sensitivity_ablation(
     device: torch.device | None = None,
 ) -> dict[str, Any]:
     """Evaluate grid sensitivity over exploration coefficient c and momentum alpha."""
-    active_config = config if config is not None else ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
-    out_path = Path(output_dir)
+    if config is not None:
+        active_config = config
+    elif get_active_session_mode() is not None:
+        active_config = ExperimentConfig(execution_mode=get_active_session_mode())
+    else:
+        active_config = ExperimentConfig(execution_mode=ExecutionMode.REAL)
+
+    paths = get_isolated_paths(active_config)
+    if str(output_dir) == "results" or Path(output_dir) == Path("results"):
+        out_path = paths.results_dir
+    else:
+        out_path = Path(output_dir)
 
     train_lbl_np = (
         train_labels.detach().cpu().numpy()

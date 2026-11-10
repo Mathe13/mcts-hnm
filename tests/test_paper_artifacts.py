@@ -5,6 +5,11 @@ from pathlib import Path
 import pytest
 import yaml
 
+from src.utils.experiment_config import (
+    ExecutionMode,
+    ExperimentConfig,
+    reset_active_session_mode,
+)
 from src.utils.paper_artifacts import (
     DEFAULT_PAPER_METADATA,
     compile_paper,
@@ -54,9 +59,10 @@ def test_load_paper_metadata(tmp_path: Path):
 def test_benchmark_results_loader_and_synthesizer(tmp_path: Path):
     import json
 
-    # 1. Test synthetic fallback on empty directory
+    # 1. Test synthetic fallback on empty directory in SMOKE mode
     empty_results = tmp_path / "results_empty"
-    data = load_or_synthesize_benchmark_results(empty_results, seed=42)
+    smoke_cfg = ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
+    data = load_or_synthesize_benchmark_results(empty_results, seed=42, config=smoke_cfg)
     assert "scenario1" in data
     assert "scenario2" in data
     assert "ablation" in data
@@ -83,6 +89,7 @@ def test_benchmark_results_loader_and_synthesizer(tmp_path: Path):
         assert "worst_10_recall" in scen2_entry
 
     # 2. Test real JSON loading from disk (F3)
+    reset_active_session_mode()
     real_results = tmp_path / "results_real"
     real_results.mkdir(parents=True)
     real_data = {
@@ -98,7 +105,8 @@ def test_benchmark_results_loader_and_synthesizer(tmp_path: Path):
 
 def test_publication_figures_generation(tmp_path: Path):
     fig_dir = tmp_path / "paper" / "figures"
-    data = load_or_synthesize_benchmark_results(tmp_path, seed=42)
+    smoke_cfg = ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
+    data = load_or_synthesize_benchmark_results(tmp_path, seed=42, config=smoke_cfg)
 
     # 1. Convergence plot
     conv_pdf, conv_png = generate_convergence_plot(data, output_dir=fig_dir)
@@ -120,7 +128,8 @@ def test_publication_figures_generation(tmp_path: Path):
 
 def test_latex_tables_generation(tmp_path: Path):
     tab_dir = tmp_path / "paper" / "tables"
-    data = load_or_synthesize_benchmark_results(tmp_path, seed=42)
+    smoke_cfg = ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
+    data = load_or_synthesize_benchmark_results(tmp_path, seed=42, config=smoke_cfg)
 
     # 1. Scenario 1 table
     t1 = generate_scenario1_table(data, output_dir=tab_dir)
@@ -164,10 +173,12 @@ def test_generate_all_paper_artifacts_directory_creation(tmp_path: Path):
     # Ensure paper_dir does not exist beforehand
     assert not paper_dir.exists()
 
+    smoke_cfg = ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
     res = generate_all_paper_artifacts(
         results_dir=results_dir,
         paper_dir=paper_dir,
         metadata_path="paper_metadata.yaml",
+        config=smoke_cfg,
     )
 
     assert paper_dir.exists()

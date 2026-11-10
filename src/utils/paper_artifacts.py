@@ -23,6 +23,7 @@ from src.utils.experiment_config import (
     find_repo_root,
     get_active_session_mode,
     get_isolated_paths,
+    validate_provenance_metadata,
 )
 
 logger = logging.getLogger(__name__)
@@ -159,27 +160,42 @@ def _get_git_commit(cwd: Optional[Path] = None) -> str:
         return "unknown"
 
 
-def load_real_benchmark_results(results_dir: str | Path = "results") -> dict[str, Any]:
-    """Load and parse real benchmark results from results_dir.
+def load_real_benchmark_results(
+    results_dir: str | Path = "results",
+    expected_mode: ExecutionMode = ExecutionMode.REAL,
+) -> dict[str, Any]:
+    """Load, validate provenance, and normalize real benchmark results from results_dir.
 
     Args:
         results_dir: Directory containing benchmark result files.
+        expected_mode: Expected execution mode (defaults to ExecutionMode.REAL).
 
     Returns:
         Structured dictionary matching Scenario 1, Scenario 2, and ablation schemas.
 
     Raises:
         FileNotFoundError: If no valid real benchmark result files exist in results_dir.
+        ValueError: If loaded artifacts fail provenance validation (e.g. synthetic data in REAL mode).
     """
-    res_path = Path(results_dir)
-    tier1_file = res_path / "tier1_benchmark_summary.json"
+    import numpy as np
 
+    res_path = Path(results_dir)
+
+    def _validate_meta(json_f: Path) -> None:
+        meta_f = json_f.parent / f"{json_f.name}.meta.json"
+        if meta_f.exists():
+            validate_provenance_metadata(meta_f, expected_mode=expected_mode)
+
+    tier1_file = res_path / "tier1_benchmark_summary.json"
     if tier1_file.exists():
+        _validate_meta(tier1_file)
         try:
             with open(tier1_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            if isinstance(data, dict) and "scenario1" in data:
+            if isinstance(data, dict) and ("scenario1" in data or "scenario2" in data):
                 logger.info("Loaded real benchmark results from %s", tier1_file)
+                if expected_mode == ExecutionMode.SMOKE:
+                    data["is_smoke"] = True
                 return data
         except Exception as e:
             logger.warning("Failed to load %s: %s", tier1_file, e)
@@ -202,53 +218,153 @@ def load_real_benchmark_results(results_dir: str | Path = "results") -> dict[str
 
     if axis1_file.exists():
         found_any = True
+        _validate_meta(axis1_file)
         try:
             with open(axis1_file, "r", encoding="utf-8") as f:
                 d1 = json.load(f)
-            if "aggregated_summary" in d1:
-                merged["scenario1"] = d1["aggregated_summary"]
-            elif "scenario1" in d1:
+            if "scenario1" in d1 and isinstance(d1["scenario1"], dict) and any("f1" in str(v) for v in d1["scenario1"].values()):
                 merged["scenario1"] = d1["scenario1"]
+            elif "runs" in d1:
+                scen1_norm: dict[str, Any] = {}
+                for r in d1.get("runs", []):
+                    strat = r.get("strategy")
+                    metrics = r.get("final_metrics", {})
+                    if not strat or not metrics:
+                        continue
+                    scen1_norm.setdefault(strat, {}).setdefault("10", {"f1": [], "auprc": [], "fpr95": []})
+                    scen1_norm[strat]["10"]["f1"].append(float(metrics.get("f1", 0.0)))
+                    scen1_norm[strat]["10"]["auprc"].append(float(metrics.get("auprc", 0.0)))
+                    scen1_norm[strat]["10"]["fpr95"].append(float(metrics.get("fpr_at_95_recall", metrics.get("fpr95", 0.0))))
+
+                for s, r_dict in scen1_norm.items():
+                    for rho, m_dict in r_dict.items():
+                        for mk in ("f1", "auprc", "fpr95"):
+                            vals = m_dict[mk]
+                            m_dict[mk] = {
+                                "mean": float(np.mean(vals)) if vals else 0.0,
+                                "std": float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0,
+                                "values": vals,
+                            }
+                merged["scenario1"] = scen1_norm
+            elif "aggregated_summary" in d1:
+                scen1_norm = {}
+                for tt, strat_dict in d1["aggregated_summary"].items():
+                    for strat, s_metrics in strat_dict.items():
+                        scen1_norm.setdefault(strat, {})["10"] = {
+                            "f1": {"mean": s_metrics.get("f1_mean", 0.0), "std": s_metrics.get("f1_std", 0.0), "values": [s_metrics.get("f1_mean", 0.0)]},
+                            "auprc": {"mean": s_metrics.get("auprc_mean", 0.0), "std": s_metrics.get("auprc_std", 0.0), "values": [s_metrics.get("auprc_mean", 0.0)]},
+                            "fpr95": {"mean": s_metrics.get("fpr_at_95_recall_mean", s_metrics.get("fpr95_mean", 0.0)), "std": s_metrics.get("fpr_at_95_recall_std", 0.0), "values": [s_metrics.get("fpr_at_95_recall_mean", 0.0)]},
+                        }
+                merged["scenario1"] = scen1_norm
+
+            if "convergence" in d1:
+                merged["convergence"] = d1["convergence"]
+            if "heatmap" in d1:
+                merged["heatmap"] = d1["heatmap"]
         except Exception as e:
             logger.warning("Error parsing %s: %s", axis1_file, e)
 
     if scen2_file.exists():
         found_any = True
+        _validate_meta(scen2_file)
         try:
             with open(scen2_file, "r", encoding="utf-8") as f:
                 d2 = json.load(f)
-            if "aggregated_summary" in d2:
-                merged["scenario2"] = d2["aggregated_summary"]
-            elif "scenario2" in d2:
+            if "scenario2" in d2 and isinstance(d2["scenario2"], dict) and any("top1_accuracy" in str(v) for v in d2["scenario2"].values()):
                 merged["scenario2"] = d2["scenario2"]
+            elif "runs" in d2:
+                scen2_norm: dict[str, Any] = {}
+                for r in d2.get("runs", []):
+                    strat = r.get("strategy")
+                    metrics = r.get("final_metrics", {})
+                    if not strat or not metrics:
+                        continue
+                    scen2_norm.setdefault(strat, {"top1_accuracy": [], "macro_f1": [], "worst_10_recall": []})
+                    scen2_norm[strat]["top1_accuracy"].append(float(metrics.get("top1_accuracy", 0.0)))
+                    scen2_norm[strat]["macro_f1"].append(float(metrics.get("macro_f1", metrics.get("f1", 0.0))))
+                    scen2_norm[strat]["worst_10_recall"].append(float(metrics.get("worst_10_class_recall", metrics.get("worst_10_recall", 0.0))))
+
+                for s, m_dict in scen2_norm.items():
+                    for mk in ("top1_accuracy", "macro_f1", "worst_10_recall"):
+                        vals = m_dict[mk]
+                        m_dict[mk] = {
+                            "mean": float(np.mean(vals)) if vals else 0.0,
+                            "std": float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0,
+                            "values": vals,
+                        }
+                merged["scenario2"] = scen2_norm
+            elif "aggregated_summary" in d2:
+                scen2_norm = {}
+                for tt, strat_dict in d2["aggregated_summary"].items():
+                    for strat, s_metrics in strat_dict.items():
+                        scen2_norm[strat] = {
+                            "top1_accuracy": {"mean": s_metrics.get("top1_accuracy_mean", 0.0), "std": s_metrics.get("top1_accuracy_std", 0.0), "values": [s_metrics.get("top1_accuracy_mean", 0.0)]},
+                            "macro_f1": {"mean": s_metrics.get("macro_f1_mean", s_metrics.get("f1_mean", 0.0)), "std": s_metrics.get("macro_f1_std", 0.0), "values": [s_metrics.get("macro_f1_mean", 0.0)]},
+                            "worst_10_recall": {"mean": s_metrics.get("worst_10_class_recall_mean", 0.0), "std": s_metrics.get("worst_10_class_recall_std", 0.0), "values": [s_metrics.get("worst_10_class_recall_mean", 0.0)]},
+                        }
+                merged["scenario2"] = scen2_norm
         except Exception as e:
             logger.warning("Error parsing %s: %s", scen2_file, e)
 
     if ablation_file.exists():
         found_any = True
+        _validate_meta(ablation_file)
         try:
             with open(ablation_file, "r", encoding="utf-8") as f:
                 da = json.load(f)
-            if "aggregated_summary" in da:
-                merged["ablation"] = da["aggregated_summary"]
-            elif "ablation" in da:
+            if "ablation" in da:
                 merged["ablation"] = da["ablation"]
+            elif "runs" in da:
+                ab_norm: dict[str, Any] = {}
+                for r in da.get("runs", []):
+                    tt = r.get("tree_type")
+                    metrics = r.get("final_metrics", {})
+                    key = f"{tt}_tree" if not str(tt).endswith("_tree") else str(tt)
+                    ab_norm.setdefault(key, {"f1": [], "auprc": []})
+                    ab_norm[key]["f1"].append(float(metrics.get("f1", 0.0)))
+                    ab_norm[key]["auprc"].append(float(metrics.get("auprc", 0.0)))
+                merged["ablation"] = {
+                    k: {"f1": float(np.mean(v["f1"])), "auprc": float(np.mean(v["auprc"]))}
+                    for k, v in ab_norm.items()
+                }
+            elif "aggregated_summary" in da:
+                ab_norm = {}
+                for tt, s_dict in da["aggregated_summary"].items():
+                    for s, m in s_dict.items():
+                        key = f"{tt}_tree" if not str(tt).endswith("_tree") else str(tt)
+                        ab_norm[key] = {"f1": m.get("f1_mean", 0.0), "auprc": m.get("auprc_mean", 0.0)}
+                merged["ablation"] = ab_norm
         except Exception as e:
             logger.warning("Error parsing %s: %s", ablation_file, e)
 
     if sensitivity_file.exists():
         found_any = True
+        _validate_meta(sensitivity_file)
         try:
             with open(sensitivity_file, "r", encoding="utf-8") as f:
                 ds = json.load(f)
             if "sensitivity" in ds:
                 merged["sensitivity"] = ds["sensitivity"]
-            elif "aggregated_summary" in ds:
-                merged["sensitivity"] = ds["aggregated_summary"]
+            elif "grid" in ds:
+                grid = ds["grid"]
+                c_vals = sorted(list({float(g["c"]) for g in grid}))
+                alpha_vals = sorted(list({float(g["alpha"]) for g in grid}))
+                def_alpha = 0.3 if 0.3 in alpha_vals else (alpha_vals[len(alpha_vals) // 2] if alpha_vals else 0.3)
+                c_f1 = [float(next((g["f1_mean"] for g in grid if float(g["c"]) == c and float(g["alpha"]) == def_alpha), 0.0)) for c in c_vals]
+                def_c = 1.0 if 1.0 in c_vals else (c_vals[len(c_vals) // 2] if c_vals else 1.0)
+                alpha_f1 = [float(next((g["f1_mean"] for g in grid if float(g["c"]) == def_c and float(g["alpha"]) == a), 0.0)) for a in alpha_vals]
+                merged["sensitivity"] = {
+                    "c_values": c_vals,
+                    "c_f1": c_f1,
+                    "alpha_values": alpha_vals,
+                    "alpha_f1": alpha_f1,
+                }
         except Exception as e:
             logger.warning("Error parsing %s: %s", sensitivity_file, e)
 
     if found_any and (merged["scenario1"] or merged["scenario2"]):
+        if expected_mode == ExecutionMode.SMOKE:
+            merged["is_smoke"] = True
         return merged
 
     raise FileNotFoundError(
@@ -276,18 +392,20 @@ def load_or_synthesize_benchmark_results(
     Returns:
         Structured dictionary matching Scenario 1, Scenario 2, and ablation schemas.
     """
-    if config is not None:
-        mode = config.execution_mode
-    elif get_active_session_mode() is not None:
-        mode = get_active_session_mode()
-    else:
-        try:
-            return load_real_benchmark_results(results_dir)
-        except FileNotFoundError:
-            mode = ExecutionMode.SMOKE
+    mode = config.execution_mode if config is not None else get_active_session_mode()
 
     if mode == ExecutionMode.REAL:
-        return load_real_benchmark_results(results_dir)
+        return load_real_benchmark_results(results_dir, expected_mode=ExecutionMode.REAL)
+
+    if mode == ExecutionMode.SMOKE:
+        try:
+            return load_real_benchmark_results(results_dir, expected_mode=ExecutionMode.SMOKE)
+        except Exception:
+            pass
+    else:
+        # Default strictly to REAL when unconfigured; fail with FileNotFoundError if results are missing.
+        # NEVER infer SMOKE from absent files.
+        return load_real_benchmark_results(results_dir, expected_mode=ExecutionMode.REAL)
 
     logger.warning("SMOKE mode: Generating deterministic synthetic benchmark distributions.")
 
@@ -464,6 +582,9 @@ def generate_convergence_plot(
         "mcts_enhanced": ("#2ca02c", "-", "Enhanced MCTS-HNM (Ours)"),
     }
 
+    if not data.get("is_smoke") and not any(f"{k}_f1" in conv for k in palette):
+        raise ValueError("Convergence curve metrics missing for REAL publication figure.")
+
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.2), dpi=300)
 
     # Subplot 1: Test Minority F1-Score
@@ -536,6 +657,8 @@ def generate_tree_visitation_heatmap(
     png_path = out / "fig_tree_visitation_heatmap.png"
 
     heat = data.get("heatmap", {})
+    if not data.get("is_smoke") and ("matrix" not in heat or not heat["matrix"]):
+        raise ValueError("Tree visitation heatmap matrix missing for REAL publication figure.")
     matrix = np.array(heat.get("matrix", np.zeros((20, 10))))
     steps = heat.get("steps", list(range(matrix.shape[1])))
     superclasses = heat.get("superclasses", [f"SC-{i:02d}" for i in range(matrix.shape[0])])
@@ -601,6 +724,8 @@ def generate_hyperparameter_sensitivity_plot(
     png_path = out / "fig_hyperparameter_sensitivity.png"
 
     sens = data.get("sensitivity", {})
+    if not data.get("is_smoke") and (not sens or not sens.get("c_values")):
+        raise ValueError("Hyperparameter sensitivity metrics missing for REAL publication figure.")
     c_vals = sens.get("c_values", [0.25, 0.5, 1.0, 1.5, 2.0, 3.0])
     c_f1 = sens.get("c_f1", [0.52, 0.55, 0.56, 0.55, 0.54, 0.51])
     alpha_vals = sens.get("alpha_values", [0.05, 0.1, 0.3, 0.5, 0.7, 0.9])
@@ -660,16 +785,26 @@ def generate_scenario1_table(
     tex_path = out / "tab_scenario1_imbalanced.tex"
 
     scen1 = data.get("scenario1", {})
+    if not scen1:
+        raise ValueError("Scenario 1 results dictionary is empty or missing.")
+
     strategies = [
         ("uniform", "Uniform Random"),
         ("ohem", "OHEM (Shrivastava et al.)"),
         ("mcts_strict", "Strict GiantHunter (Qu et al.)"),
         ("mcts_enhanced", "\\textbf{Enhanced MCTS-HNM (Ours)}"),
     ]
-    imbalance_ratios = [("10", "1:10"), ("50", "1:50"), ("100", "1:100")]
+    cand_ratios = [("10", "1:10"), ("50", "1:50"), ("100", "1:100")]
+    imbalance_ratios = [
+        (rk, rl) for rk, rl in cand_ratios
+        if any(rk in scen1.get(sk, {}) for sk, _ in strategies)
+    ]
+    if not imbalance_ratios:
+        imbalance_ratios = [("10", "1:10")]
 
     lines = [
         r"% Auto-generated by src/utils/paper_artifacts.py",
+        r"% SMOKE TEST — NOT VALID FOR SCIENTIFIC PUBLICATION" if data.get("is_smoke") else "",
         r"\begin{table*}[t]",
         r"\centering",
         r"\small",
@@ -682,6 +817,7 @@ def generate_scenario1_table(
         r"Imbalance ($\rho$) & Negative Mining Strategy & Minority F1-Score (\%) & AUPRC & FPR@95 ($\downarrow$) & $p$-value ($t$-test) \\",
         r"\midrule",
     ]
+    lines = [l for l in lines if l]
 
     for rho_key, rho_label in imbalance_ratios:
         # Reference baseline: enhanced
@@ -698,10 +834,12 @@ def generate_scenario1_table(
             strat_vals = entry.get("f1", {}).get("values", [f1_mean / 100.0] * 5)
             if strat_key == "mcts_enhanced":
                 p_val_str = "--- (Reference)"
-            else:
+            elif len(strat_vals) >= 2 and len(enhanced_vals) >= 2 and len(strat_vals) == len(enhanced_vals):
                 stat_res = compute_paired_statistical_tests(strat_vals, enhanced_vals)
                 p_val = stat_res["t_pvalue"]
                 p_val_str = f"$p < 0.001$" if p_val < 0.001 else f"$p = {p_val:.3f}$"
+            else:
+                p_val_str = "N/A"
 
             lines.append(
                 f"  {rho_label} & {strat_label} & {f1_mean:.1f} $\\pm$ {f1_std:.1f} & "
@@ -743,6 +881,9 @@ def generate_scenario2_table(
     tex_path = out / "tab_scenario2_multiclass.tex"
 
     scen2 = data.get("scenario2", {})
+    if not scen2:
+        raise ValueError("Scenario 2 results dictionary is empty or missing.")
+
     strategies = [
         ("uniform", "Uniform Random"),
         ("ohem", "OHEM (Shrivastava et al.)"),
@@ -754,6 +895,7 @@ def generate_scenario2_table(
 
     lines = [
         r"% Auto-generated by src/utils/paper_artifacts.py",
+        r"% SMOKE TEST — NOT VALID FOR SCIENTIFIC PUBLICATION" if data.get("is_smoke") else "",
         r"\begin{table}[t]",
         r"\centering",
         r"\small",
@@ -765,6 +907,7 @@ def generate_scenario2_table(
         r"Strategy & Top-1 Accuracy (\%) & Macro-F1 (\%) & Worst-10 Recall (\%) & $p$-value ($t$-test) \\",
         r"\midrule",
     ]
+    lines = [l for l in lines if l]
 
     for strat_key, strat_label in strategies:
         entry = scen2.get(strat_key, {})
@@ -778,10 +921,12 @@ def generate_scenario2_table(
         strat_acc_vals = entry.get("top1_accuracy", {}).get("values", [acc_mean / 100.0] * 5)
         if strat_key == "mcts_enhanced":
             p_val_str = "--- (Ref)"
-        else:
+        elif len(strat_acc_vals) >= 2 and len(enhanced_acc_vals) >= 2 and len(strat_acc_vals) == len(enhanced_acc_vals):
             stat_res = compute_paired_statistical_tests(strat_acc_vals, enhanced_acc_vals)
             p_val = stat_res["t_pvalue"]
             p_val_str = f"$p < 0.001$" if p_val < 0.001 else f"$p = {p_val:.3f}$"
+        else:
+            p_val_str = "N/A"
 
         lines.append(
             f"  {strat_label} & {acc_mean:.1f} $\\pm$ {acc_std:.1f} & "
@@ -819,6 +964,8 @@ def generate_ablation_table(
     tex_path = out / "tab_ablation_study.tex"
 
     ablation = data.get("ablation", {})
+    if not ablation:
+        raise ValueError("Ablation results dictionary is empty or missing.")
 
     rows = [
         ("Hierarchy Geometry", "Native Semantic Tree (20 superclasses)", ablation.get("semantic_tree", {}).get("f1", 0.548), ablation.get("semantic_tree", {}).get("auprc", 0.536)),
@@ -836,6 +983,7 @@ def generate_ablation_table(
 
     lines = [
         r"% Auto-generated by src/utils/paper_artifacts.py",
+        r"% SMOKE TEST — NOT VALID FOR SCIENTIFIC PUBLICATION" if data.get("is_smoke") else "",
         r"\begin{table}[t]",
         r"\centering",
         r"\small",
@@ -847,6 +995,7 @@ def generate_ablation_table(
         r"Ablation Axis & Configuration & F1-Score & AUPRC & $\Delta$ F1 vs. Strict \\",
         r"\midrule",
     ]
+    lines = [l for l in lines if l]
 
     last_axis = ""
     for axis, config, f1, auprc in rows:
@@ -957,9 +1106,19 @@ def generate_all_paper_artifacts(
     if config is not None:
         mode = config.execution_mode
         paths = get_isolated_paths(config)
-        fig_dir = paths.paper_figures_dir
-        tab_dir = paths.paper_tables_dir
-        manifest_dir = fig_dir.parent
+        is_default_paper = (
+            str(paper_dir) == "paper"
+            or Path(paper_dir).resolve() == (paths.repo_root / "paper").resolve()
+        )
+        if is_default_paper:
+            fig_dir = paths.paper_figures_dir
+            tab_dir = paths.paper_tables_dir
+            manifest_dir = fig_dir.parent
+        else:
+            p_dir = _ensure_dir(Path(paper_dir))
+            fig_dir = _ensure_dir(p_dir / "figures")
+            tab_dir = _ensure_dir(p_dir / "tables")
+            manifest_dir = p_dir
         res_dir = paths.results_dir if str(results_dir) == "results" else Path(results_dir)
     else:
         active = get_active_session_mode()

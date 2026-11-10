@@ -9,7 +9,11 @@ import numpy as np
 import torch
 from torchvision import datasets, transforms
 
-from src.utils.experiment_config import ExecutionMode, ExperimentConfig
+from src.utils.experiment_config import (
+    ExecutionMode,
+    ExperimentConfig,
+    get_active_session_mode,
+)
 
 
 def load_cifar100_raw_images(
@@ -38,7 +42,13 @@ def load_cifar100_raw_images(
     if split not in ("train", "test", "val"):
         raise ValueError(f"split must be 'train', 'test', or 'val', got '{split}'.")
 
-    active_config = config if config is not None else ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
+    if config is not None:
+        active_config = config
+    elif get_active_session_mode() is not None:
+        active_config = ExperimentConfig(execution_mode=get_active_session_mode())
+    else:
+        active_config = ExperimentConfig(execution_mode=ExecutionMode.REAL)
+
     path = Path(data_dir)
 
     if active_config.execution_mode == ExecutionMode.REAL:
