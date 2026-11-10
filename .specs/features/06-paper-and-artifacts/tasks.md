@@ -202,10 +202,10 @@ T6
 
 **Done when**:
 
-- [ ] `notebooks/05_paper_artifacts.ipynb` executes `generate_all_paper_artifacts()` and renders inline previews of all publication figures and LaTeX tables
-- [ ] `notebooks/00_master_end_to_end.ipynb` provides top-to-bottom master orchestration (CIFAR-100 download check $\rightarrow$ embeddings $\rightarrow$ trees $\rightarrow$ Tier-1 smoke benchmark $\rightarrow$ Tier-2 E2E smoke train $\rightarrow$ paper artifacts) running under 2 minutes in `FAST_MODE = True`
-- [ ] Integration test executes both notebooks via `nbclient` confirming error-free execution
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v`
+- [x] `notebooks/05_paper_artifacts.ipynb` executes `generate_all_paper_artifacts()` and renders inline previews of all publication figures and LaTeX tables
+- [x] `notebooks/00_master_end_to_end.ipynb` provides top-to-bottom master orchestration (CIFAR-100 download check $\rightarrow$ embeddings $\rightarrow$ trees $\rightarrow$ Tier-1 smoke benchmark $\rightarrow$ Tier-2 E2E smoke train $\rightarrow$ paper artifacts) running under 2 minutes in `FAST_MODE = True`
+- [x] Integration test executes both notebooks via `nbclient` confirming error-free execution
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v`
 
 **Tests**: integration
 **Gate**: build

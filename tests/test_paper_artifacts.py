@@ -226,5 +226,68 @@ def test_compile_paper_pdf():
     assert pdf_path.stat().st_size > 50000  # Multi-page scientific paper PDF
 
 
+def test_notebook_05_execution():
+    import ast
+    import nbformat
+
+    repo_root = Path(__file__).resolve().parent.parent
+    nb_path = repo_root / "notebooks" / "05_paper_artifacts.ipynb"
+    assert nb_path.is_file(), "notebooks/05_paper_artifacts.ipynb must exist"
+
+    nb = nbformat.read(nb_path, as_version=4)
+    nbformat.validate(nb)
+
+    md_cells = [c for c in nb.cells if c.cell_type == "markdown"]
+    code_cells = [c for c in nb.cells if c.cell_type == "code"]
+    assert len(md_cells) >= 3
+    assert len(code_cells) >= 3
+
+    joined_code = "\n\n".join(c.source for c in code_cells)
+    for cell in code_cells:
+        ast.parse(cell.source)
+
+    for required_ref in (
+        "load_paper_metadata",
+        "generate_all_paper_artifacts",
+        "compile_paper",
+        "paper_metadata.yaml",
+    ):
+        assert required_ref in joined_code, f"Notebook 05 missing reference to {required_ref}"
+
+
+def test_notebook_00_execution():
+    import ast
+    import nbformat
+
+    repo_root = Path(__file__).resolve().parent.parent
+    nb_path = repo_root / "notebooks" / "00_master_end_to_end.ipynb"
+    assert nb_path.is_file(), "notebooks/00_master_end_to_end.ipynb must exist"
+
+    nb = nbformat.read(nb_path, as_version=4)
+    nbformat.validate(nb)
+
+    md_cells = [c for c in nb.cells if c.cell_type == "markdown"]
+    code_cells = [c for c in nb.cells if c.cell_type == "code"]
+    assert len(md_cells) >= 5
+    assert len(code_cells) >= 5
+
+    joined_code = "\n\n".join(c.source for c in code_cells)
+    for cell in code_cells:
+        ast.parse(cell.source)
+
+    for required_ref in (
+        "FAST_MODE",
+        "CIFAR100Taxonomy",
+        "build_semantic_tree",
+        "build_confusion_tree",
+        "train_scenario1",
+        "train_e2e_scenario1",
+        "generate_all_paper_artifacts",
+        "compile_paper",
+    ):
+        assert required_ref in joined_code, f"Notebook 00 missing reference to {required_ref}"
+
+
+
 
 
