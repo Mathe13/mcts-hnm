@@ -1,5 +1,6 @@
 """CIFAR-100 dataset loaders, taxonomy mappings, embedding caches, and scenario splitters."""
 
+from src.data.cifar100_images import load_cifar100_raw_images
 from src.data.cifar100_taxonomy import (
     CIFAR100_COARSE_CLASSES,
     CIFAR100_FINE_CLASSES,
@@ -46,6 +47,7 @@ __all__ = [
     "extract_or_generate_embeddings",
     "fine_to_coarse_tensor",
     "get_cifar100_taxonomy",
+    "load_cifar100_raw_images",
     "load_embedding_cache",
     "validate_embedding_bundle",
 ]

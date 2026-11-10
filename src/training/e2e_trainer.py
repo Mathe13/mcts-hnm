@@ -27,6 +27,11 @@ from src.training.trainer import (
 )
 from src.trees.base_tree import FastHierarchyTree
 from src.trees.confusion_tree import build_confusion_tree, validate_confusion_matrix
+from src.utils.experiment_config import (
+    ExecutionMode,
+    ExperimentConfig,
+    save_provenance_metadata,
+)
 from src.utils.seed import set_global_seed
 from src.utils.statistics import compute_paired_statistical_tests
 
@@ -240,6 +245,7 @@ def train_e2e_scenario1(
     k_sub: int = 3,
     seed: int = 42,
     device: torch.device | None = None,
+    checkpoints_dir: str | Path | None = None,
 ) -> dict[str, object]:
     """Train Tier2ResNet18 end-to-end under Scenario 1 (Binary One-vs-Rest)."""
     if strategy not in SUPPORTED_STRATEGIES:
@@ -409,11 +415,25 @@ def train_e2e_scenario1(
             history.append(metrics)
 
     final_eval = history[-1] if history else evaluate_scenario1_metrics(model, test_images, test_binary_labels, device=dev)
+    checkpoint_path: str | None = None
+    if checkpoints_dir is not None:
+        cdir = Path(checkpoints_dir)
+        cdir.mkdir(parents=True, exist_ok=True)
+        ckpt_file = cdir / f"tier2_resnet18_scenario1_{strategy}_seed{seed}.pt"
+        torch.save({
+            "model_state_dict": model.state_dict(),
+            "final_metrics": final_eval,
+            "seed": seed,
+            "strategy": strategy,
+        }, ckpt_file)
+        checkpoint_path = str(ckpt_file)
+
     return {
         "strategy": strategy,
         "history": history,
         "final_metrics": final_eval,
         "model": model,
+        "checkpoint_path": checkpoint_path,
         "diagnostics": diagnostics_tracker.summary() if diagnostics_tracker is not None else None,
         "final_num_leaves": tree.num_leaves if tree is not None else None,
     }
@@ -445,6 +465,7 @@ def train_e2e_scenario2(
     k_sub: int = 3,
     seed: int = 42,
     device: torch.device | None = None,
+    checkpoints_dir: str | Path | None = None,
 ) -> dict[str, object]:
     """Train Tier2ResNet18 end-to-end under Scenario 2 (100-way Multi-Class)."""
     if strategy not in SUPPORTED_STRATEGIES:
@@ -617,11 +638,25 @@ def train_e2e_scenario2(
             history.append(metrics)
 
     final_eval = history[-1] if history else evaluate_scenario2_metrics(model, test_images, test_labels, num_classes=num_classes, device=dev)
+    checkpoint_path: str | None = None
+    if checkpoints_dir is not None:
+        cdir = Path(checkpoints_dir)
+        cdir.mkdir(parents=True, exist_ok=True)
+        ckpt_file = cdir / f"tier2_resnet18_scenario2_{strategy}_seed{seed}.pt"
+        torch.save({
+            "model_state_dict": model.state_dict(),
+            "final_metrics": final_eval,
+            "seed": seed,
+            "strategy": strategy,
+        }, ckpt_file)
+        checkpoint_path = str(ckpt_file)
+
     return {
         "strategy": strategy,
         "history": history,
         "final_metrics": final_eval,
         "model": model,
+        "checkpoint_path": checkpoint_path,
         "diagnostics": diagnostics_tracker.summary() if diagnostics_tracker is not None else None,
         "final_num_leaves": tree.num_leaves if tree is not None else None,
     }
@@ -645,6 +680,7 @@ class E2EExperimentConfig:
     k_sub: int = 2
     refresh_tree_every: int | None = None
     output_dir: str = "results"
+    checkpoints_dir: str | None = None
 
 
 def run_e2e_experiment(
@@ -659,6 +695,7 @@ def run_e2e_experiment(
     positive_indices: np.ndarray | None = None,
     negative_indices: np.ndarray | None = None,
     device: torch.device | None = None,
+    experiment_config: ExperimentConfig | None = None,
 ) -> dict[str, object]:
     """Execute multi-seed Tier-2 E2E experiments, run statistical tests, and export JSON/CSV."""
     if config.scenario not in (1, 2):
@@ -701,6 +738,7 @@ def run_e2e_experiment(
                     k_sub=config.k_sub,
                     seed=seed,
                     device=device,
+                    checkpoints_dir=config.checkpoints_dir,
                 )
             else:
                 num_classes = int(np.max(train_labels) + 1)
@@ -725,6 +763,7 @@ def run_e2e_experiment(
                     k_sub=config.k_sub,
                     seed=seed,
                     device=device,
+                    checkpoints_dir=config.checkpoints_dir,
                 )
             results_by_strategy[strat].append(res["final_metrics"])
 
@@ -773,5 +812,13 @@ def run_e2e_experiment(
         writer.writeheader()
         writer.writerows(csv_rows)
     tmp_csv.replace(csv_file)
+
+    active_config = (
+        experiment_config
+        if experiment_config is not None
+        else ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
+    )
+    save_provenance_metadata(json_file, active_config)
+    save_provenance_metadata(csv_file, active_config)
 
     return summary
