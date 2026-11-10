@@ -1,5 +1,19 @@
 """Shared utilities for reproducibility, metrics, and artifact export."""
 
+from src.utils.experiment_config import (
+    ExecutionMode,
+    ExperimentConfig,
+    IllegalStateError,
+    IsolatedPaths,
+    find_repo_root,
+    get_active_session_mode,
+    get_isolated_paths,
+    print_execution_banner,
+    reset_active_session_mode,
+    save_provenance_metadata,
+    set_active_session_mode,
+    validate_provenance_metadata,
+)
 from src.utils.paper_artifacts import (
     compile_paper,
     generate_ablation_table,
@@ -16,6 +30,18 @@ from src.utils.seed import get_torch_generator, set_global_seed
 from src.utils.statistics import compute_paired_statistical_tests
 
 __all__ = [
+    "ExecutionMode",
+    "ExperimentConfig",
+    "IllegalStateError",
+    "IsolatedPaths",
+    "find_repo_root",
+    "get_active_session_mode",
+    "get_isolated_paths",
+    "print_execution_banner",
+    "reset_active_session_mode",
+    "save_provenance_metadata",
+    "set_active_session_mode",
+    "validate_provenance_metadata",
     "get_torch_generator",
     "set_global_seed",
     "compute_paired_statistical_tests",
