@@ -114,9 +114,17 @@
 - **Date**: 2026-11-10
 - **Status**: active (AD-014)
 
+### AD-015
+- **Decision**: Codify a unified automated regression testing suite (`tests/test_automated_suite_real.py`) executing all six notebooks (`00` through `05`) end-to-end in `ExecutionMode.SMOKE`, verifying cross-mode cache rejection (REAL rejects SMOKE cache with `ValueError`; SMOKE rejects REAL cache), enforcing session mode transition immutability (`IllegalStateError`), confirming notebook 05 rejects SMOKE results during REAL generation with `FileNotFoundError`, and exercising a labeled reduced real integration path within a strict <60s SLA.
+- **Reason**: ROADMAP_Improvements.md Phase 6 establishes full automated end-to-end regression validation, preventing accidental divergence, silent fallbacks, or cross-mode pollution across all pipeline stages.
+- **Trade-off**: Adds 12 automated tests (~12s) while keeping total repository test suite runtime (~30s across 142 tests) well under the 60-second budget.
+- **Scope**: `tests/test_automated_suite_real.py`, `src/data/extract_embeddings.py`, `notebooks/01_data_and_embeddings.ipynb`
+- **Date**: 2026-11-10
+- **Status**: active (AD-015)
+
 ## Handoff
 
-- **Feature**: `11-paper-artifacts-real-integration` (`.specs/features/11-paper-artifacts-real-integration/`)
+- **Feature**: `12-automated-testing-suite` (`.specs/features/12-automated-testing-suite/`)
 - **Phase / Task**: Done & Verified (`validate_verification.py` exited 0)
 - **Completed**:
   - Phase 0 (Baseline Audit) completed and documented.
@@ -125,11 +133,12 @@
   - Feature `09-tier1-benchmarks-real-data` (Phase 3): Done & Verified (`C1`–`C11`, 110 repository tests passing)
   - Feature `10-tier2-e2e-real-cifar` (Phase 4): Done & Verified (`C1`–`C10`, 120 repository tests passing)
   - Feature `11-paper-artifacts-real-integration` (Phase 5): Done & Verified (`C1`–`C10`, 130 repository tests passing)
-    - `cc96588`: Standardized paper artifacts and real benchmark ingestion, added `load_real_benchmark_results`, updated `load_or_synthesize_benchmark_results` to reject missing files in REAL mode, added `generate_artifact_manifest` with SHA-256 provenance tracking, watermarked smoke figures, and updated Notebook 05.
-    - `tests/test_paper_artifacts_real.py`: 10 automated tests covering mode enforcement, synthetic rejection in REAL mode, real benchmark ingestion, smoke watermarking and directory isolation, manifest generation, and compiler error handling.
-    - `38eaef6`: Independent Verifier report (`verification.md`) confirming `PASS` on all checks C1–C10.
+  - Feature `12-automated-testing-suite` (Phase 6): Done & Verified (`C1`–`C12`, 142 repository tests passing)
+    - `5996e58`: Automated regression testing suite covering all 6 notebooks end-to-end in SMOKE mode, cross-mode cache rejection, session immutability, notebook 05 real mode validation, and labeled reduced real integration path.
+    - `tests/test_automated_suite_real.py`: 12 automated tests completing in ~13s. Full repo suite (142 tests) completes in ~30s.
+    - `d96cb89`: Independent Verifier report (`verification.md`) confirming `PASS` on all checks C1–C12.
 - **In-progress**: None
-- **Next step**: Phase 6 of `ROADMAP_Improvements.md` — Feature `12-automated-testing-suite` (Automated testing across all 6 notebooks end-to-end in SMOKE mode, ensuring complete execution without regressions).
+- **Next step**: Phase 7 of `ROADMAP_Improvements.md` — Feature `13-documentation-and-reproducibility` (Update root `README.md` and create `docs/experimental_reproducibility.md`).
 - **Blockers**: None
 - **Uncommitted files**: None (after commit)
 - **Branch**: `main`
