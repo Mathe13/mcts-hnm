@@ -49,7 +49,7 @@ htmlcov/
 *.swo
 
 # Large raw outputs
-results/raw/
+results/
 logs/
 
 # LaTeX build artifacts

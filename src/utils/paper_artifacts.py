@@ -7,10 +7,23 @@ and manuscript compilation.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import os
+import shutil
+import subprocess
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional, Union
+
+from src.utils.experiment_config import (
+    ExecutionMode,
+    ExperimentConfig,
+    find_repo_root,
+    get_active_session_mode,
+    get_isolated_paths,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -120,33 +133,163 @@ def load_paper_metadata(path: str | Path = "paper_metadata.yaml") -> dict[str, A
     return DEFAULT_PAPER_METADATA.copy()
 
 
-def load_or_synthesize_benchmark_results(
-    results_dir: str | Path = "results",
-    seed: int = 42,
-) -> dict[str, Any]:
-    """Load benchmark results from JSON files in results_dir, or synthesize deterministic 5-seed data.
+def _compute_sha256(file_path: Path) -> str:
+    """Compute hex SHA-256 digest of a file."""
+    if not file_path.is_file():
+        return ""
+    h = hashlib.sha256()
+    with open(file_path, "rb") as f:
+        while chunk := f.read(65536):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _get_git_commit(cwd: Optional[Path] = None) -> str:
+    """Retrieve current git commit hash."""
+    try:
+        res = subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=str(cwd) if cwd else None,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return res.stdout.strip()
+    except Exception:
+        return "unknown"
+
+
+def load_real_benchmark_results(results_dir: str | Path = "results") -> dict[str, Any]:
+    """Load and parse real benchmark results from results_dir.
 
     Args:
-        results_dir: Directory containing benchmark JSON summaries.
-        seed: Random seed for deterministic synthetic fallback.
+        results_dir: Directory containing benchmark result files.
 
     Returns:
         Structured dictionary matching Scenario 1, Scenario 2, and ablation schemas.
+
+    Raises:
+        FileNotFoundError: If no valid real benchmark result files exist in results_dir.
     """
     res_path = Path(results_dir)
     tier1_file = res_path / "tier1_benchmark_summary.json"
 
     if tier1_file.exists():
         try:
-            import json
-
             with open(tier1_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
             if isinstance(data, dict) and "scenario1" in data:
                 logger.info("Loaded real benchmark results from %s", tier1_file)
                 return data
         except Exception as e:
-            logger.warning("Failed to load %s: %s; falling back to synthesis", tier1_file, e)
+            logger.warning("Failed to load %s: %s", tier1_file, e)
+
+    # Check for individual benchmark suite outputs
+    axis1_file = res_path / "tier1_axis1_samplers.json"
+    scen2_file = res_path / "tier1_scenario2_curriculum.json"
+    ablation_file = res_path / "tier1_axis2_tree_ablation.json"
+    sensitivity_file = res_path / "tier1_hyperparameter_sensitivity.json"
+
+    found_any = False
+    merged: dict[str, Any] = {
+        "scenario1": {},
+        "scenario2": {},
+        "ablation": {},
+        "convergence": {},
+        "heatmap": {},
+        "sensitivity": {},
+    }
+
+    if axis1_file.exists():
+        found_any = True
+        try:
+            with open(axis1_file, "r", encoding="utf-8") as f:
+                d1 = json.load(f)
+            if "aggregated_summary" in d1:
+                merged["scenario1"] = d1["aggregated_summary"]
+            elif "scenario1" in d1:
+                merged["scenario1"] = d1["scenario1"]
+        except Exception as e:
+            logger.warning("Error parsing %s: %s", axis1_file, e)
+
+    if scen2_file.exists():
+        found_any = True
+        try:
+            with open(scen2_file, "r", encoding="utf-8") as f:
+                d2 = json.load(f)
+            if "aggregated_summary" in d2:
+                merged["scenario2"] = d2["aggregated_summary"]
+            elif "scenario2" in d2:
+                merged["scenario2"] = d2["scenario2"]
+        except Exception as e:
+            logger.warning("Error parsing %s: %s", scen2_file, e)
+
+    if ablation_file.exists():
+        found_any = True
+        try:
+            with open(ablation_file, "r", encoding="utf-8") as f:
+                da = json.load(f)
+            if "aggregated_summary" in da:
+                merged["ablation"] = da["aggregated_summary"]
+            elif "ablation" in da:
+                merged["ablation"] = da["ablation"]
+        except Exception as e:
+            logger.warning("Error parsing %s: %s", ablation_file, e)
+
+    if sensitivity_file.exists():
+        found_any = True
+        try:
+            with open(sensitivity_file, "r", encoding="utf-8") as f:
+                ds = json.load(f)
+            if "sensitivity" in ds:
+                merged["sensitivity"] = ds["sensitivity"]
+            elif "aggregated_summary" in ds:
+                merged["sensitivity"] = ds["aggregated_summary"]
+        except Exception as e:
+            logger.warning("Error parsing %s: %s", sensitivity_file, e)
+
+    if found_any and (merged["scenario1"] or merged["scenario2"]):
+        return merged
+
+    raise FileNotFoundError(
+        f"Real benchmark results not found in {res_path}. "
+        "Automatic synthetic fallback is prohibited in REAL mode. "
+        "Ensure tier1_benchmark_summary.json or component benchmark results are produced first."
+    )
+
+
+def load_or_synthesize_benchmark_results(
+    results_dir: str | Path = "results",
+    seed: int = 42,
+    config: Optional[ExperimentConfig] = None,
+) -> dict[str, Any]:
+    """Load benchmark results from JSON files in results_dir, or synthesize deterministic 5-seed data.
+
+    In ExecutionMode.REAL, raises FileNotFoundError if real benchmark results are missing.
+    In ExecutionMode.SMOKE, returns deterministic synthetic distributions flagged with is_smoke=True.
+
+    Args:
+        results_dir: Directory containing benchmark JSON summaries.
+        seed: Random seed for deterministic synthetic fallback.
+        config: Optional ExperimentConfig specifying execution mode.
+
+    Returns:
+        Structured dictionary matching Scenario 1, Scenario 2, and ablation schemas.
+    """
+    if config is not None:
+        mode = config.execution_mode
+    elif get_active_session_mode() is not None:
+        mode = get_active_session_mode()
+    else:
+        try:
+            return load_real_benchmark_results(results_dir)
+        except FileNotFoundError:
+            mode = ExecutionMode.SMOKE
+
+    if mode == ExecutionMode.REAL:
+        return load_real_benchmark_results(results_dir)
+
+    logger.warning("SMOKE mode: Generating deterministic synthetic benchmark distributions.")
 
     # Deterministic synthesis of 5-seed benchmark distributions
     import numpy as np
@@ -263,6 +406,7 @@ def load_or_synthesize_benchmark_results(
     alpha_f1 = [0.529, 0.547, 0.564, 0.556, 0.538, 0.512]
 
     return {
+        "is_smoke": True,
         "scenario1": scenario1_results,
         "scenario2": scenario2_results,
         "ablation": ablation_results,
@@ -290,12 +434,14 @@ def _ensure_dir(path: Path) -> Path:
 def generate_convergence_plot(
     data: dict[str, Any],
     output_dir: str | Path = "paper/figures",
+    watermark: Optional[str] = None,
 ) -> tuple[Path, Path]:
     """Generate convergence curves figure (PDF vector and PNG raster).
 
     Args:
         data: Benchmark results dictionary containing 'convergence'.
         output_dir: Directory where figures will be saved.
+        watermark: Optional watermark banner text for smoke test outputs.
 
     Returns:
         Tuple of (pdf_path, png_path).
@@ -348,7 +494,15 @@ def generate_convergence_plot(
     ax2.set_ylim(0.0, 0.8)
     ax2.legend(loc="upper right", frameon=True, fontsize=9)
 
-    plt.tight_layout()
+    if watermark is None and data.get("is_smoke"):
+        watermark = "SMOKE TEST — NOT FOR PUBLICATION"
+
+    if watermark:
+        fig.suptitle(f"[{watermark}]", fontsize=11, color="crimson", fontweight="bold")
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
+    else:
+        plt.tight_layout()
+
     fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
     fig.savefig(png_path, format="png", bbox_inches="tight", dpi=300)
     plt.close(fig)
@@ -360,12 +514,14 @@ def generate_convergence_plot(
 def generate_tree_visitation_heatmap(
     data: dict[str, Any],
     output_dir: str | Path = "paper/figures",
+    watermark: Optional[str] = None,
 ) -> tuple[Path, Path]:
     """Generate tree visitation heatmap figure showing exploration to exploitation.
 
     Args:
         data: Benchmark results dictionary containing 'heatmap'.
         output_dir: Directory where figures will be saved.
+        watermark: Optional watermark banner text for smoke test outputs.
 
     Returns:
         Tuple of (pdf_path, png_path).
@@ -404,7 +560,15 @@ def generate_tree_visitation_heatmap(
     cbar = fig.colorbar(im, ax=ax, fraction=0.035, pad=0.04)
     cbar.set_label("Visitation Probability $p_k$", fontsize=9)
 
-    plt.tight_layout()
+    if watermark is None and data.get("is_smoke"):
+        watermark = "SMOKE TEST — NOT FOR PUBLICATION"
+
+    if watermark:
+        fig.suptitle(f"[{watermark}]", fontsize=11, color="crimson", fontweight="bold")
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
+    else:
+        plt.tight_layout()
+
     fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
     fig.savefig(png_path, format="png", bbox_inches="tight", dpi=300)
     plt.close(fig)
@@ -416,12 +580,14 @@ def generate_tree_visitation_heatmap(
 def generate_hyperparameter_sensitivity_plot(
     data: dict[str, Any],
     output_dir: str | Path = "paper/figures",
+    watermark: Optional[str] = None,
 ) -> tuple[Path, Path]:
     """Generate hyperparameter sensitivity plot for exploration constant c and momentum alpha.
 
     Args:
         data: Benchmark results dictionary containing 'sensitivity'.
         output_dir: Directory where figures will be saved.
+        watermark: Optional watermark banner text for smoke test outputs.
 
     Returns:
         Tuple of (pdf_path, png_path).
@@ -458,7 +624,15 @@ def generate_hyperparameter_sensitivity_plot(
     ax2.grid(True, linestyle=":", alpha=0.6)
     ax2.legend(loc="lower right", fontsize=9)
 
-    plt.tight_layout()
+    if watermark is None and data.get("is_smoke"):
+        watermark = "SMOKE TEST — NOT FOR PUBLICATION"
+
+    if watermark:
+        fig.suptitle(f"[{watermark}]", fontsize=11, color="crimson", fontweight="bold")
+        plt.tight_layout(rect=[0, 0, 1, 0.95])
+    else:
+        plt.tight_layout()
+
     fig.savefig(pdf_path, format="pdf", bbox_inches="tight")
     fig.savefig(png_path, format="png", bbox_inches="tight", dpi=300)
     plt.close(fig)
@@ -701,41 +875,141 @@ def generate_ablation_table(
     return tex_path
 
 
+def generate_artifact_manifest(
+    output_dir: str | Path,
+    artifacts: list[Path | str],
+    source_files: list[Path | str],
+    mode: ExecutionMode | str,
+    git_commit: Optional[str] = None,
+) -> Path:
+    """Generate artifact_manifest.json with SHA-256 hashes and provenance metadata.
+
+    Args:
+        output_dir: Directory where the manifest will be written.
+        artifacts: List of generated artifact file paths.
+        source_files: List of input data file paths.
+        mode: ExecutionMode (REAL or SMOKE).
+        git_commit: Optional git commit hash.
+
+    Returns:
+        Path to the generated artifact_manifest.json.
+    """
+    out_dir = _ensure_dir(Path(output_dir))
+    manifest_path = out_dir / "artifact_manifest.json"
+
+    mode_str = mode.value if isinstance(mode, ExecutionMode) else str(mode).lower()
+    commit_str = git_commit or _get_git_commit(out_dir)
+
+    art_entries = []
+    for art in artifacts:
+        p = Path(art)
+        if p.exists():
+            art_entries.append({
+                "file": str(p),
+                "name": p.name,
+                "sha256": _compute_sha256(p),
+                "bytes": p.stat().st_size if p.is_file() else 0,
+            })
+
+    src_entries = []
+    for src in source_files:
+        p = Path(src)
+        if p.exists():
+            src_entries.append({
+                "file": str(p),
+                "name": p.name,
+                "sha256": _compute_sha256(p),
+                "bytes": p.stat().st_size if p.is_file() else 0,
+            })
+
+    manifest_data = {
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "execution_mode": mode_str,
+        "git_commit": commit_str,
+        "artifacts": art_entries,
+        "source_files": src_entries,
+    }
+
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump(manifest_data, f, indent=2)
+
+    logger.info("Saved artifact manifest to %s (%d artifacts)", manifest_path, len(art_entries))
+    return manifest_path
+
+
 def generate_all_paper_artifacts(
     results_dir: str | Path = "results",
     paper_dir: str | Path = "paper",
     metadata_path: str | Path = "paper_metadata.yaml",
-) -> dict[str, list[Path]]:
-    """High-level pipeline: generate all figures and tables into paper/figures/ and paper/tables/.
+    config: Optional[ExperimentConfig] = None,
+) -> dict[str, Any]:
+    """High-level pipeline: generate all figures and tables into isolated paper directories.
 
     Args:
         results_dir: Path to directory containing experiment JSON files.
-        paper_dir: Root paper directory (will create 'figures/' and 'tables/' inside).
+        paper_dir: Root paper directory.
         metadata_path: Path to paper_metadata.yaml.
+        config: Optional ExperimentConfig for mode-segregated paths and execution rules.
 
     Returns:
-        Dictionary mapping 'figures' and 'tables' to list of generated file Paths.
+        Dictionary mapping 'figures', 'tables', and 'manifest' to generated file Paths.
     """
-    p_dir = _ensure_dir(Path(paper_dir))
-    fig_dir = _ensure_dir(p_dir / "figures")
-    tab_dir = _ensure_dir(p_dir / "tables")
+    if config is not None:
+        mode = config.execution_mode
+        paths = get_isolated_paths(config)
+        fig_dir = paths.paper_figures_dir
+        tab_dir = paths.paper_tables_dir
+        manifest_dir = fig_dir.parent
+        res_dir = paths.results_dir if str(results_dir) == "results" else Path(results_dir)
+    else:
+        active = get_active_session_mode()
+        mode = active if active is not None else ExecutionMode.REAL
+        p_dir = _ensure_dir(Path(paper_dir))
+        fig_dir = _ensure_dir(p_dir / "figures")
+        tab_dir = _ensure_dir(p_dir / "tables")
+        manifest_dir = p_dir
+        res_dir = Path(results_dir)
 
     meta = load_paper_metadata(metadata_path)
-    data = load_or_synthesize_benchmark_results(results_dir)
+    data = load_or_synthesize_benchmark_results(results_dir=res_dir, config=config)
+
+    watermark = "SMOKE TEST — NOT FOR PUBLICATION" if (mode == ExecutionMode.SMOKE or data.get("is_smoke")) else None
 
     # 1. Figures
-    c_pdf, c_png = generate_convergence_plot(data, output_dir=fig_dir)
-    h_pdf, h_png = generate_tree_visitation_heatmap(data, output_dir=fig_dir)
-    s_pdf, s_png = generate_hyperparameter_sensitivity_plot(data, output_dir=fig_dir)
+    c_pdf, c_png = generate_convergence_plot(data, output_dir=fig_dir, watermark=watermark)
+    h_pdf, h_png = generate_tree_visitation_heatmap(data, output_dir=fig_dir, watermark=watermark)
+    s_pdf, s_png = generate_hyperparameter_sensitivity_plot(data, output_dir=fig_dir, watermark=watermark)
 
     # 2. Tables
     t_scen1 = generate_scenario1_table(data, output_dir=tab_dir)
     t_scen2 = generate_scenario2_table(data, output_dir=tab_dir)
     t_ablation = generate_ablation_table(data, output_dir=tab_dir)
 
+    all_artifacts = [c_pdf, c_png, h_pdf, h_png, s_pdf, s_png, t_scen1, t_scen2, t_ablation]
+
+    # 3. Provenance Source Files
+    source_candidates = [
+        res_dir / "tier1_benchmark_summary.json",
+        res_dir / "tier1_axis1_samplers.json",
+        res_dir / "tier1_scenario2_curriculum.json",
+        res_dir / "tier1_axis2_tree_ablation.json",
+        res_dir / "tier1_hyperparameter_sensitivity.json",
+        Path(metadata_path),
+    ]
+    source_files = [p for p in source_candidates if p.exists()]
+
+    # 4. Manifest
+    manifest_path = generate_artifact_manifest(
+        output_dir=manifest_dir,
+        artifacts=all_artifacts,
+        source_files=source_files,
+        mode=mode,
+    )
+
     return {
         "figures": [c_pdf, c_png, h_pdf, h_png, s_pdf, s_png],
         "tables": [t_scen1, t_scen2, t_ablation],
+        "manifest": manifest_path,
     }
 
 
