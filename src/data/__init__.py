@@ -14,6 +14,7 @@ from src.data.extract_embeddings import (
     build_frozen_resnet18_extractor,
     create_stratified_train_val_indices,
     extract_cifar100_embeddings,
+    extract_or_generate_embeddings,
     load_embedding_cache,
     validate_embedding_bundle,
 )
@@ -42,6 +43,7 @@ __all__ = [
     "build_scenario2_split",
     "create_stratified_train_val_indices",
     "extract_cifar100_embeddings",
+    "extract_or_generate_embeddings",
     "fine_to_coarse_tensor",
     "get_cifar100_taxonomy",
     "load_embedding_cache",

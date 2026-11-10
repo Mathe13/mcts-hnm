@@ -87,6 +87,7 @@ def build_confusion_tree(
     class_to_indices: dict[int, np.ndarray],
     return_linkage: Literal[False] = False,
     taxonomy: CIFAR100Taxonomy | None = None,
+    linkage_method: str = "ward",
 ) -> FastHierarchyTree: ...
 
 
@@ -96,6 +97,7 @@ def build_confusion_tree(
     class_to_indices: dict[int, np.ndarray],
     return_linkage: Literal[True],
     taxonomy: CIFAR100Taxonomy | None = None,
+    linkage_method: str = "ward",
 ) -> tuple[FastHierarchyTree, np.ndarray, np.ndarray]: ...
 
 
@@ -104,18 +106,25 @@ def build_confusion_tree(
     class_to_indices: dict[int, np.ndarray],
     return_linkage: bool = False,
     taxonomy: CIFAR100Taxonomy | None = None,
+    linkage_method: str = "ward",
 ) -> FastHierarchyTree | tuple[FastHierarchyTree, np.ndarray, np.ndarray]:
-    """Construct a binary Ward Confusion Hierarchy from `confusion_matrix` and `class_to_indices`.
+    """Construct a binary Confusion Hierarchy from `confusion_matrix` and `class_to_indices`.
 
     Args:
         confusion_matrix: Square confusion matrix of shape `(K, K)` or `(100, 100)`.
         class_to_indices: Mapping from active fine class IDs (`0..99`) to 1D sample index arrays.
         return_linkage: If `True`, returns `(tree, linkage_matrix, distance_matrix)`.
         taxonomy: Optional `CIFAR100Taxonomy` for human-readable class names.
+        linkage_method: Hierarchical clustering linkage algorithm (`"ward"` or `"average"`).
 
     Returns:
         Binary `FastHierarchyTree` with `2K - 1` nodes and `root_id=0` (or tuple if `return_linkage=True`).
     """
+    method_lower = str(linkage_method).lower()
+    if method_lower not in ("ward", "average"):
+        raise ValueError(
+            f"Unsupported linkage_method: '{linkage_method}'. Must be 'ward' or 'average'."
+        )
     cleaned_pools = _validate_class_to_indices(class_to_indices)
     sorted_class_ids = sorted(cleaned_pools.keys())
     k = len(sorted_class_ids)
@@ -135,7 +144,7 @@ def build_confusion_tree(
 
     dist_matrix = compute_confusion_distance_matrix(active_mat)
     condensed_dist = squareform(dist_matrix, checks=False)
-    linkage_matrix = np.ascontiguousarray(linkage(condensed_dist, method="ward"), dtype=np.float64)
+    linkage_matrix = np.ascontiguousarray(linkage(condensed_dist, method=method_lower), dtype=np.float64)
 
     tax = taxonomy if taxonomy is not None else get_cifar100_taxonomy()
     total_nodes = 2 * k - 1

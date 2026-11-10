@@ -14,6 +14,12 @@ from torchvision import datasets, models, transforms
 
 from src.data.cifar100_taxonomy import fine_to_coarse_tensor
 from src.utils.seed import get_torch_generator, set_global_seed
+from src.utils.experiment_config import (
+    ExecutionMode,
+    ExperimentConfig,
+    get_isolated_paths,
+    save_provenance_metadata,
+)
 
 EMBEDDING_DIM: int = 512
 REQUIRED_SPLITS: tuple[str, ...] = ("train", "val", "test")
@@ -304,4 +310,117 @@ def extract_cifar100_embeddings(
     torch.save(bundle, tmp_path)
     tmp_path.replace(target_cache)
 
+    return bundle
+
+
+def extract_or_generate_embeddings(
+    config: ExperimentConfig,
+    data_dir: str | Path = "data",
+    cache_path: str | Path | None = None,
+    batch_size: int = 256,
+    val_fraction: float = 0.1,
+    seed: int | None = None,
+    device: str | torch.device | None = None,
+    overwrite: bool = False,
+    dataset_factory: Callable[[Path, bool, Callable[..., Any]], Dataset[Any]] | None = None,
+    backbone: nn.Module | None = None,
+    samples_per_class: int = 5,
+) -> dict[str, Any]:
+    """Extract real CIFAR-100 embeddings or generate synthetic fixtures based on config.execution_mode.
+
+    In REAL mode:
+        Extracts real CIFAR-100 embeddings or loads validated real cache.
+        If real CIFAR-100 data cannot be accessed, raises FileNotFoundError.
+        Writes provenance metadata with synthetic_data=False.
+
+    In SMOKE mode:
+        Generates a small deterministic synthetic embedding bundle with 100 classes.
+        Writes provenance metadata with synthetic_data=True.
+    """
+    effective_seed = seed if seed is not None else (config.seed if isinstance(config.seed, int) else 42)
+    paths = get_isolated_paths(config)
+
+    resolved_cache = Path(cache_path) if cache_path is not None else (paths.embeddings_dir / "cifar100_resnet18.pt")
+
+    if resolved_cache.is_file() and not overwrite:
+        bundle = load_embedding_cache(resolved_cache)
+        return bundle
+
+    if config.execution_mode == ExecutionMode.REAL:
+        try:
+            bundle = extract_cifar100_embeddings(
+                data_dir=data_dir,
+                cache_path=resolved_cache,
+                batch_size=batch_size,
+                val_fraction=val_fraction,
+                seed=effective_seed,
+                device=device,
+                overwrite=overwrite,
+                dataset_factory=dataset_factory,
+                backbone=backbone,
+            )
+        except Exception as exc:
+            if isinstance(exc, FileNotFoundError):
+                raise
+            raise FileNotFoundError(
+                f"Failed to extract real CIFAR-100 embeddings in REAL mode: {exc}. "
+                "Ensure CIFAR-100 raw data is downloaded to data_dir."
+            ) from exc
+
+        save_provenance_metadata(
+            resolved_cache,
+            config,
+            extra={
+                "data_source": str(resolved_cache.name),
+                "synthetic_data": False,
+                "dataset": "CIFAR-100",
+            },
+        )
+        return bundle
+
+    # SMOKE mode: generate deterministic synthetic bundle
+    rng = np.random.default_rng(effective_seed)
+    n_classes = 100
+    train_n = n_classes * samples_per_class
+    val_n = n_classes * max(1, samples_per_class // 5)
+    test_n = n_classes * max(1, samples_per_class // 5)
+
+    def _make_split(n_samples: int) -> dict[str, torch.Tensor]:
+        labels = np.array([i % n_classes for i in range(n_samples)], dtype=np.int64)
+        feats = rng.standard_normal((n_samples, EMBEDDING_DIM)).astype(np.float32)
+        fine_tensor = torch.from_numpy(labels)
+        coarse_tensor = fine_to_coarse_tensor(fine_tensor)
+        return {
+            "embeddings": torch.from_numpy(feats),
+            "fine_labels": fine_tensor,
+            "coarse_labels": coarse_tensor,
+            "indices": torch.arange(n_samples, dtype=torch.int64),
+        }
+
+    bundle = {
+        "train": _make_split(train_n),
+        "val": _make_split(val_n),
+        "test": _make_split(test_n),
+        "metadata": {
+            "backbone": "synthetic_smoke_generator",
+            "embedding_dim": EMBEDDING_DIM,
+            "seed": effective_seed,
+            "synthetic_data": True,
+        },
+    }
+
+    validate_embedding_bundle(bundle)
+
+    resolved_cache.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(bundle, resolved_cache)
+
+    save_provenance_metadata(
+        resolved_cache,
+        config,
+        extra={
+            "data_source": str(resolved_cache.name),
+            "synthetic_data": True,
+            "dataset": "CIFAR-100-Synthetic-Smoke",
+        },
+    )
     return bundle
