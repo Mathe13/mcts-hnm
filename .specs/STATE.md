@@ -76,22 +76,24 @@
 
 ## Handoff
 
-- **Feature**: `05-extensions-and-e2e` (`.specs/features/05-extensions-and-e2e/`)
+- **Feature**: `06-paper-and-artifacts` (`.specs/features/06-paper-and-artifacts/`)
 - **Phase / Task**: Done & Verified (`validate_verification.py` exited 0)
 - **Completed**:
   - Feature `F1` (`01-data-and-embeddings`): Done & Verified (`T1`–`T6`, 17 tests passing)
   - Feature `F2` (`02-dual-hierarchy-trees`): Done & Verified (`T1`–`T4`, 12 checks passing)
   - Feature `F3` (`03-mcts-hnm-agent`): Done & Verified (`T1`–`T4`, 12 checks passing)
   - Feature `F4` (`04-tier1-benchmark-suite`): Done & Verified (`T1`–`T7`, 12 checks passing)
-  - `T1` (`4baabdb`): `src/mcts/expansion.py` (`compute_prediction_entropy`, `expand_leaf_by_entropy`, `maybe_expand_leaf`)
-  - `T2` (`7486fa2`): `src/mcts/diagnostics.py` (`compute_superclass_visit_distribution` sub-cluster mapping `cls_id % 1000`)
-  - `T3` (`7afbd33`): `src/training/trainer.py` (`enable_leaf_expansion`, `split_threshold`, `k_sub` hooks in `train_scenario1` and `train_scenario2`)
-  - `T4` (`a2b3e30`): `src/training/e2e_trainer.py` (`Tier2ResNet18`, `refresh_confusion_tree_from_model`, `train_e2e_scenario1`, `train_e2e_scenario2`)
-  - `T5` (`c38da54`): `src/training/e2e_trainer.py` (`E2EExperimentConfig`, `run_e2e_experiment` multi-seed runner with atomic JSON/CSV persistence)
-  - `T6` (`58f3471`): `notebooks/04_tier2_e2e_and_expansion.ipynb` (versioned JupyterHub orchestration notebook)
-  - Independent Verifier (`65d830bd-1a42-4132-9997-6d67d97a26c7`): `PASS` across all 11 checks (`C1`–`C11`, 65 total tests passing)
+  - Feature `F5` (`05-extensions-and-e2e`): Done & Verified (`T1`–`T6`, 11 checks passing)
+  - Feature `F6` (`06-paper-and-artifacts`): Done & Verified (`T1`–`T6`, 10 checks passing, 74 total repository tests passing)
+    - `T1` (`1ec39fe`): `paper_metadata.yaml` with PPGC UFRGS affiliation and multiple authors configuration; `load_paper_metadata()` in `src/utils/paper_artifacts.py`.
+    - `T2` (`e0cc701`): Dual-mode data loader `load_or_synthesize_benchmark_results()`; publication-quality vector figures (`fig_convergence_curves`, `fig_tree_visitation_heatmap`, `fig_hyperparameter_sensitivity`) in PDF and 300 DPI PNG.
+    - `T3` (`b0d5790`): Formal LaTeX booktabs tables (`tab_scenario1_imbalanced.tex`, `tab_scenario2_multiclass.tex`, `tab_ablation_study.tex`) with significance $p$-values; orchestrator `generate_all_paper_artifacts()`.
+    - `T4` (`649128f`): Full 8-page scientific manuscript `paper/main.tex`, `paper/PRIMEarxiv.sty`, `paper/references.bib` with citations to seminal hard negative mining and MCTS literature.
+    - `T5` (`8109956`, `79f3c79`): Robust LaTeX compilation pipeline `compile_paper()` with BibTeX resolution producing `paper/main.pdf` (336 KB).
+    - `T6` (`c4c2772`, `5015604`): Versioned notebooks `notebooks/05_paper_artifacts.ipynb` and master `notebooks/00_master_end_to_end.ipynb` with `FAST_MODE` toggle (~1 min execution) executing error-free at runtime.
+    - Independent Verifier (`955c66ff-288b-4cf6-afb1-c2ce5254833a`): `PASS` across all 9 checks (`C1`–`C9`) + `Build` on clean tree at `5015604`. All 4 findings closed and verified.
 - **In-progress**: None
-- **Next step**: Feature `F6` (`06-paper-and-artifacts`: automated paper artifacts, master notebook 00, and LaTeX manuscript)
+- **Next step**: Entire project pipeline (Features F1 through F6) complete, fully tested, and ready for deployment or remote JupyterHub runs!
 - **Blockers**: None
 - **Uncommitted files**: None (after commit)
 - **Branch**: `main`
