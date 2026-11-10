@@ -1,6 +1,6 @@
 # 06-paper-and-artifacts proofs
 
-**HEAD**: 60f9488
+**HEAD**: bf906d3
 **Tree**: clean
 **Shell**: /bin/sh
 **Result**: 10 pass, 0 fail
@@ -37,5 +37,5 @@ tests/test_training_loop.py::test_run_benchmark_multi_seed_and_export
     batch = mcts_sampler.sample_batch(mcts_leaf_id)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-======================= 74 passed, 7 warnings in 29.48s ========================
+================== 74 passed, 7 warnings in 66.32s (0:01:06) ===================
 ```
