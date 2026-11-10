@@ -65,9 +65,9 @@ flowchart TD
   ```yaml
   title: "MCTS-HNM: Monte Carlo Tree Search for Hierarchical Hard Negative Mining in Class-Imbalanced Learning"
   authors:
-    - name: "Matheus Santos"
+    - name: ""
       affiliation: "PPGC - Universidade Federal do Rio Grande do Sul (UFRGS)"
-      email: "matheus@inf.ufrgs.br"
+      email: ""
   affiliation_default: "Postgraduate Program in Computer Science (PPGC)\nUniversidade Federal do Rio Grande do Sul (UFRGS)\nPorto Alegre, RS, Brazil"
   keywords:
     - "Monte Carlo Tree Search"

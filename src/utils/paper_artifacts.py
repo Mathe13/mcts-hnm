@@ -18,9 +18,9 @@ DEFAULT_PAPER_METADATA: dict[str, Any] = {
     "title": "MCTS-HNM: Monte Carlo Tree Search for Hierarchical Hard Negative Mining in Class-Imbalanced Learning",
     "authors": [
         {
-            "name": "Matheus Santos",
+            "name": "",
             "affiliation": "PPGC - Universidade Federal do Rio Grande do Sul (UFRGS)",
-            "email": "matheus@inf.ufrgs.br",
+            "email": "",
         },
         {
             "name": "Co-Author Placeholder",
