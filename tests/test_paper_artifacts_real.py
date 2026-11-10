@@ -26,6 +26,7 @@ from src.utils.paper_artifacts import (
     generate_tree_visitation_heatmap,
     load_or_synthesize_benchmark_results,
     load_real_benchmark_results,
+    validate_artifact_completeness,
 )
 
 
@@ -264,3 +265,38 @@ def test_compile_paper_missing_compiler_raises(tmp_path: Path):
     """C10: compile_paper raises RuntimeError if compiler engine is missing."""
     with pytest.raises((RuntimeError, FileNotFoundError)):
         compile_paper(paper_dir=tmp_path, engine="non_existent_latex_compiler_xyz_123")
+
+
+def test_validate_artifact_completeness():
+    """Verify validate_artifact_completeness checks valid schemas and rejects incomplete data."""
+    # 1. Valid data from synthesizer passes all checks
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
+    valid_data = load_or_synthesize_benchmark_results(config=cfg)
+
+    for artifact in ("scenario1_table", "scenario2_table", "ablation_table", "convergence_plot", "visitation_heatmap", "sensitivity_plot"):
+        validate_artifact_completeness(valid_data, artifact)
+
+    # 2. Rejection of invalid types and missing sections
+    with pytest.raises(ValueError, match="must be a dictionary"):
+        validate_artifact_completeness("not_a_dict", "scenario1_table")  # type: ignore
+
+    with pytest.raises(ValueError, match="Scenario 1 results dictionary is empty"):
+        validate_artifact_completeness({}, "scenario1_table")
+
+    with pytest.raises(ValueError, match="Scenario 2 results dictionary is empty"):
+        validate_artifact_completeness({}, "scenario2_table")
+
+    with pytest.raises(ValueError, match="Ablation results dictionary is empty"):
+        validate_artifact_completeness({}, "ablation_table")
+
+    with pytest.raises(ValueError, match="Convergence curve metrics missing"):
+        validate_artifact_completeness({}, "convergence_plot")
+
+    with pytest.raises(ValueError, match="visitation heatmap matrix missing"):
+        validate_artifact_completeness({}, "visitation_heatmap")
+
+    with pytest.raises(ValueError, match="sensitivity metrics .* missing"):
+        validate_artifact_completeness({}, "sensitivity_plot")
+
+    with pytest.raises(ValueError, match="Unknown artifact type"):
+        validate_artifact_completeness(valid_data, "unknown_artifact")

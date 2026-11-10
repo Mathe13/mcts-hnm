@@ -28,6 +28,7 @@ from src.utils.paper_artifacts import (
     load_or_synthesize_benchmark_results,
     load_paper_metadata,
     load_real_benchmark_results,
+    validate_artifact_completeness,
 )
 from src.utils.seed import get_torch_generator, set_global_seed
 from src.utils.statistics import compute_paired_statistical_tests
@@ -61,4 +62,5 @@ __all__ = [
     "generate_artifact_manifest",
     "generate_all_paper_artifacts",
     "compile_paper",
+    "validate_artifact_completeness",
 ]

@@ -542,6 +542,84 @@ def load_or_synthesize_benchmark_results(
     }
 
 
+def validate_artifact_completeness(
+    data: dict[str, Any],
+    artifact_type: str,
+    strict_strategies: bool = False,
+) -> None:
+    """Validate completeness of benchmark results prior to artifact generation.
+
+    Args:
+        data: Benchmark results dictionary.
+        artifact_type: Type of artifact to validate ('scenario1_table', 'scenario2_table',
+            'ablation_table', 'convergence_plot', 'visitation_heatmap', 'sensitivity_plot').
+        strict_strategies: Whether all canonical strategies are strictly required.
+
+    Raises:
+        ValueError: If required data keys, strategies, or metrics are missing or incomplete.
+    """
+    if not isinstance(data, dict):
+        raise ValueError("Benchmark data must be a dictionary.")
+
+    is_smoke = bool(data.get("is_smoke", False))
+    require_all_strats = strict_strategies or (not is_smoke and not data.get("partial_allowed", False))
+
+    if artifact_type == "scenario1_table":
+        scen1 = data.get("scenario1")
+        if not scen1 or not isinstance(scen1, dict):
+            raise ValueError("Scenario 1 results dictionary is empty or missing.")
+        canonical = ["uniform", "ohem", "mcts_strict", "mcts_enhanced"]
+        if require_all_strats:
+            missing = [s for s in canonical if s not in scen1]
+            if missing:
+                raise ValueError(f"Scenario 1 results missing required strategies: {missing}")
+        for strat, r_dict in scen1.items():
+            if not isinstance(r_dict, dict) or not r_dict:
+                raise ValueError(f"Scenario 1 strategy '{strat}' has no imbalance ratio data.")
+            for rho, m_dict in r_dict.items():
+                for mk in ("f1", "auprc", "fpr95"):
+                    if mk not in m_dict or "mean" not in m_dict[mk] or "std" not in m_dict[mk]:
+                        raise ValueError(f"Scenario 1 strategy '{strat}' missing metric '{mk}' at rho={rho}")
+
+    elif artifact_type == "scenario2_table":
+        scen2 = data.get("scenario2")
+        if not scen2 or not isinstance(scen2, dict):
+            raise ValueError("Scenario 2 results dictionary is empty or missing.")
+        if require_all_strats:
+            if "uniform" not in scen2 or "mcts_enhanced" not in scen2:
+                raise ValueError("Scenario 2 results missing required strategies ('uniform', 'mcts_enhanced').")
+        for strat, m_dict in scen2.items():
+            for mk in ("top1_accuracy", "macro_f1", "worst_10_recall"):
+                if mk not in m_dict or "mean" not in m_dict[mk] or "std" not in m_dict[mk]:
+                    raise ValueError(f"Scenario 2 strategy '{strat}' missing metric '{mk}'")
+
+    elif artifact_type == "ablation_table":
+        ablation = data.get("ablation")
+        if not ablation or not isinstance(ablation, dict):
+            raise ValueError("Ablation results dictionary is empty or missing.")
+        for k, v in ablation.items():
+            if not isinstance(v, dict) or "f1" not in v or "auprc" not in v:
+                raise ValueError(f"Ablation configuration '{k}' missing required 'f1' or 'auprc' metric: {v}")
+
+    elif artifact_type == "convergence_plot":
+        conv = data.get("convergence")
+        if not conv or not isinstance(conv, dict) or "steps" not in conv or len(conv["steps"]) < 2:
+            raise ValueError("Convergence curve metrics missing or steps array insufficient.")
+
+    elif artifact_type == "visitation_heatmap":
+        heat = data.get("heatmap")
+        if not heat or not isinstance(heat, dict) or "matrix" not in heat or not heat["matrix"]:
+            raise ValueError("Tree visitation heatmap matrix missing or empty.")
+
+    elif artifact_type == "sensitivity_plot":
+        sens = data.get("sensitivity")
+        if not sens or not isinstance(sens, dict) or not sens.get("c_values") or not sens.get("alpha_values"):
+            raise ValueError("Hyperparameter sensitivity metrics ('c_values', 'alpha_values') missing.")
+
+    else:
+        raise ValueError(f"Unknown artifact type: '{artifact_type}'")
+
+
 def _ensure_dir(path: Path) -> Path:
     """Ensure directory exists and return it."""
     path.mkdir(parents=True, exist_ok=True)
@@ -563,6 +641,7 @@ def generate_convergence_plot(
     Returns:
         Tuple of (pdf_path, png_path).
     """
+    validate_artifact_completeness(data, "convergence_plot")
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -646,6 +725,7 @@ def generate_tree_visitation_heatmap(
     Returns:
         Tuple of (pdf_path, png_path).
     """
+    validate_artifact_completeness(data, "visitation_heatmap")
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -714,6 +794,7 @@ def generate_hyperparameter_sensitivity_plot(
     Returns:
         Tuple of (pdf_path, png_path).
     """
+    validate_artifact_completeness(data, "sensitivity_plot")
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -778,6 +859,7 @@ def generate_scenario1_table(
     Returns:
         Path to the saved .tex file.
     """
+    validate_artifact_completeness(data, "scenario1_table")
     from src.utils.statistics import compute_paired_statistical_tests
 
     out = _ensure_dir(Path(output_dir))
@@ -893,6 +975,7 @@ def generate_scenario2_table(
     Returns:
         Path to the saved .tex file.
     """
+    validate_artifact_completeness(data, "scenario2_table")
     from src.utils.statistics import compute_paired_statistical_tests
 
     out = _ensure_dir(Path(output_dir))
@@ -995,6 +1078,7 @@ def generate_ablation_table(
     Returns:
         Path to the saved .tex file.
     """
+    validate_artifact_completeness(data, "ablation_table")
     out = _ensure_dir(Path(output_dir))
     tex_path = out / "tab_ablation_study.tex"
 

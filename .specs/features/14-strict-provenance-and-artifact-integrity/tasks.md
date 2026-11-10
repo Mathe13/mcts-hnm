@@ -110,8 +110,8 @@ T6
 **Requirement**: ART-01  
 
 **Done when**:
-- [ ] `validate_artifact_completeness()` validates complete strategies and configurations for Scenario 1, Scenario 2, ablation, and figures
-- [ ] Unit tests pass: `.venv/bin/pytest -v tests/test_paper_artifacts_real.py`
+- [x] `validate_artifact_completeness()` validates complete strategies and configurations for Scenario 1, Scenario 2, ablation, and figures
+- [x] Unit tests pass: `.venv/bin/pytest -v tests/test_paper_artifacts_real.py`
 
 **Tests**: unit  
 **Gate**: quick  
