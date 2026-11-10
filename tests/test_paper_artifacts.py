@@ -327,12 +327,18 @@ def test_notebook_05_execution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     orig_compile = compile_paper
     orig_generate = generate_all_paper_artifacts
 
+    def _is_repo_paper(p):
+        target = Path(p)
+        if not target.is_absolute():
+            target = repo_root / target
+        return target.resolve() == (repo_root / "paper").resolve()
+
     def safe_compile_paper(paper_dir="paper", **kwargs):
-        p_dir = str(tmp_paper) if str(paper_dir) == "paper" else paper_dir
+        p_dir = str(tmp_paper) if _is_repo_paper(paper_dir) else paper_dir
         return orig_compile(paper_dir=p_dir, **kwargs)
 
     def safe_generate_all(results_dir="results", paper_dir="paper", **kwargs):
-        p_dir = str(tmp_paper) if str(paper_dir) == "paper" else paper_dir
+        p_dir = str(tmp_paper) if _is_repo_paper(paper_dir) else paper_dir
         return orig_generate(results_dir=results_dir, paper_dir=p_dir, **kwargs)
 
     monkeypatch.setattr("src.utils.paper_artifacts.compile_paper", safe_compile_paper)
@@ -384,12 +390,18 @@ def test_notebook_00_execution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     orig_compile = compile_paper
     orig_generate = generate_all_paper_artifacts
 
+    def _is_repo_paper(p):
+        target = Path(p)
+        if not target.is_absolute():
+            target = repo_root / target
+        return target.resolve() == (repo_root / "paper").resolve()
+
     def safe_compile_paper(paper_dir="paper", **kwargs):
-        p_dir = str(tmp_paper) if str(paper_dir) == "paper" else paper_dir
+        p_dir = str(tmp_paper) if _is_repo_paper(paper_dir) else paper_dir
         return orig_compile(paper_dir=p_dir, **kwargs)
 
     def safe_generate_all(results_dir="results", paper_dir="paper", **kwargs):
-        p_dir = str(tmp_paper) if str(paper_dir) == "paper" else paper_dir
+        p_dir = str(tmp_paper) if _is_repo_paper(paper_dir) else paper_dir
         return orig_generate(results_dir=results_dir, paper_dir=p_dir, **kwargs)
 
     monkeypatch.setattr("src.utils.paper_artifacts.compile_paper", safe_compile_paper)
