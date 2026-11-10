@@ -98,20 +98,29 @@
 - **Date**: 2026-11-10
 - **Status**: active (AD-012)
 
+### AD-013
+- **Decision**: Standardize Notebook 04 under `ExecutionMode` contract (rejecting missing CIFAR-100 datasets in REAL mode without fallback), implement `load_cifar100_raw_images` in `src/data/cifar100_images.py`, persist ResNet-18 model weights to `checkpoints/{mode}/`, export E2E metrics to `results/{mode}/` with `.meta.json` sidecars, and audit dynamic entropy leaf expansion and tree structural invariants.
+- **Reason**: Eliminates silent synthetic random image tensor fallbacks in Tier-2 vision training, ensuring scientific legitimacy for end-to-end benchmarks and dynamic tree expansion.
+- **Trade-off**: Requires local or downloaded CIFAR-100 dataset when executing in REAL mode.
+- **Scope**: `src/data/cifar100_images.py`, `src/training/e2e_trainer.py`, `notebooks/04_tier2_e2e_and_expansion.ipynb`, `tests/test_tier2_e2e_real.py`
+- **Date**: 2026-11-10
+- **Status**: active (AD-013)
+
 ## Handoff
 
-- **Feature**: `09-tier1-benchmarks-real-data` (`.specs/features/09-tier1-benchmarks-real-data/`)
+- **Feature**: `10-tier2-e2e-real-cifar` (`.specs/features/10-tier2-e2e-real-cifar/`)
 - **Phase / Task**: Done & Verified (`validate_verification.py` exited 0)
 - **Completed**:
   - Phase 0 (Baseline Audit) completed and documented.
   - Feature `07-global-execution-contract` (Phase 1): Done & Verified (`C1`–`C13`, 87 repository tests passing)
   - Feature `08-notebooks-00-01-02-reproducibility` (Phase 2): Done & Verified (`C1`–`C12`, 99 repository tests passing)
   - Feature `09-tier1-benchmarks-real-data` (Phase 3): Done & Verified (`C1`–`C11`, 110 repository tests passing)
-    - `422ad7f`: Standardized benchmark runner with `audit_scenario1_imbalance`, `run_sensitivity_ablation`, budget equivalence validation, Scenario 2 multiclass diagnostics, mode segregation, and updated Notebook 03.
-    - `tests/test_tier1_benchmarks_real.py`: 11 automated tests covering mode enforcement, imbalance audits, budget equivalence, MCTS visitation entropy, class coverage, per-class recall, sensitivity grid, and multi-seed serialization.
-    - `1724bc0`: Independent Verifier report (`verification.md`) confirming `PASS` on all checks C1–C11.
+  - Feature `10-tier2-e2e-real-cifar` (Phase 4): Done & Verified (`C1`–`C10`, 120 repository tests passing)
+    - `205b1aa`: Standardized Tier-2 vision pipeline with `load_cifar100_raw_images`, checkpoint persistence, isolated outputs with `.meta.json`, dynamic leaf expansion evaluation, and updated Notebook 04.
+    - `tests/test_tier2_e2e_real.py`: 10 automated tests covering mode enforcement, synthetic image rejection in REAL mode, checkpoint persistence, multi-seed statistical tests, and dynamic leaf expansion invariants.
+    - `1a4504b`: Independent Verifier report (`verification.md`) confirming `PASS` on all checks C1–C10.
 - **In-progress**: None
-- **Next step**: Phase 4 of `ROADMAP_Improvements.md` — Feature `10-tier2-e2e-real-cifar` (Fix Notebook 04: Tier-2 End-to-End CNN Real CIFAR-100 image training, eliminate random synthetic tensor fallbacks, verify GPU batching and evaluation under REAL mode, dynamic leaf expansion evaluation).
+- **Next step**: Phase 5 of `ROADMAP_Improvements.md` — Feature `11-paper-artifacts-real-integration` (Fix Notebook 05: Paper Artifacts & Publication Visualizations — Ingest real benchmark JSON outputs without synthetic fallbacks, verify LaTeX compilation with `paper_metadata.yaml` and real values, generate artifact provenance manifest).
 - **Blockers**: None
 - **Uncommitted files**: None (after commit)
 - **Branch**: `main`
