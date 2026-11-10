@@ -188,9 +188,9 @@ T6
 
 **Done when**:
 
-- [ ] `notebooks/04_tier2_e2e_and_expansion.ipynb` is a valid `nbformat` v4 notebook executing the dynamic leaf expansion ablation and Tier-2 end-to-end ResNet-18 experiment via `src.*` APIs, rendering summary plots/tables, and saving JSON/CSV artifacts under `results/`
-- [ ] End-to-end notebook execution test in `tests/test_dynamic_expansion.py` passes with zero errors
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v`
+- [x] `notebooks/04_tier2_e2e_and_expansion.ipynb` is a valid `nbformat` v4 notebook executing the dynamic leaf expansion ablation and Tier-2 end-to-end ResNet-18 experiment via `src.*` APIs, rendering summary plots/tables, and saving JSON/CSV artifacts under `results/`
+- [x] End-to-end notebook execution test in `tests/test_dynamic_expansion.py` passes with zero errors
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v`
 
 **Tests**: integration
 **Gate**: build

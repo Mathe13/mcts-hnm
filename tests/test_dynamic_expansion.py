@@ -318,7 +318,34 @@ def test_run_e2e_experiment_multi_seed_and_export(tmp_path: Path, toy_tree: Fast
     assert (tmp_path / "e2e_scenario_1_results.csv").exists()
 
 
-# --- C10 Tests ---
+# --- C11 Tests ---
+def test_notebook_04_execution() -> None:
+    import ast
+    import nbformat
+
+    repo_root = Path(__file__).resolve().parent.parent
+    nb_path = repo_root / "notebooks" / "04_tier2_e2e_and_expansion.ipynb"
+    assert nb_path.is_file(), "notebooks/04_tier2_e2e_and_expansion.ipynb must exist"
+
+    nb = nbformat.read(nb_path, as_version=4)
+    nbformat.validate(nb)
+
+    md_cells = [c for c in nb.cells if c.cell_type == "markdown"]
+    code_cells = [c for c in nb.cells if c.cell_type == "code"]
+    assert len(md_cells) >= 3
+    assert len(code_cells) >= 3
+
+    joined_code = "\n\n".join(c.source for c in code_cells)
+    for cell in code_cells:
+        ast.parse(cell.source)
+
+    for required_ref in (
+        "src.training.e2e_trainer",
+        "Tier2ResNet18",
+        "run_e2e_experiment",
+        "enable_leaf_expansion",
+    ):
+        assert required_ref in joined_code, f"Notebook 04 missing reference to {required_ref}"
 def test_e2e_trainer_invalid_arguments_raise() -> None:
     from src.training.e2e_trainer import E2EExperimentConfig, Tier2ResNet18, run_e2e_experiment, train_e2e_scenario1
 
