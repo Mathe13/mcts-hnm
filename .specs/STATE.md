@@ -74,26 +74,26 @@
 - **Date**: 2026-11-09
 - **Status**: active (AD-009)
 
+### AD-010
+- **Decision**: Implement a centralized `ExperimentConfig` and `ExecutionMode` (`SMOKE` vs `REAL`) enforcing strict isolation across directory trees (`embeddings/{mode}`, `results/{mode}`, `checkpoints/{mode}`, `results/legacy`), explicit ASCII warning banners, and `.meta.json` provenance sidecars, prohibiting synthetic fallbacks in REAL mode.
+- **Reason**: ROADMAP_Improvements.md mandates strict reproducibility, elimination of silent fallbacks to random data, and full auditability of experimental scientific artifacts.
+- **Trade-off**: Requires explicit configuration in all entrypoints and rejecting unannotated or synthetic artifacts when in REAL mode.
+- **Scope**: `src/utils/experiment_config.py`, `notebooks/`, `tests/`
+- **Date**: 2026-11-10
+- **Status**: active (AD-010)
+
 ## Handoff
 
-- **Feature**: `06-paper-and-artifacts` (`.specs/features/06-paper-and-artifacts/`)
+- **Feature**: `07-global-execution-contract` (`.specs/features/07-global-execution-contract/`)
 - **Phase / Task**: Done & Verified (`validate_verification.py` exited 0)
 - **Completed**:
-  - Feature `F1` (`01-data-and-embeddings`): Done & Verified (`T1`–`T6`, 17 tests passing)
-  - Feature `F2` (`02-dual-hierarchy-trees`): Done & Verified (`T1`–`T4`, 12 checks passing)
-  - Feature `F3` (`03-mcts-hnm-agent`): Done & Verified (`T1`–`T4`, 12 checks passing)
-  - Feature `F4` (`04-tier1-benchmark-suite`): Done & Verified (`T1`–`T7`, 12 checks passing)
-  - Feature `F5` (`05-extensions-and-e2e`): Done & Verified (`T1`–`T6`, 11 checks passing)
-  - Feature `F6` (`06-paper-and-artifacts`): Done & Verified (`T1`–`T6`, 10 checks passing, 74 total repository tests passing)
-    - `T1` (`1ec39fe`): `paper_metadata.yaml` with PPGC UFRGS affiliation and multiple authors configuration; `load_paper_metadata()` in `src/utils/paper_artifacts.py`.
-    - `T2` (`e0cc701`): Dual-mode data loader `load_or_synthesize_benchmark_results()`; publication-quality vector figures (`fig_convergence_curves`, `fig_tree_visitation_heatmap`, `fig_hyperparameter_sensitivity`) in PDF and 300 DPI PNG.
-    - `T3` (`b0d5790`): Formal LaTeX booktabs tables (`tab_scenario1_imbalanced.tex`, `tab_scenario2_multiclass.tex`, `tab_ablation_study.tex`) with significance $p$-values; orchestrator `generate_all_paper_artifacts()`.
-    - `T4` (`649128f`): Full 8-page scientific manuscript `paper/main.tex`, `paper/PRIMEarxiv.sty`, `paper/references.bib` with citations to seminal hard negative mining and MCTS literature.
-    - `T5` (`8109956`, `79f3c79`): Robust LaTeX compilation pipeline `compile_paper()` with BibTeX resolution producing `paper/main.pdf` (336 KB).
-    - `T6` (`c4c2772`, `5015604`): Versioned notebooks `notebooks/05_paper_artifacts.ipynb` and master `notebooks/00_master_end_to_end.ipynb` with `FAST_MODE` toggle (~1 min execution) executing error-free at runtime.
-    - Independent Verifier (`955c66ff-288b-4cf6-afb1-c2ce5254833a`): `PASS` across all 9 checks (`C1`–`C9`) + `Build` on clean tree at `5015604`. All 4 findings closed and verified.
+  - Phase 0 (Baseline Audit) completed and documented.
+  - Feature `07-global-execution-contract` (Phase 1): Done & Verified (`C1`–`C13`, 87 repository tests passing)
+    - `ef98cca`: `src/utils/experiment_config.py` with `ExecutionMode(SMOKE, REAL)`, `ExperimentConfig`, `print_execution_banner`, `get_isolated_paths`, `save_provenance_metadata`, `validate_provenance_metadata`.
+    - `tests/test_experiment_config.py`: 13 isolated unit tests verifying mode enforcement, banners, path anchoring, legacy directory preservation, and metadata validation.
+    - `e192399`: Independent Verifier report (`verification.md`) confirming `PASS` on all checks C1–C13.
 - **In-progress**: None
-- **Next step**: Entire project pipeline (Features F1 through F6) complete, fully tested, and ready for deployment or remote JupyterHub runs!
+- **Next step**: Phase 2 of `ROADMAP_Improvements.md` — Fix Notebooks 00, 01, and 02 with the new execution contract and directory isolation.
 - **Blockers**: None
 - **Uncommitted files**: None (after commit)
 - **Branch**: `main`
