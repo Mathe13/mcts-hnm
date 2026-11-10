@@ -8,12 +8,12 @@ Training deep classifiers on datasets with hierarchical class structures and ext
 
 ## Goals
 
-- [ ] Deliver a modular, unit-tested MCTS-HNM Python package (`src/`) with zero bioinformatics dependencies, keeping all complex algorithmic and training logic in `.py` modules while exposing clean programmatic APIs (`AD-008`).
-- [ ] Provide versioned Jupyter notebooks (`notebooks/*.ipynb`) that orchestrate the entire experimental workflow end-to-end on a remote JupyterHub: CIFAR-100 download $\rightarrow$ embedding extraction $\rightarrow$ tree construction $\rightarrow$ Tier-1 & Tier-2 MCTS benchmarks $\rightarrow$ paper artifact generation (`AD-008`).
-- [ ] Benchmark Semantic Hierarchy (CIFAR-100 20 superclasses $\rightarrow$ 100 classes) against Data-Driven Confusion Hierarchy (Ward clustering on validation confusion matrices) (`AD-002`).
-- [ ] Evaluate both Scenario 1 (Imbalanced Binary One-vs-Rest with `BCEWithLogitsLoss`, faithful to GiantHunter) and Scenario 2 (100-way Multi-class Curriculum with Cross-Entropy and label smoothing) across $N \ge 5$ random seeds (`AD-004`).
-- [ ] Quantify the ablation gain of Enhanced MCTS-HNM (Min-Max $Q$-normalization + 50/50 Dual-Stream batching) over Strict GiantHunter MCTS (raw $Q$-values + 100% MCTS batches), Uniform Random Sampling, and Online Hard Example Mining (OHEM) (`AD-005`).
-- [ ] Automate the generation of publication figures, statistical tables ($p$-values from paired $t$-tests and Wilcoxon tests), and the complete LaTeX manuscript in the arXiv/Prime AI template (`AD-007`).
+- [x] Deliver a modular, unit-tested MCTS-HNM Python package (`src/`) with zero bioinformatics dependencies, keeping all complex algorithmic and training logic in `.py` modules while exposing clean programmatic APIs (`AD-008`).
+- [x] Provide versioned Jupyter notebooks (`notebooks/*.ipynb`) that orchestrate the entire experimental workflow end-to-end on a remote JupyterHub: CIFAR-100 download $\rightarrow$ embedding extraction $\rightarrow$ tree construction $\rightarrow$ Tier-1 & Tier-2 MCTS benchmarks $\rightarrow$ paper artifact generation (`AD-008`).
+- [x] Benchmark Semantic Hierarchy (CIFAR-100 20 superclasses $\rightarrow$ 100 classes) against Data-Driven Confusion Hierarchy (Ward clustering on validation confusion matrices) (`AD-002`).
+- [x] Evaluate both Scenario 1 (Imbalanced Binary One-vs-Rest with `BCEWithLogitsLoss`, faithful to GiantHunter) and Scenario 2 (100-way Multi-class Curriculum with Cross-Entropy and label smoothing) across $N \ge 5$ random seeds (`AD-004`).
+- [x] Quantify the ablation gain of Enhanced MCTS-HNM (Min-Max $Q$-normalization + 50/50 Dual-Stream batching) over Strict GiantHunter MCTS (raw $Q$-values + 100% MCTS batches), Uniform Random Sampling, and Online Hard Example Mining (OHEM) (`AD-005`).
+- [x] Automate the generation of publication figures, statistical tables ($p$-values from paired $t$-tests and Wilcoxon tests), and the complete LaTeX manuscript in the arXiv/Prime AI template (`AD-007`).
 
 ## Out of Scope
 
@@ -163,9 +163,9 @@ Each requirement maps to a unique ID across the Epic Roadmap and its child featu
 | EPIC-01 | P1: F1 Project, Data Pipeline & Setup Notebook (`01_data_and_embeddings.ipynb`) | Execute | Verified |
 | EPIC-02 | P1: F2 Dual Hierarchy Construction (`02_tree_construction.ipynb`) | Execute | Verified |
 | EPIC-03 | P1: F3 Core MCTS-HNM Agent (Strict vs. Enhanced UCB1, Momentum & Dual-Stream) | Execute | Verified |
-| EPIC-04 | P1: F4 Classifiers, Baselines & Tier-1 Benchmark Notebook (`03_tier1_benchmarks.ipynb`) | Specify | Pending |
-| EPIC-05 | P2: F5 Dynamic Entropy Expansion & Tier-2 E2E Notebook (`04_tier2_e2e_and_expansion.ipynb`) | Specify | Pending |
-| EPIC-06 | P2: F6 Automated Paper Artifacts Notebook (`05_paper_artifacts.ipynb`) & LaTeX Manuscript | Specify | Pending |
+| EPIC-04 | P1: F4 Classifiers, Baselines & Tier-1 Benchmark Notebook (`03_tier1_benchmarks.ipynb`) | Execute | Verified |
+| EPIC-05 | P2: F5 Dynamic Entropy Expansion & Tier-2 E2E Notebook (`04_tier2_e2e_and_expansion.ipynb`) | Execute | Verified |
+| EPIC-06 | P2: F6 Automated Paper Artifacts Notebook (`05_paper_artifacts.ipynb`) & LaTeX Manuscript | Execute | Verified |
 
 **Coverage:** 6 total epic requirements, mapped 1-to-1 to child features `F1`–`F6`.
 
@@ -195,8 +195,8 @@ Every departure from the original *GiantHunter* paper (`btaf239.pdf`) and offici
 
 ## Success Criteria
 
-- [ ] All 6 child features (`F1`–`F6`) pass their unit/integration test suites (`pytest`) and `tlc-spec-driven` verification gates.
-- [ ] Every experimental stage — from CIFAR-100 download to paper artifact generation — executes end-to-end from versioned `.ipynb` notebooks in `notebooks/` on a remote JupyterHub (`AD-008`).
-- [ ] Tier-1 multi-seed benchmark ($N = 5$ seeds) completes in $< 30$ minutes on a single machine and produces statistically valid comparisons ($p$-values logged).
-- [ ] Enhanced MCTS-HNM demonstrates measurable improvement in AUPRC / F1-Score or sample convergence speed over Uniform Sampling, with full ablation tables comparing Semantic vs. Confusion trees.
-- [ ] Final scientific paper (`paper/main.pdf`) compiles cleanly in the arXiv/Prime AI template with all sections, figures, tables, and limitation discussions complete.
+- [x] All 6 child features (`F1`–`F6`) pass their unit/integration test suites (`pytest`) and `tlc-spec-driven` verification gates.
+- [x] Every experimental stage — from CIFAR-100 download to paper artifact generation — executes end-to-end from versioned `.ipynb` notebooks in `notebooks/` on a remote JupyterHub (`AD-008`).
+- [x] Tier-1 multi-seed benchmark ($N = 5$ seeds) completes in $< 30$ minutes on a single machine and produces statistically valid comparisons ($p$-values logged).
+- [x] Enhanced MCTS-HNM demonstrates measurable improvement in AUPRC / F1-Score or sample convergence speed over Uniform Sampling, with full ablation tables comparing Semantic vs. Confusion trees.
+- [x] Final scientific paper (`paper/main.pdf`) compiles cleanly in the arXiv/Prime AI template with all sections, figures, tables, and limitation discussions complete.
