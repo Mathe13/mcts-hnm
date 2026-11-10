@@ -90,19 +90,28 @@
 - **Date**: 2026-11-10
 - **Status**: active (AD-011)
 
+### AD-012
+- **Decision**: Standardize Notebook 03 under `ExecutionMode` contract (rejection of missing embeddings in REAL mode without fallback), enforce strict negative batch budget equivalence ($K_{\text{neg}} = 48$) across Uniform, OHEM, Strict GiantHunter, and Enhanced MCTS, instrument Scenario 1 imbalance audit (available vs effective batch ratios), track Scenario 2 MCTS multiclass diagnostics (visitation entropy, unvisited class counts, per-class recall, and coverage percentage), implement executable sensitivity ablation for $(c, \alpha)$, and serialize isolated JSON/CSV with `.meta.json` sidecars.
+- **Reason**: Fixes critical scientific risks in Tier-1 benchmarks where synthetic prototype embeddings could silently pollute experimental tables, resolves methodological ambiguity in 1:50 imbalance sampling, and provides empirical verification for announced sensitivity claims.
+- **Trade-off**: Increases telemetry payload and results directory files, with each artifact now carrying a sidecar `.meta.json`.
+- **Scope**: `src/training/benchmark_runner.py`, `src/data/splits.py`, `notebooks/03_tier1_mcts_benchmarks.ipynb`, `tests/test_tier1_benchmarks_real.py`
+- **Date**: 2026-11-10
+- **Status**: active (AD-012)
+
 ## Handoff
 
-- **Feature**: `08-notebooks-00-01-02-reproducibility` (`.specs/features/08-notebooks-00-01-02-reproducibility/`)
+- **Feature**: `09-tier1-benchmarks-real-data` (`.specs/features/09-tier1-benchmarks-real-data/`)
 - **Phase / Task**: Done & Verified (`validate_verification.py` exited 0)
 - **Completed**:
   - Phase 0 (Baseline Audit) completed and documented.
   - Feature `07-global-execution-contract` (Phase 1): Done & Verified (`C1`–`C13`, 87 repository tests passing)
   - Feature `08-notebooks-00-01-02-reproducibility` (Phase 2): Done & Verified (`C1`–`C12`, 99 repository tests passing)
-    - `7296939`: Standardized notebooks 00, 01, 02; added `extract_or_generate_embeddings` in `src/data/extract_embeddings.py`; added configurable linkage in `src/trees/confusion_tree.py`.
-    - `tests/test_notebooks_00_01_02.py`: 12 automated tests covering mode enforcement, banner emission, synthetic rejection, Ward vs Average linkage, and tree serialization integrity.
-    - `401d212`: Independent Verifier report (`verification.md`) confirming `PASS` on all checks C1–C12.
+  - Feature `09-tier1-benchmarks-real-data` (Phase 3): Done & Verified (`C1`–`C11`, 110 repository tests passing)
+    - `422ad7f`: Standardized benchmark runner with `audit_scenario1_imbalance`, `run_sensitivity_ablation`, budget equivalence validation, Scenario 2 multiclass diagnostics, mode segregation, and updated Notebook 03.
+    - `tests/test_tier1_benchmarks_real.py`: 11 automated tests covering mode enforcement, imbalance audits, budget equivalence, MCTS visitation entropy, class coverage, per-class recall, sensitivity grid, and multi-seed serialization.
+    - `1724bc0`: Independent Verifier report (`verification.md`) confirming `PASS` on all checks C1–C11.
 - **In-progress**: None
-- **Next step**: Phase 3 of `ROADMAP_Improvements.md` — Fix Notebook 03: Tier-1 Benchmarks (P1: eliminate synthetic fallback, configure negative samplers/hierarchies/seeds, verify Scenario 1 1:50 ratio and budget equivalence, instrument Scenario 2 multiclass coverage and recall, export individual multi-seed results).
+- **Next step**: Phase 4 of `ROADMAP_Improvements.md` — Feature `10-tier2-e2e-real-cifar` (Fix Notebook 04: Tier-2 End-to-End CNN Real CIFAR-100 image training, eliminate random synthetic tensor fallbacks, verify GPU batching and evaluation under REAL mode, dynamic leaf expansion evaluation).
 - **Blockers**: None
 - **Uncommitted files**: None (after commit)
 - **Branch**: `main`
