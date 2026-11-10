@@ -2,6 +2,7 @@
 
 Profile: light
 Plan: `.specs/features/10-tier2-e2e-real-cifar/plan.md`
+Commit: 205b1aa
 
 ## Intent
 
