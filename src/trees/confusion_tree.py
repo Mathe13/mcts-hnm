@@ -259,7 +259,7 @@ def estimate_validation_confusion_matrix(
         else np.asarray(val_labels)
     ).astype(np.int64)
 
-    clf = LogisticRegression(max_iter=200, C=1.0, random_state=seed)
+    clf = LogisticRegression(max_iter=1000, C=1.0, random_state=seed)
     clf.fit(x_train, y_train)
     val_preds = clf.predict(x_val)
 
