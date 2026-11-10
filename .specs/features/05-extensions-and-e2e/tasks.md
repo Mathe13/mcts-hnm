@@ -145,11 +145,11 @@ T6
 
 **Done when**:
 
-- [ ] `Tier2ResNet18(num_outputs=K, width_multiplier=...)` processes 4D RGB images `[B, 3, 32, 32]` and returns logits `[B, K]` (or `[B]` when `squeeze_binary=True` and `K=1`) and feature vectors via `forward_features()`
-- [ ] `train_e2e_scenario1()` and `train_e2e_scenario2()` optimize `Tier2ResNet18` end-to-end with `Adam` across `uniform`, `ohem`, `mcts_strict`, and `mcts_enhanced`, supporting both `enable_leaf_expansion=True` and periodic Ward confusion-tree rebuilds via `refresh_tree_every`
-- [ ] Invalid image tensor shapes, unknown strategies, or non-positive step/eval counts raise `ValueError`
-- [ ] Unit and integration tests pass in `tests/test_dynamic_expansion.py`
-- [ ] Gate check passes: `.venv/bin/pytest -v`
+- [x] `Tier2ResNet18(num_outputs=K, width_multiplier=...)` processes 4D RGB images `[B, 3, 32, 32]` and returns logits `[B, K]` (or `[B]` when `squeeze_binary=True` and `K=1`) and feature vectors via `forward_features()`
+- [x] `train_e2e_scenario1()` and `train_e2e_scenario2()` optimize `Tier2ResNet18` end-to-end with `Adam` across `uniform`, `ohem`, `mcts_strict`, and `mcts_enhanced`, supporting both `enable_leaf_expansion=True` and periodic Ward confusion-tree rebuilds via `refresh_tree_every`
+- [x] Invalid image tensor shapes, unknown strategies, or non-positive step/eval counts raise `ValueError`
+- [x] Unit and integration tests pass in `tests/test_dynamic_expansion.py`
+- [x] Gate check passes: `.venv/bin/pytest -v`
 
 **Tests**: integration
 **Gate**: full

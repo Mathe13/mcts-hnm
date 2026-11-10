@@ -8,8 +8,10 @@ from src.data.cifar100_taxonomy import CIFAR100Taxonomy, get_cifar100_taxonomy
 from src.trees.base_tree import FastHierarchyTree
 
 
-def _validate_class_to_indices(class_to_indices: dict[int, np.ndarray]) -> dict[int, np.ndarray]:
-    """Validate `class_to_indices` keys in `[0, 99]` and non-empty 1D integer index arrays."""
+def _validate_class_to_indices(
+    class_to_indices: dict[int, np.ndarray], allow_subclusters: bool = True
+) -> dict[int, np.ndarray]:
+    """Validate `class_to_indices` keys and non-empty 1D integer index arrays."""
     if not isinstance(class_to_indices, dict) or len(class_to_indices) == 0:
         raise ValueError("class_to_indices must be a non-empty dictionary mapping fine class IDs to index arrays.")
 
@@ -18,7 +20,7 @@ def _validate_class_to_indices(class_to_indices: dict[int, np.ndarray]) -> dict[
         if isinstance(raw_cls_id, bool) or not isinstance(raw_cls_id, (int, np.integer)):
             raise ValueError(f"Class ID must be an integer in [0, 99], got {raw_cls_id!r}.")
         cls_id = int(raw_cls_id)
-        if cls_id < 0 or cls_id >= 100:
+        if cls_id < 0 or (not allow_subclusters and cls_id >= 100):
             raise ValueError(f"CIFAR-100 fine class ID must be in range [0, 99], got {cls_id}.")
 
         arr = np.asarray(raw_indices)
@@ -46,7 +48,7 @@ def build_semantic_tree(
     Returns:
         Validated `FastHierarchyTree` with `tree_type="semantic"` and `root_id=0`.
     """
-    cleaned_pools = _validate_class_to_indices(class_to_indices)
+    cleaned_pools = _validate_class_to_indices(class_to_indices, allow_subclusters=False)
     tax = taxonomy if taxonomy is not None else get_cifar100_taxonomy()
 
     active_superclasses: list[tuple[int, list[int]]] = []

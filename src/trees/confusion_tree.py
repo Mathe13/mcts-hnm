@@ -163,7 +163,15 @@ def build_confusion_tree(
         is_leaf[leaf_nid] = True
         leaf_to_class_id[leaf_nid] = cls_id
         instance_counts[leaf_nid] = int(cleaned_pools[cls_id].size)
-        node_names[leaf_nid] = f"class:{tax.fine_names[cls_id]}"
+        base_id = cls_id % 1000
+        if base_id < len(tax.fine_names):
+            c_name = tax.fine_names[base_id]
+        else:
+            c_name = str(base_id)
+        if cls_id >= 1000:
+            node_names[leaf_nid] = f"class:{c_name}:sub_{cls_id // 1000}"
+        else:
+            node_names[leaf_nid] = f"class:{c_name}"
 
     # Process merges bottom-up (m = 0 .. k - 2); final merge m = k - 2 maps to root_id = 0
     for merge_idx in range(num_internal):

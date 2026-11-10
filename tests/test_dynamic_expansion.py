@@ -170,7 +170,192 @@ def test_expansion_invalid_arguments_raise(toy_tree: FastHierarchyTree) -> None:
         expand_leaf_by_entropy(tree, leaf_node_id=1, entropies=np.zeros(5), k_sub=2)
 
 
-# --- C6 Tests ---
+# --- C7 Tests ---
+def test_tier2_resnet18_forward_and_features() -> None:
+    from src.training.e2e_trainer import Tier2ResNet18
+
+    # Width multiplier 0.25 for quick execution
+    model_bin = Tier2ResNet18(num_outputs=1, width_multiplier=0.25, squeeze_binary=True)
+    images = torch.randn(4, 3, 32, 32)
+    out_bin = model_bin(images)
+    assert out_bin.shape == (4,)
+
+    feats = model_bin.forward_features(images)
+    assert feats.ndim == 2
+    assert feats.shape[0] == 4
+
+    model_multi = Tier2ResNet18(num_outputs=10, width_multiplier=0.25, squeeze_binary=False)
+    out_multi = model_multi(images)
+    assert out_multi.shape == (4, 10)
+
+
+# --- C8 Tests ---
+def test_train_e2e_scenario1_and_scenario2_with_refresh_and_expansion(toy_tree: FastHierarchyTree) -> None:
+    from src.training.e2e_trainer import train_e2e_scenario1, train_e2e_scenario2
+
+    images = torch.randn(30, 3, 32, 32)
+    labels = np.array([0] * 10 + [1] * 10 + [2] * 10, dtype=np.int64)
+    pos_idx = np.arange(0, 10, dtype=np.int64)
+    neg_idx = np.arange(10, 30, dtype=np.int64)
+    bin_labels = (labels == 0).astype(np.int64)
+
+    tree = FastHierarchyTree(
+        tree_type="confusion_ward",
+        root_id=0,
+        parents=toy_tree.parents.copy(),
+        children=toy_tree.children.copy(),
+        child_counts=toy_tree.child_counts.copy(),
+        is_leaf=toy_tree.is_leaf.copy(),
+        depths=toy_tree.depths.copy(),
+        leaf_to_class_id=toy_tree.leaf_to_class_id.copy(),
+        instance_counts=toy_tree.instance_counts.copy(),
+        visits=toy_tree.visits.copy(),
+        q_values=toy_tree.q_values.copy(),
+        node_names=toy_tree.node_names,
+        class_to_indices={k: v.copy() for k, v in toy_tree.class_to_indices.items()},
+    )
+
+    res1 = train_e2e_scenario1(
+        train_images=images,
+        train_binary_labels=bin_labels,
+        positive_indices=pos_idx,
+        negative_indices=neg_idx,
+        test_images=images,
+        test_binary_labels=bin_labels,
+        strategy="mcts_enhanced",
+        tree=tree,
+        val_images=images,
+        val_binary_labels=bin_labels,
+        num_steps=10,
+        eval_every=5,
+        refresh_tree_every=5,
+        pos_batch_size=2,
+        neg_batch_size=4,
+        width_multiplier=0.25,
+        enable_leaf_expansion=True,
+        split_threshold=3,
+        k_sub=2,
+        seed=42,
+    )
+    assert res1["final_metrics"]["loss"] is not None
+
+    res2 = train_e2e_scenario2(
+        train_images=images,
+        train_labels=labels,
+        test_images=images,
+        test_labels=labels,
+        strategy="mcts_enhanced",
+        tree=tree,
+        val_images=images,
+        val_labels=labels,
+        num_classes=3,
+        num_steps=10,
+        eval_every=5,
+        refresh_tree_every=5,
+        batch_size=4,
+        width_multiplier=0.25,
+        enable_leaf_expansion=True,
+        split_threshold=3,
+        k_sub=2,
+        seed=42,
+    )
+    assert res2["final_metrics"]["loss"] is not None
+
+
+# --- C9 Tests ---
+def test_run_e2e_experiment_multi_seed_and_export(tmp_path: Path, toy_tree: FastHierarchyTree) -> None:
+    from src.training.e2e_trainer import E2EExperimentConfig, run_e2e_experiment
+
+    images = torch.randn(30, 3, 32, 32)
+    labels = np.array([0] * 10 + [1] * 10 + [2] * 10, dtype=np.int64)
+    pos_idx = np.arange(0, 10, dtype=np.int64)
+    neg_idx = np.arange(10, 30, dtype=np.int64)
+    bin_labels = (labels == 0).astype(np.int64)
+
+    def tree_factory() -> FastHierarchyTree:
+        return FastHierarchyTree(
+            tree_type="toy",
+            root_id=0,
+            parents=toy_tree.parents.copy(),
+            children=toy_tree.children.copy(),
+            child_counts=toy_tree.child_counts.copy(),
+            is_leaf=toy_tree.is_leaf.copy(),
+            depths=toy_tree.depths.copy(),
+            leaf_to_class_id=toy_tree.leaf_to_class_id.copy(),
+            instance_counts=toy_tree.instance_counts.copy(),
+            visits=toy_tree.visits.copy(),
+            q_values=toy_tree.q_values.copy(),
+            node_names=toy_tree.node_names,
+            class_to_indices={k: v.copy() for k, v in toy_tree.class_to_indices.items()},
+        )
+
+    cfg = E2EExperimentConfig(
+        scenario=1,
+        strategies=("uniform", "mcts_enhanced"),
+        seeds=(42, 43),
+        num_steps=6,
+        eval_every=3,
+        pos_batch_size=2,
+        neg_batch_size=4,
+        width_multiplier=0.25,
+        output_dir=str(tmp_path),
+    )
+
+    summary = run_e2e_experiment(
+        config=cfg,
+        train_images=images,
+        train_labels=bin_labels,
+        test_images=images,
+        test_labels=bin_labels,
+        positive_indices=pos_idx,
+        negative_indices=neg_idx,
+        tree_factory=tree_factory,
+    )
+
+    assert "strategies" in summary
+    assert "statistical_tests" in summary
+    assert (tmp_path / "e2e_scenario_1_results.json").exists()
+    assert (tmp_path / "e2e_scenario_1_results.csv").exists()
+
+
+# --- C10 Tests ---
+def test_e2e_trainer_invalid_arguments_raise() -> None:
+    from src.training.e2e_trainer import E2EExperimentConfig, Tier2ResNet18, run_e2e_experiment, train_e2e_scenario1
+
+    # Tier2ResNet18 invalid args
+    with pytest.raises(ValueError):
+        Tier2ResNet18(num_outputs=0)
+    with pytest.raises(ValueError):
+        Tier2ResNet18(width_multiplier=-1.0)
+    with pytest.raises(ValueError):
+        Tier2ResNet18(dropout=1.0)
+
+    # Invalid image shape
+    model = Tier2ResNet18(width_multiplier=0.25)
+    with pytest.raises(ValueError):
+        model.forward_features(torch.randn(2, 4, 32, 32))  # 4 channels
+
+    # Unknown strategy
+    with pytest.raises(ValueError):
+        train_e2e_scenario1(
+            train_images=torch.randn(10, 3, 32, 32),
+            train_binary_labels=np.zeros(10),
+            positive_indices=np.array([0]),
+            negative_indices=np.array([1]),
+            test_images=torch.randn(10, 3, 32, 32),
+            test_binary_labels=np.zeros(10),
+            strategy="invalid_strat",
+        )
+
+    # Invalid scenario in config
+    with pytest.raises(ValueError):
+        run_e2e_experiment(
+            config=E2EExperimentConfig(scenario=3),
+            train_images=torch.randn(10, 3, 32, 32),
+            train_labels=np.zeros(10),
+            test_images=torch.randn(10, 3, 32, 32),
+            test_labels=np.zeros(10),
+        )
 def test_tier1_trainers_with_dynamic_leaf_expansion(toy_tree: FastHierarchyTree) -> None:
     from src.training.trainer import train_scenario1, train_scenario2
 
