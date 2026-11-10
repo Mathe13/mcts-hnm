@@ -26,6 +26,14 @@ from src.utils.paper_artifacts import (
 )
 
 
+@pytest.fixture(autouse=True)
+def clean_session():
+    """Reset global execution mode before and after each test."""
+    reset_active_session_mode()
+    yield
+    reset_active_session_mode()
+
+
 def test_load_paper_metadata(tmp_path: Path):
     # 1. Existing root yaml
     meta = load_paper_metadata("paper_metadata.yaml")
@@ -166,6 +174,26 @@ def test_latex_tables_generation(tmp_path: Path):
     assert "Native Semantic Tree" in content3
     assert "Ward Confusion Tree" in content3
     assert "Min-Max" in content3
+
+
+def test_latex_tables_raise_on_missing_metrics(tmp_path: Path):
+    """Verify that table generators raise ValueError on incomplete schemas instead of silent defaults."""
+    tab_dir = tmp_path / "tables_err"
+
+    # Scenario 1 missing metrics
+    bad_scen1 = {"scenario1": {"uniform": {"10": {"f1": {"mean": 0.5}}}}}  # missing auprc and fpr95
+    with pytest.raises(ValueError, match="missing metric"):
+        generate_scenario1_table(bad_scen1, output_dir=tab_dir)
+
+    # Scenario 2 missing metrics
+    bad_scen2 = {"scenario2": {"uniform": {"top1_accuracy": {"mean": 0.5, "std": 0.0, "values": [0.5]}}}}  # missing macro_f1
+    with pytest.raises(ValueError, match="missing metric"):
+        generate_scenario2_table(bad_scen2, output_dir=tab_dir)
+
+    # Ablation missing metrics
+    bad_ablation = {"ablation": {"semantic_tree": {"f1": 0.5}}}  # missing auprc
+    with pytest.raises(ValueError, match="Missing required ablation metrics"):
+        generate_ablation_table(bad_ablation, output_dir=tab_dir)
 
 
 def test_generate_all_paper_artifacts_directory_creation(tmp_path: Path):

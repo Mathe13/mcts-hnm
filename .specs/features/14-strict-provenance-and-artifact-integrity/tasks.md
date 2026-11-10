@@ -93,9 +93,9 @@ T6
 **Requirement**: NUM-01  
 
 **Done when**:
-- [ ] `generate_ablation_table()` reads real metrics and raises `ValueError` on missing ablation configurations
-- [ ] `generate_scenario1_table()` and `generate_scenario2_table()` validate required fields (`mean`, `std`, `values`) without filling in silent defaults
-- [ ] Unit tests pass: `.venv/bin/pytest -v tests/test_paper_artifacts.py`
+- [x] `generate_ablation_table()` reads real metrics and raises `ValueError` on missing ablation configurations
+- [x] `generate_scenario1_table()` and `generate_scenario2_table()` validate required fields (`mean`, `std`, `values`) without filling in silent defaults
+- [x] Unit tests pass: `.venv/bin/pytest -v tests/test_paper_artifacts.py`
 
 **Tests**: unit  
 **Gate**: quick  
