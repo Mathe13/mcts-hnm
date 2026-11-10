@@ -1,6 +1,7 @@
 """Shared utilities for reproducibility, metrics, and artifact export."""
 
 from src.utils.paper_artifacts import (
+    compile_paper,
     generate_ablation_table,
     generate_all_paper_artifacts,
     generate_convergence_plot,
@@ -27,4 +28,5 @@ __all__ = [
     "generate_scenario2_table",
     "generate_ablation_table",
     "generate_all_paper_artifacts",
+    "compile_paper",
 ]

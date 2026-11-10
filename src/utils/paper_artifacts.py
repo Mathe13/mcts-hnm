@@ -651,9 +651,9 @@ def generate_ablation_table(
         ("Hierarchy Geometry", "Ward Confusion Tree (Empirical)", ablation.get("confusion_ward_tree", {}).get("f1", 0.564), ablation.get("confusion_ward_tree", {}).get("auprc", 0.552)),
         ("UCB1 Normalization", "Raw Unnormalized Q (Strict GiantHunter)", ablation.get("q_norm_off", {}).get("f1", 0.512), ablation.get("q_norm_off", {}).get("auprc", 0.501)),
         ("UCB1 Normalization", "Min-Max Sibling Q-Normalization", ablation.get("q_norm_on", {}).get("f1", 0.564), ablation.get("q_norm_on", {}).get("auprc", 0.552)),
-        ("Dual-Stream Batch", "100\\% MCTS Negatives ($\beta=0.0$)", ablation.get("dual_stream_0.0", {}).get("f1", 0.508), ablation.get("dual_stream_0.0", {}).get("auprc", 0.498)),
-        ("Dual-Stream Batch", "50/50 Dual-Stream Hybrid ($\beta=0.5$)", ablation.get("dual_stream_0.5", {}).get("f1", 0.564), ablation.get("dual_stream_0.5", {}).get("auprc", 0.552)),
-        ("Dual-Stream Batch", "100\\% Uniform Random ($\beta=1.0$)", ablation.get("dual_stream_1.0", {}).get("f1", 0.421), ablation.get("dual_stream_1.0", {}).get("auprc", 0.405)),
+        ("Dual-Stream Batch", r"100\% MCTS Negatives ($\beta=0.0$)", ablation.get("dual_stream_0.0", {}).get("f1", 0.508), ablation.get("dual_stream_0.0", {}).get("auprc", 0.498)),
+        ("Dual-Stream Batch", r"50/50 Dual-Stream Hybrid ($\beta=0.5$)", ablation.get("dual_stream_0.5", {}).get("f1", 0.564), ablation.get("dual_stream_0.5", {}).get("auprc", 0.552)),
+        ("Dual-Stream Batch", r"100\% Uniform Random ($\beta=1.0$)", ablation.get("dual_stream_1.0", {}).get("f1", 0.421), ablation.get("dual_stream_1.0", {}).get("auprc", 0.405)),
         ("Leaf Granularity", "Fixed 100 Class Leaves (P1 MVP)", ablation.get("dynamic_expansion_off", {}).get("f1", 0.564), ablation.get("dynamic_expansion_off", {}).get("auprc", 0.552)),
         ("Leaf Granularity", "Dynamic Entropy Sub-Clustering (P2)", ablation.get("dynamic_expansion_on", {}).get("f1", 0.581), ablation.get("dynamic_expansion_on", {}).get("auprc", 0.572)),
     ]
@@ -737,3 +737,68 @@ def generate_all_paper_artifacts(
         "figures": [c_pdf, c_png, h_pdf, h_png, s_pdf, s_png],
         "tables": [t_scen1, t_scen2, t_ablation],
     }
+
+
+def compile_paper(
+    paper_dir: str | Path = "paper",
+    engine: str = "pdflatex",
+    runs: int = 2,
+) -> Path:
+    """Compile LaTeX manuscript (main.tex) into PDF via pdflatex and bibtex.
+
+    Args:
+        paper_dir: Directory containing main.tex and PRIMEarxiv.sty.
+        engine: LaTeX compiler command (default: 'pdflatex').
+        runs: Number of compilation passes (default: 2).
+
+    Returns:
+        Path to the compiled PDF file.
+
+    Raises:
+        RuntimeError: If compiler fails or PDF is not produced.
+        FileNotFoundError: If main.tex or compiler binary is missing.
+    """
+    import shutil
+    import subprocess
+
+    p_dir = Path(paper_dir).resolve()
+    main_tex = p_dir / "main.tex"
+    main_pdf = p_dir / "main.pdf"
+
+    if not main_tex.exists():
+        raise FileNotFoundError(f"LaTeX document not found at {main_tex}")
+
+    compiler_bin = shutil.which(engine)
+    if not compiler_bin:
+        raise RuntimeError(f"LaTeX compiler '{engine}' not found on PATH.")
+
+    bibtex_bin = shutil.which("bibtex")
+
+    for pass_idx in range(runs):
+        cmd = [compiler_bin, "-interaction=nonstopmode", "main.tex"]
+        proc = subprocess.run(
+            cmd,
+            cwd=str(p_dir),
+            capture_output=True,
+            text=True,
+        )
+        if proc.returncode != 0 and pass_idx == runs - 1 and not main_pdf.exists():
+            raise RuntimeError(
+                f"LaTeX compilation failed with exit code {proc.returncode}:\n"
+                f"{proc.stdout[-2000:]}\n{proc.stderr}"
+            )
+
+        # Run bibtex on first pass if bibliography exists
+        if pass_idx == 0 and bibtex_bin and (p_dir / "references.bib").exists():
+            subprocess.run(
+                [bibtex_bin, "main"],
+                cwd=str(p_dir),
+                capture_output=True,
+                text=True,
+            )
+
+    if not main_pdf.exists() or main_pdf.stat().st_size == 0:
+        raise RuntimeError(f"Compilation did not produce a valid PDF at {main_pdf}")
+
+    logger.info("Successfully compiled %s (%d bytes)", main_pdf, main_pdf.stat().st_size)
+    return main_pdf

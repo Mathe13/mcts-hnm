@@ -23,6 +23,7 @@
 \lhead{\small\textit{MCTS-HNM: Hierarchical Hard Negative Mining}}
 \cfoot{\thepage}
 
+\RequirePackage{xcolor}
 \RequirePackage{microtype}
 \RequirePackage{booktabs}
 \RequirePackage{amsmath}
@@ -31,9 +32,9 @@
 \RequirePackage{hyperref}
 \hypersetup{
   colorlinks=true,
-  linkcolor=blue!70!black,
-  citecolor=blue!70!black,
-  urlcolor=blue!70!black
+  linkcolor=blue,
+  citecolor=blue,
+  urlcolor=blue
 }
 
 \renewcommand{\maketitle}{%
@@ -58,6 +59,13 @@
   \end{center}%
   \begin{quote}
 }{%
+  \end{quote}
+  \vskip 1.5em
+}
+
+\newcommand{\keywords}[1]{%
+  \begin{quote}
+    \textbf{Keywords: } #1
   \end{quote}
   \vskip 1.5em
 }

@@ -181,10 +181,10 @@ T6
 
 **Done when**:
 
-- [ ] `compile_paper(paper_dir="paper")` executes `pdflatex` and `bibtex` headless inside `paper/`
-- [ ] `paper/main.pdf` is successfully generated with exit code 0
-- [ ] Integration test verifies `main.pdf` file presence and non-empty byte size
-- [ ] Gate check passes: `.venv/bin/pytest -v`
+- [x] `compile_paper(paper_dir="paper")` executes `pdflatex` and `bibtex` headless inside `paper/`
+- [x] `paper/main.pdf` is successfully generated with exit code 0
+- [x] Integration test verifies `main.pdf` file presence and non-empty byte size
+- [x] Gate check passes: `.venv/bin/pytest -v`
 
 **Tests**: integration
 **Gate**: full

@@ -3,6 +3,7 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage{lmodern}
 \usepackage{url}
 \usepackage{amsfonts}
 \usepackage{nicefrac}
@@ -31,7 +32,7 @@
 Deep image classification under severe class imbalance and hierarchical label structures presents formidable challenges for standard gradient-based optimization. Uniform negative sampling is statistically inefficient when rare positive classes must be discriminated from hundreds of negative categories, while naive batch-level hard negative mining (OHEM) suffers from high gradient variance, loss osculation, and representational collapse. In this work, we investigate Monte Carlo Tree Search (MCTS) as an active reinforcement learning agent for hierarchical hard negative mining (MCTS-HNM). Formulating negative selection as sequential tree traversal under Upper Confidence Bound applied to Trees (UCT), our agent navigates semantic and empirical confusion taxonomies to mine informative, high-loss negatives. We introduce two key algorithmic innovations: sibling Min-Max $Q$-value normalization to stabilize UCB1 exploration across heterogeneous hierarchy depths, and a Dual-Stream batching mechanism combining MCTS hard negatives with uniform anchors to prevent mode collapse. Evaluated across Imbalanced Binary One-vs-Rest and 100-way Multi-Class curriculum settings on CIFAR-100 across 5 random seeds, MCTS-HNM statistically significantly outperforms Uniform Sampling, OHEM, and strict unnormalized MCTS, improving minority AUPRC by up to $8.4\%$ and worst-class recall by $11.2\%$.
 \end{abstract}
 
-\keywords{Monte Carlo Tree Search \and Hard Negative Mining \and Hierarchical Classification \and Class Imbalance \and Curriculum Learning \and Reinforcement Learning}
+\keywords{Monte Carlo Tree Search, Hard Negative Mining, Hierarchical Classification, Class Imbalance, Curriculum Learning, Reinforcement Learning}
 
 \section{Introduction}
 \label{sec:intro}

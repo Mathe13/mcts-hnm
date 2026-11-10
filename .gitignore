@@ -51,3 +51,14 @@ htmlcov/
 # Large raw outputs
 results/raw/
 logs/
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.toc
+*.fls
+*.fdb_latexmk
+
