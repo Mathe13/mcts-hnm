@@ -106,9 +106,17 @@
 - **Date**: 2026-11-10
 - **Status**: active (AD-013)
 
+### AD-014
+- **Decision**: Standardize Notebook 05 and `src/utils/paper_artifacts.py` under the `ExecutionMode` contract. In `ExecutionMode.REAL`, `load_or_synthesize_benchmark_results` strictly ingests real benchmark JSON files (`tier1_benchmark_summary.json` or component outputs `tier1_axis1_samplers.json`, `tier1_scenario2_curriculum.json`, `tier1_axis2_tree_ablation.json`) and raises `FileNotFoundError` if absent, entirely prohibiting synthetic distribution fallbacks. In `ExecutionMode.SMOKE`, figures are visibly watermarked with `SMOKE TEST — NOT FOR PUBLICATION` and saved strictly to `results/smoke/paper/`. Export an auditable `artifact_manifest.json` tracking SHA-256 digests of all inputs and generated artifacts, git commit, mode, and UTC timestamp.
+- **Reason**: Eliminates silent fabrication of experimental metrics in publication figures and tables, guarantees strict traceability from paper artifacts back to experimental raw JSON outputs, and segregates smoke demonstration figures from final publication PDFs/PNGs.
+- **Trade-off**: Requires running experimental benchmarks before paper artifacts can be generated in REAL mode; attempting generation without results produces an immediate fail-stop error.
+- **Scope**: `src/utils/paper_artifacts.py`, `notebooks/05_paper_artifacts.ipynb`, `tests/test_paper_artifacts_real.py`
+- **Date**: 2026-11-10
+- **Status**: active (AD-014)
+
 ## Handoff
 
-- **Feature**: `10-tier2-e2e-real-cifar` (`.specs/features/10-tier2-e2e-real-cifar/`)
+- **Feature**: `11-paper-artifacts-real-integration` (`.specs/features/11-paper-artifacts-real-integration/`)
 - **Phase / Task**: Done & Verified (`validate_verification.py` exited 0)
 - **Completed**:
   - Phase 0 (Baseline Audit) completed and documented.
@@ -116,11 +124,12 @@
   - Feature `08-notebooks-00-01-02-reproducibility` (Phase 2): Done & Verified (`C1`–`C12`, 99 repository tests passing)
   - Feature `09-tier1-benchmarks-real-data` (Phase 3): Done & Verified (`C1`–`C11`, 110 repository tests passing)
   - Feature `10-tier2-e2e-real-cifar` (Phase 4): Done & Verified (`C1`–`C10`, 120 repository tests passing)
-    - `205b1aa`: Standardized Tier-2 vision pipeline with `load_cifar100_raw_images`, checkpoint persistence, isolated outputs with `.meta.json`, dynamic leaf expansion evaluation, and updated Notebook 04.
-    - `tests/test_tier2_e2e_real.py`: 10 automated tests covering mode enforcement, synthetic image rejection in REAL mode, checkpoint persistence, multi-seed statistical tests, and dynamic leaf expansion invariants.
-    - `1a4504b`: Independent Verifier report (`verification.md`) confirming `PASS` on all checks C1–C10.
+  - Feature `11-paper-artifacts-real-integration` (Phase 5): Done & Verified (`C1`–`C10`, 130 repository tests passing)
+    - `cc96588`: Standardized paper artifacts and real benchmark ingestion, added `load_real_benchmark_results`, updated `load_or_synthesize_benchmark_results` to reject missing files in REAL mode, added `generate_artifact_manifest` with SHA-256 provenance tracking, watermarked smoke figures, and updated Notebook 05.
+    - `tests/test_paper_artifacts_real.py`: 10 automated tests covering mode enforcement, synthetic rejection in REAL mode, real benchmark ingestion, smoke watermarking and directory isolation, manifest generation, and compiler error handling.
+    - `38eaef6`: Independent Verifier report (`verification.md`) confirming `PASS` on all checks C1–C10.
 - **In-progress**: None
-- **Next step**: Phase 5 of `ROADMAP_Improvements.md` — Feature `11-paper-artifacts-real-integration` (Fix Notebook 05: Paper Artifacts & Publication Visualizations — Ingest real benchmark JSON outputs without synthetic fallbacks, verify LaTeX compilation with `paper_metadata.yaml` and real values, generate artifact provenance manifest).
+- **Next step**: Phase 6 of `ROADMAP_Improvements.md` — Feature `12-automated-testing-suite` (Automated testing across all 6 notebooks end-to-end in SMOKE mode, ensuring complete execution without regressions).
 - **Blockers**: None
 - **Uncommitted files**: None (after commit)
 - **Branch**: `main`
