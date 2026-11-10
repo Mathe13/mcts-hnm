@@ -122,23 +122,31 @@
 - **Date**: 2026-11-10
 - **Status**: active (AD-015)
 
+### AD-016
+- **Decision**: Codify a comprehensive experimental reproducibility guide (`docs/experimental_reproducibility.md`) and revise root `README.md` to document execution mode semantics (`SMOKE` vs `REAL`), directory layout with `.meta.json` sidecars, step-by-step reproduction recipes, tree geometry methodological review (Ward vs Average linkage), negative mining budget equivalence ($K_{\text{neg}}=48$), dynamic leaf expansion, known experimental limitations, and auditable classification of completed vs pending vs historical experiments.
+- **Reason**: ROADMAP_Improvements.md Phase 7 establishes scientific transparency, complete auditability, and publication-ready experimental reproducibility across the entire project lifecycle.
+- **Trade-off**: Requires maintaining documentation synchronized with code changes, verified by automated link-checking and structure tests in `tests/test_documentation_and_reproducibility.py`.
+- **Scope**: `README.md`, `docs/experimental_reproducibility.md`, `tests/test_documentation_and_reproducibility.py`
+- **Date**: 2026-11-10
+- **Status**: active (AD-016)
+
 ## Handoff
 
-- **Feature**: `12-automated-testing-suite` (`.specs/features/12-automated-testing-suite/`)
-- **Phase / Task**: Done & Verified (`validate_verification.py` exited 0)
+- **Feature**: `13-documentation-and-reproducibility` (`.specs/features/13-documentation-and-reproducibility/`)
+- **Phase / Task**: All Phases (Phase 0 through Phase 7) of `ROADMAP_Improvements.md` are Done & Verified (`validate_verification.py` exited 0 for all features).
 - **Completed**:
-  - Phase 0 (Baseline Audit) completed and documented.
+  - Phase 0: Baseline Audit & Historical Preservation (COMPLETED)
   - Feature `07-global-execution-contract` (Phase 1): Done & Verified (`C1`–`C13`, 87 repository tests passing)
   - Feature `08-notebooks-00-01-02-reproducibility` (Phase 2): Done & Verified (`C1`–`C12`, 99 repository tests passing)
   - Feature `09-tier1-benchmarks-real-data` (Phase 3): Done & Verified (`C1`–`C11`, 110 repository tests passing)
   - Feature `10-tier2-e2e-real-cifar` (Phase 4): Done & Verified (`C1`–`C10`, 120 repository tests passing)
   - Feature `11-paper-artifacts-real-integration` (Phase 5): Done & Verified (`C1`–`C10`, 130 repository tests passing)
   - Feature `12-automated-testing-suite` (Phase 6): Done & Verified (`C1`–`C12`, 142 repository tests passing)
-    - `5996e58`: Automated regression testing suite covering all 6 notebooks end-to-end in SMOKE mode, cross-mode cache rejection, session immutability, notebook 05 real mode validation, and labeled reduced real integration path.
-    - `tests/test_automated_suite_real.py`: 12 automated tests completing in ~13s. Full repo suite (142 tests) completes in ~30s.
-    - `d96cb89`: Independent Verifier report (`verification.md`) confirming `PASS` on all checks C1–C12.
+  - Feature `13-documentation-and-reproducibility` (Phase 7): Done & Verified (`C1`–`C8`, 150 repository tests passing)
+    - `9cadae2`: Comprehensive reproducibility guide in `docs/experimental_reproducibility.md`, updated `README.md`, and 8 automated tests in `tests/test_documentation_and_reproducibility.py`.
+    - `abe8667`: Independent Verifier report (`verification.md`) confirming `PASS` on all checks C1–C8.
 - **In-progress**: None
-- **Next step**: Phase 7 of `ROADMAP_Improvements.md` — Feature `13-documentation-and-reproducibility` (Update root `README.md` and create `docs/experimental_reproducibility.md`).
+- **Next step**: All tasks and Definition of Done in `ROADMAP_Improvements.md` are 100% completed. Codebase is clean, fully verified, and ready for full-scale cluster experiments or publication artifact generation.
 - **Blockers**: None
-- **Uncommitted files**: None (after commit)
+- **Uncommitted files**: None
 - **Branch**: `main`

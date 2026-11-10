@@ -614,20 +614,20 @@ Do not start definitive figure generation before completing real result integrat
 
 The implementation is considered complete only when:
 
-- [ ] All six notebooks support both modes without mixing.
-- [ ] All notebooks clearly print the execution mode.
-- [ ] No silent synthetic fallback remains.
-- [ ] REAL and SMOKE directories are isolated.
-- [ ] Data, trees, caches, models, and results have consistent provenance.
-- [ ] Notebook 03 consumes real embeddings in REAL mode.
-- [ ] Notebook 04 consumes real images in REAL mode.
-- [ ] Notebook 05 uses actual results in REAL mode.
-- [ ] Missing data and results produce clear errors.
-- [ ] Historical experiments are preserved.
-- [ ] Unit and integration tests pass.
-- [ ] All six notebooks complete execution in SMOKE mode.
-- [ ] The REAL path is validated by integration tests with real data.
-- [ ] Reproducibility documentation is updated.
+- [x] All six notebooks support both modes without mixing.
+- [x] All notebooks clearly print the execution mode.
+- [x] No silent synthetic fallback remains.
+- [x] REAL and SMOKE directories are isolated.
+- [x] Data, trees, caches, models, and results have consistent provenance.
+- [x] Notebook 03 consumes real embeddings in REAL mode.
+- [x] Notebook 04 consumes real images in REAL mode.
+- [x] Notebook 05 uses actual results in REAL mode.
+- [x] Missing data and results produce clear errors.
+- [x] Historical experiments are preserved.
+- [x] Unit and integration tests pass.
+- [x] All six notebooks complete execution in SMOKE mode.
+- [x] The REAL path is validated by integration tests with real data.
+- [x] Reproducibility documentation is updated.
 
 **Important:** Completing the implementation does not require running all full REAL benchmarks, but it requires demonstrating that the REAL execution path is correct. Full scientific runs represent a subsequent step with their own validation criteria.
 
