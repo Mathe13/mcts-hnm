@@ -160,9 +160,9 @@ T6
 **Requirement**: E2E-01  
 
 **Done when**:
-- [ ] Old smoke/real temporary results are cleaned
-- [ ] All six notebooks execute end-to-end in SMOKE mode cleanly
-- [ ] Full pytest suite passes with 100% pass rate in under 60 seconds
+- [x] Old smoke/real temporary results are cleaned
+- [x] All six notebooks execute end-to-end in SMOKE mode cleanly
+- [x] Full pytest suite passes with 100% pass rate in under 60 seconds
 
 **Tests**: integration  
 **Gate**: full  
