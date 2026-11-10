@@ -159,11 +159,11 @@ T6
 
 **Done when**:
 
-- [ ] `paper/PRIMEarxiv.sty` provides arXiv / Prime AI preprint styling
-- [ ] `paper/references.bib` contains BibTeX entries for GiantHunter, Sutton & Barto, UCB1, OHEM, ResNet, CIFAR-100, and Ward clustering
-- [ ] `paper/main.tex` contains complete manuscript sections: `Abstract`, `Introduction`, `Related Work`, `Methodology`, `Experimental Setup`, `Results`, `Discussion & Limitations`, and `Conclusion`, including tables and figures
-- [ ] Integration test verifies that every `\cite{...}`, `\input{tables/...}`, and `\includegraphics{figures/...}` in `main.tex` resolves to existing files/entries
-- [ ] Gate check passes: `.venv/bin/pytest -v`
+- [x] `paper/PRIMEarxiv.sty` provides arXiv / Prime AI preprint styling
+- [x] `paper/references.bib` contains BibTeX entries for GiantHunter, Sutton & Barto, UCB1, OHEM, ResNet, CIFAR-100, and Ward clustering
+- [x] `paper/main.tex` contains complete manuscript sections: `Abstract`, `Introduction`, `Related Work`, `Methodology`, `Experimental Setup`, `Results`, `Discussion & Limitations`, and `Conclusion`, including tables and figures
+- [x] Integration test verifies that every `\cite{...}`, `\input{tables/...}`, and `\includegraphics{figures/...}` in `main.tex` resolves to existing files/entries
+- [x] Gate check passes: `.venv/bin/pytest -v`
 
 **Tests**: integration
 **Gate**: full

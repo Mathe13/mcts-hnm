@@ -161,3 +161,60 @@ def test_generate_all_paper_artifacts_directory_creation(tmp_path: Path):
         assert p.exists() and p.stat().st_size > 0
 
 
+def test_manuscript_syntax_and_citations():
+    paper_dir = Path("paper")
+    main_tex = paper_dir / "main.tex"
+    sty_file = paper_dir / "PRIMEarxiv.sty"
+    bib_file = paper_dir / "references.bib"
+
+    assert main_tex.exists() and main_tex.stat().st_size > 0
+    assert sty_file.exists() and sty_file.stat().st_size > 0
+    assert bib_file.exists() and bib_file.stat().st_size > 0
+
+    with open(main_tex, "r", encoding="utf-8") as f:
+        tex_content = f.read()
+
+    with open(bib_file, "r", encoding="utf-8") as f:
+        bib_content = f.read()
+
+    # 1. Section presence
+    expected_sections = [
+        "begin{abstract}",
+        "section{Introduction}",
+        "section{Related Work}",
+        "section{Methodology}",
+        "section{Experimental Setup}",
+        "section{Results}",
+        "section{Discussion",
+        "section{Conclusion}",
+    ]
+    for sec in expected_sections:
+        assert sec in tex_content, f"Missing section '{sec}' in main.tex"
+
+    # 2. Check \cite keys
+    import re
+
+    cite_matches = re.findall(r"\\cite\{([^}]+)\}", tex_content)
+    bib_keys = set(re.findall(r"@\w+\{([^,]+),", bib_content))
+
+    for match in cite_matches:
+        for key in match.split(","):
+            clean_key = key.strip()
+            assert clean_key in bib_keys, f"Citation key '{clean_key}' not found in references.bib"
+
+    # 3. Check \input files
+    input_matches = re.findall(r"\\input\{([^}]+)\}", tex_content)
+    for inp in input_matches:
+        inp_path = paper_dir / inp
+        if not inp_path.suffix:
+            inp_path = inp_path.with_suffix(".tex")
+        assert inp_path.exists(), f"Input file '{inp_path}' referenced in main.tex does not exist"
+
+    # 4. Check \includegraphics files
+    img_matches = re.findall(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}", tex_content)
+    for img in img_matches:
+        img_path = paper_dir / img
+        assert img_path.exists(), f"Figure file '{img_path}' referenced in main.tex does not exist"
+
+
+

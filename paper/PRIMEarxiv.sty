@@ -1,0 +1,63 @@
+% PRIME arXiv preprint style file
+% Adapted for MCTS-HNM publication manuscript
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{PRIMEarxiv}[2026/11/09 v1.0 PRIME arXiv preprint style]
+
+\RequirePackage{geometry}
+\geometry{
+  letterpaper,
+  top=1in,
+  bottom=1in,
+  left=1in,
+  right=1in,
+  headheight=14pt,
+  headsep=25pt,
+  footskip=30pt
+}
+
+\RequirePackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\small\textit{A Preprint - Under Review}}
+\lhead{\small\textit{MCTS-HNM: Hierarchical Hard Negative Mining}}
+\cfoot{\thepage}
+
+\RequirePackage{microtype}
+\RequirePackage{booktabs}
+\RequirePackage{amsmath}
+\RequirePackage{amssymb}
+\RequirePackage{graphicx}
+\RequirePackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!70!black,
+  citecolor=blue!70!black,
+  urlcolor=blue!70!black
+}
+
+\renewcommand{\maketitle}{%
+  \begin{center}%
+    \vskip 2em%
+    {\LARGE\bfseries \@title \par}%
+    \vskip 1.5em%
+    {\large
+      \lineskip .5em%
+      \begin{tabular}[t]{c}%
+        \@author
+      \end{tabular}\par}%
+    \vskip 1.5em%
+  \end{center}%
+  \par
+  \vskip 1.5em
+}
+
+\renewenvironment{abstract}{%
+  \begin{center}%
+    {\large\bfseries Abstract\par}%
+  \end{center}%
+  \begin{quote}
+}{%
+  \end{quote}
+  \vskip 1.5em
+}

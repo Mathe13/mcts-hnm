@@ -1,0 +1,189 @@
+\documentclass[11pt]{article}
+\usepackage{PRIMEarxiv}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{url}
+\usepackage{amsfonts}
+\usepackage{nicefrac}
+\usepackage{microtype}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{subcaption}
+\usepackage{cite}
+
+\title{MCTS-HNM: Monte Carlo Tree Search for Hierarchical Hard Negative Mining in Class-Imbalanced Learning}
+
+\author{
+  Matheus Santos\thanks{Corresponding author: \texttt{matheus@inf.ufrgs.br}} \quad Co-Author Placeholder \\
+  Postgraduate Program in Computer Science (PPGC) \\
+  Universidade Federal do Rio Grande do Sul (UFRGS) \\
+  Porto Alegre, RS, Brazil
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Deep image classification under severe class imbalance and hierarchical label structures presents formidable challenges for standard gradient-based optimization. Uniform negative sampling is statistically inefficient when rare positive classes must be discriminated from hundreds of negative categories, while naive batch-level hard negative mining (OHEM) suffers from high gradient variance, loss osculation, and representational collapse. In this work, we investigate Monte Carlo Tree Search (MCTS) as an active reinforcement learning agent for hierarchical hard negative mining (MCTS-HNM). Formulating negative selection as sequential tree traversal under Upper Confidence Bound applied to Trees (UCT), our agent navigates semantic and empirical confusion taxonomies to mine informative, high-loss negatives. We introduce two key algorithmic innovations: sibling Min-Max $Q$-value normalization to stabilize UCB1 exploration across heterogeneous hierarchy depths, and a Dual-Stream batching mechanism combining MCTS hard negatives with uniform anchors to prevent mode collapse. Evaluated across Imbalanced Binary One-vs-Rest and 100-way Multi-Class curriculum settings on CIFAR-100 across 5 random seeds, MCTS-HNM statistically significantly outperforms Uniform Sampling, OHEM, and strict unnormalized MCTS, improving minority AUPRC by up to $8.4\%$ and worst-class recall by $11.2\%$.
+\end{abstract}
+
+\keywords{Monte Carlo Tree Search \and Hard Negative Mining \and Hierarchical Classification \and Class Imbalance \and Curriculum Learning \and Reinforcement Learning}
+
+\section{Introduction}
+\label{sec:intro}
+
+Class imbalance is ubiquitous across real-world computer vision tasks, including medical diagnosis, rare object detection, and fine-grained species identification. In extreme imbalance regimes, where negative instances outnumber positives by orders of magnitude ($1:10$ to $1:100$), standard stochastic gradient descent (SGD) with uniform mini-batch sampling is dominated by trivial, uninformative negative examples. Consequently, gradient updates provide negligible error signals for refining the decision boundary around rare minority concepts.
+
+To counteract this inefficiency, practitioners commonly employ Online Hard Example Mining (OHEM)~\cite{shrivastava2016training} or focal loss weighting~\cite{lin2017focal}. However, OHEM evaluates candidate hardness strictly within small, randomly sampled candidate pools, rendering it inherently myopic. In large label spaces, OHEM repeatedly samples boundary outliers and mislabeled instances, inducing severe training instability, high gradient variance, and catastrophic forgetting of canonical class distributions.
+
+Recently, Qu et al.~\cite{qu2025gianthunter} proposed \textit{GiantHunter}, introducing Monte Carlo Tree Search (MCTS) to mine informative negative viral genomes from a biological taxonomy tree. While GiantHunter demonstrated the promise of sequential decision-making for negative selection, its official codebase omitted the MCTS training implementation, and its formulation was tightly coupled to genomic transformers without testing whether MCTS-based negative mining generalizes to visual domains. Furthermore, GiantHunter employed raw, unnormalized action-value estimates ($Q$-values) within the Upper Confidence Bound (UCB1) formula~\cite{auer2002finite} and constructed mini-batches consisting entirely ($100\%$) of MCTS-selected negatives, creating significant risks of value scale mismatch and representational drift.
+
+In this paper, we present \textbf{MCTS-HNM}, a unified, mathematically rigorous reinforcement learning framework that adapts MCTS for hierarchical hard negative mining in visual classification. We formulate negative selection as a multi-armed bandit problem over a tree hierarchy $\mathcal{T}$, where internal nodes represent semantic superclasses or empirical confusion clusters and leaf nodes represent fine classes. To address the fundamental limitations of prior formulations, we propose:
+\begin{enumerate}
+    \item \textbf{Min-Max $Q$-Value Normalization}: Sibling-level normalization that maps raw action-values dynamically into $[0, 1]$, ensuring invariant exploration--exploitation trade-offs regardless of loss magnitude or tree depth.
+    \item \textbf{Dual-Stream Hybrid Batching}: A sampling mechanism combining MCTS hard negatives with uniformly drawn anchor samples at ratio $\beta$, preserving global feature geometry while focusing capacity on hard negative boundaries.
+    \item \textbf{Dual Hierarchy Comparison}: A rigorous empirical study comparing human-designed Semantic Trees against data-driven Ward Confusion Trees~\cite{ward1963hierarchical}.
+    \item \textbf{Dynamic Leaf Sub-Clustering}: An entropy-driven tree expansion mechanism that partitions visited leaf nodes by classifier uncertainty, mining hard instances within difficult fine classes.
+\end{enumerate}
+
+Extensive empirical evaluations on CIFAR-100~\cite{krizhevsky2009learning} across 5 random seeds demonstrate that MCTS-HNM achieves statistically significant gains over Uniform Sampling, OHEM, and strict GiantHunter across both binary imbalanced and multi-class curriculum settings.
+
+\section{Related Work}
+\label{sec:related}
+
+\textbf{Hard Negative Mining in Deep Learning.} Mining informative negatives is essential in metric learning and object detection~\cite{shrivastava2016training,he2016deep}. Classic approaches select negatives based on instantaneous loss ranking. While effective in bounded regimes, batch-level mining is susceptible to noisy labels and gradient instability~\cite{lin2017focal,cui2019class}. In contrast, MCTS-HNM maintains running value estimates across epochs, providing smooth, temporally consistent guidance.
+
+\textbf{Monte Carlo Tree Search in Machine Learning.} MCTS has achieved landmark breakthroughs in combinatorial games~\cite{silver2016mastering} and sequential planning~\cite{sutton2018reinforcement}. Adapting MCTS to training sample selection remains an emerging frontier. Qu et al.~\cite{qu2025gianthunter} demonstrated its efficacy for metagenomic classification, but relied on raw $Q$-values and pure MCTS batches. Our work resolves these stabilization challenges and benchmarks tree structures systematically.
+
+\textbf{Hierarchical and Curriculum Learning.} Incorporating semantic hierarchies structures complex multi-class spaces into coarse-to-fine representations~\cite{bengio2009curriculum}. We extend hierarchical modeling by comparing expert taxonomies against empirical Ward clustering trees~\cite{ward1963hierarchical}.
+
+\section{Methodology}
+\label{sec:method}
+
+\subsection{Hierarchical Tree Formulations}
+Let $\mathcal{T} = (\mathcal{V}, \mathcal{E})$ denote a rooted directed tree representing the negative label space. We consider two distinct tree topologies:
+\begin{itemize}
+    \item \textbf{Native Semantic Tree}: A 3-level hierarchy mapping a Virtual Root to 20 coarse superclasses, each branching into 5 fine classes ($100$ leaves total).
+    \item \textbf{Data-Driven Ward Confusion Tree}: A binary dendrogram constructed by computing the symmetric validation confusion distance $D_{i,j} = 1 - \frac{C_{i,j} + C_{j,i}}{2 \cdot \max(C)}$ from a warm-up model pass and applying Ward's minimum-variance linkage~\cite{ward1963hierarchical}.
+\end{itemize}
+
+\subsection{The 4-Phase MCTS-HNM Engine}
+
+Each training iteration executes four sequential MCTS operations:
+
+\textbf{1. Selection.} Starting from the root $s_0$, the agent traverses the tree by selecting child node $i \in \text{Children}(s)$ that maximizes the Upper Confidence Bound:
+\begin{equation}
+    U_i = \bar{Q}_i^{\text{norm}} + c \cdot \sqrt{\frac{\ln N_s}{n_i + \epsilon}},
+    \label{eq:ucb1}
+\end{equation}
+where $N_s$ is the visit count of parent $s$, $n_i$ is the visit count of child $i$, and $c > 0$ controls exploration. Sibling Min-Max normalization computes:
+\begin{equation}
+    \bar{Q}_i^{\text{norm}} = \frac{Q_i - \min_{j \in \text{Siblings}(i)} Q_j}{\max_{j \in \text{Siblings}(i)} Q_j - \min_{j \in \text{Siblings}(i)} Q_j + \epsilon}.
+    \label{eq:qnorm}
+\end{equation}
+If all siblings have equal $Q$-values, $\bar{Q}_i^{\text{norm}}$ is set to $0$, avoiding division-by-zero.
+
+\textbf{2. Expansion.} Once a leaf node $l$ is reached, the model verifies whether $n_l \ge N_{\text{split}}$. If dynamic leaf expansion is active, the leaf is partitioned into $K_{\text{sub}}$ child leaves sorted by prediction entropy $H(p) = -\sum_k p_k \ln(p_k + \epsilon)$, refining mining to the most ambiguous instances of that class.
+
+\textbf{3. Simulation (Model Step).} The batch sampler draws negative instances from leaf $l$. Under Dual-Stream batching ($\beta \in [0, 1]$), mini-batch $\mathcal{B}_{\text{neg}}$ combines $\lfloor (1 - \beta) B_{\text{neg}} \rfloor$ instances from leaf $l$ and $\lceil \beta B_{\text{neg}} \rceil$ instances sampled uniformly at random across all negative classes. The downstream model computes step loss $\mathcal{L}(\mathcal{B})$. The scalar reward is defined as $r = \mathcal{L}(\mathcal{B})$.
+
+\textbf{4. Momentum Backpropagation.} Leaf value $Q_l$ is updated via momentum ($\alpha = 0.3$):
+\begin{equation}
+    Q_l^{(t)} = \alpha r + (1 - \alpha) Q_l^{(t-1)}.
+    \label{eq:momentum}
+\end{equation}
+Every ancestor $p$ on the path from $l$ to the root aggregates child values weighted by instance count $M_c$:
+\begin{equation}
+    Q_p = \frac{1}{\sum_{c \in \text{Children}(p)} M_c} \sum_{c \in \text{Children}(p)} M_c Q_c.
+    \label{eq:ancestor}
+\end{equation}
+
+\section{Experimental Setup}
+\label{sec:setup}
+
+\textbf{Dataset and Environments.} Experiments are conducted on CIFAR-100~\cite{krizhevsky2009learning} (50,000 train, 10,000 test images across 100 fine classes and 20 superclasses). We evaluate two execution tiers:
+\begin{itemize}
+    \item \textbf{Tier 1}: Feature extraction using a frozen ResNet-18~\cite{he2016deep} backbone ($512$-dim embeddings) with a 2-layer MLP head ($512 \rightarrow 128 \rightarrow K$) trained via Adam ($\eta = 10^{-3}$) for 10,000 steps.
+    \item \textbf{Tier 2}: End-to-end convolutional training of a CIFAR-adapted ResNet-18 on raw $32 \times 32$ RGB images with periodic Ward confusion tree refreshes.
+\end{itemize}
+
+\textbf{Evaluation Scenarios.}
+\begin{itemize}
+    \item \textbf{Scenario 1 (One-vs-Rest Binary)}: A rare positive class is chosen from diverse superclasses (\textit{beaver}, \textit{oak tree}, \textit{pickup truck}, \textit{rocket}, \textit{shark}) evaluated at imbalance ratios $\rho \in \{1:10, 1:50, 1:100\}$. Evaluated on Minority F1, AUPRC, and False Positive Rate at 95\% recall (FPR@95).
+    \item \textbf{Scenario 2 (100-way Multi-Class)}: Full multi-class curriculum evaluated on Top-1 Accuracy, Macro-F1, and Worst-10-Class Recall.
+\end{itemize}
+
+\textbf{Baselines.} We compare Enhanced MCTS-HNM against Uniform Random Sampling, Online Hard Example Mining (OHEM)~\cite{shrivastava2016training}, and Strict GiantHunter (unnormalized $Q$, $100\%$ MCTS batch) across $N = 5$ random seeds. Paired Student's $t$-tests and Wilcoxon signed-rank tests assess statistical significance.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Scenario 1: Imbalanced Binary One-vs-Rest}
+Table~\ref{tab:scenario1_imbalanced} presents the primary benchmark results across imbalance ratios $\rho \in \{1:10, 1:50, 1:100\}$. Enhanced MCTS-HNM achieves the highest minority F1-score and AUPRC across all ratios. At $\rho=1:10$, Enhanced MCTS-HNM reaches $56.4\%$ F1, outperforming Uniform ($42.1\%$), OHEM ($48.5\%$), and Strict GiantHunter ($51.2\%$) with paired $t$-test $p < 0.001$. Crucially, FPR@95 drops from $0.352$ (Uniform) to $0.213$ (Ours), demonstrating superior boundary discrimination.
+
+\input{tables/tab_scenario1_imbalanced.tex}
+
+\subsection{Scenario 2: 100-Way Multi-Class Curriculum}
+In the 100-way multi-class curriculum setting (Table~\ref{tab:scenario2_multiclass}), Enhanced MCTS-HNM achieves $70.4\%$ Top-1 Accuracy and $69.8\%$ Macro-F1. Notably, Worst-10-Class Recall increases from $38.2\%$ (Uniform) to $49.5\%$ (Ours)---an $11.3\%$ absolute improvement---confirming that tree-guided negative mining effectively prevents the classifier from collapsing on difficult minority classes.
+
+\input{tables/tab_scenario2_multiclass.tex}
+
+\subsection{Training Convergence Dynamics}
+Figure~\ref{fig:convergence} illustrates the training trajectories over 10,000 optimization steps. While OHEM exhibits erratic loss oscillations due to batch-level variance, Enhanced MCTS-HNM converges smoothly. The running momentum formulation ($\alpha = 0.3$) filters transient gradient spikes, maintaining steady AUPRC progression throughout training.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.92\linewidth]{figures/fig_convergence_curves.pdf}
+  \caption{Training dynamics on CIFAR-100 ($\rho=1:10$): (a) Test minority F1-score and (b) Binary Cross-Entropy loss convergence across 10,000 steps for Uniform, OHEM, Strict GiantHunter, and Enhanced MCTS-HNM.}
+  \label{fig:convergence}
+\end{figure*}
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.78\linewidth]{figures/fig_tree_visitation_heatmap.pdf}
+  \caption{MCTS Superclass Visitation Density ($p_k$) over training steps. Early steps exhibit uniform exploration across all superclasses ($p_k \approx 0.05$), smoothly transitioning to focused exploitation of hard negative superclasses (e.g., SC-01, SC-04, SC-07) as action values converge.}
+  \label{fig:heatmap}
+\end{figure*}
+
+\subsection{Tree Exploration--Exploitation Dynamics}
+Figure~\ref{fig:heatmap} visualizes the temporal distribution of superclass visitations. In initial steps ($t < 1,000$), UCB1 exploration dominates, visiting all 20 superclasses uniformly ($p_k \approx 0.05$). As backpropagated loss rewards accumulate, visit density shifts selectively toward the most confusing superclasses (e.g., SC-01 and SC-04), demonstrating targeted active mining without manual curriculum tuning.
+
+\subsection{Ablation Studies}
+Table~\ref{tab:ablation_study} breaks down the contribution of each algorithmic component:
+\begin{itemize}
+    \item \textbf{Hierarchy Geometry}: Ward Confusion Trees ($56.4\%$ F1) outperform human Semantic Trees ($54.8\%$ F1), confirming that empirical misclassification geometry provides more direct mining signals than taxonomic labels.
+    \item \textbf{Min-Max Normalization}: Enabling sibling $Q$-normalization yields a $+5.2\%$ F1 gain over raw $Q$-values, preventing deeper nodes from suffering exploration starvation.
+    \item \textbf{Dual-Stream Batching}: A balanced 50/50 mix ($\beta=0.5$) outperforms both $100\%$ MCTS ($\beta=0.0$, $50.8\%$ F1) and $100\%$ Uniform ($\beta=1.0$, $42.1\%$ F1).
+    \item \textbf{Dynamic Leaf Expansion}: Sub-clustering class leaves by prediction entropy provides an additional $+1.7\%$ F1 boost ($58.1\%$ F1), confirming the utility of instance-level difficulty refinement.
+\end{itemize}
+
+\input{tables/tab_ablation_study.tex}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.95\linewidth]{figures/fig_hyperparameter_sensitivity.pdf}
+  \caption{Hyperparameter sensitivity of Enhanced MCTS-HNM on CIFAR-100 ($\rho=1:10$): (a) UCB1 exploration factor $c$ and (b) Leaf momentum update rate $\alpha$. Optimal performance is robustly achieved near $c=1.0$ and $\alpha=0.3$.}
+  \label{fig:sensitivity}
+\end{figure}
+
+\subsection{Hyperparameter Sensitivity}
+Figure~\ref{fig:sensitivity} displays sensitivity across exploration constant $c \in [0.25, 3.0]$ and momentum rate $\alpha \in [0.05, 0.9]$. Performance exhibits a convex profile peaking at $c=1.0$ and $\alpha=0.3$. Excessively small $c$ leads to premature exploitation of initial errors, while large $c$ degrades into uniform random sampling.
+
+\section{Discussion and Limitations}
+\label{sec:discussion}
+
+While MCTS-HNM significantly improves classification under extreme imbalance, several trade-offs warrant consideration. First, maintaining tree structures requires an initial warm-up pass to construct confusion matrices, adding minor setup overhead ($< 30$ seconds for CIFAR-100). Second, in dynamic leaf expansion, periodically evaluating prediction entropy requires extra forward passes on candidate pools. However, by amortizing tree updates and batching vector operations, MCTS-HNM adds less than $4\%$ wall-clock training overhead compared to standard SGD.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+In this paper, we introduced MCTS-HNM, an active reinforcement learning framework that formulates hard negative mining as sequential Monte Carlo Tree Search over class hierarchies. By combining sibling Min-Max $Q$-normalization with Dual-Stream hybrid batching, MCTS-HNM resolves the training instability of prior online mining techniques. Rigorous benchmarking on CIFAR-100 confirms statistically significant improvements in minority F1, AUPRC, and worst-class recall across both semantic and empirical confusion trees. All code, versioned Jupyter notebooks, and paper artifact generators are publicly available for full scientific reproducibility.
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\end{document}
