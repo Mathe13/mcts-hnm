@@ -9,29 +9,33 @@ from scipy.stats import ttest_rel, wilcoxon
 def compute_paired_statistical_tests(
     scores_a: np.ndarray | list[float],
     scores_b: np.ndarray | list[float],
+    keys_a: list[Any] | None = None,
+    keys_b: list[Any] | None = None,
 ) -> dict[str, float]:
     r"""Compute paired Student's t-test and Wilcoxon signed-rank test across paired score samples.
 
     Args:
         scores_a: 1D numeric array or list of metrics from method A across $N \ge 2$ seeds.
         scores_b: 1D numeric array or list of metrics from method B across $N \ge 2$ seeds.
+        keys_a: Optional pairing keys (e.g. tuples of seed, class, split, budget) for method A.
+        keys_b: Optional pairing keys for method B.
 
     Returns:
-        Dictionary containing:
-        - `mean_a`: mean metric for method A
-        - `std_a`: sample standard deviation for method A ($ddof=1$)
-        - `mean_b`: mean metric for method B
-        - `std_b`: sample standard deviation for method B ($ddof=1$)
-        - `mean_diff`: mean difference ($\text{mean}(A - B)$)
-        - `t_stat`: paired Student's t-test statistic
-        - `t_pvalue`: paired Student's t-test two-sided p-value
-        - `wilcoxon_stat`: Wilcoxon signed-rank test statistic
-        - `wilcoxon_pvalue`: Wilcoxon signed-rank test two-sided p-value
+        Dictionary containing statistical test metrics.
 
-    Safe Fallback:
-        If all differences $a_i - b_i == 0$, returns `t_stat=0.0`, `t_pvalue=1.0`,
-        `wilcoxon_stat=0.0`, and `wilcoxon_pvalue=1.0` without raising SciPy exceptions.
+    Raises:
+        ValueError: If array sizes mismatch, have fewer than 2 samples, or pairing keys mismatch.
     """
+    if keys_a is not None or keys_b is not None:
+        if keys_a is None or keys_b is None:
+            raise ValueError("Both keys_a and keys_b must be provided when pairing validation is requested.")
+        if len(keys_a) != len(keys_b):
+            raise ValueError(f"keys_a length ({len(keys_a)}) does not match keys_b length ({len(keys_b)}).")
+        if keys_a != keys_b:
+            raise ValueError(
+                f"Paired statistical tests require identical matching pairing keys, but keys differ: {keys_a} != {keys_b}."
+            )
+
     arr_a = np.asarray(scores_a, dtype=np.float64)
     arr_b = np.asarray(scores_b, dtype=np.float64)
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 import json
 import logging
 from pathlib import Path
@@ -27,7 +28,9 @@ from src.trees.semantic_tree import build_semantic_tree
 from src.utils.experiment_config import (
     ExecutionMode,
     ExperimentConfig,
+    find_repo_root,
     get_active_session_mode,
+    get_git_commit,
     get_isolated_paths,
     save_provenance_metadata,
     validate_mode_isolated_path,
@@ -85,6 +88,7 @@ class BenchmarkRunResult:
     seed: int
     final_metrics: dict[str, float]
     imbalance_ratio: str | None = None
+    run_id: str | None = None
 
 
 def _atomic_save_json(data: Any, path: Path) -> None:
@@ -370,14 +374,42 @@ def run_benchmark(
                             },
                         }
 
+                    commit_hash = get_git_commit(find_repo_root())[:8]
+                    cls_id_str = f"cls{target_class_scenario1}" if scenario == "scenario1" else "cls100"
+                    r_str = f"r{rho.replace(':', '_')}" if rho is not None else "r_none"
+                    t_str = tree_type if strat.startswith("mcts") else "none"
+                    run_id = f"{scenario}_{cls_id_str}_{r_str}_{t_str}_{strat}_s{seed}_{commit_hash}"
+
+                    # Serialize individual atomic run
+                    runs_dir = out_path / "runs"
+                    runs_dir.mkdir(parents=True, exist_ok=True)
+                    single_run_payload = {
+                        "run_id": run_id,
+                        "scenario": scenario,
+                        "strategy": strat,
+                        "tree_type": t_str,
+                        "seed": seed,
+                        "target_class": target_class_scenario1 if scenario == "scenario1" else None,
+                        "imbalance_ratio": rho,
+                        "final_metrics": final_metrics,
+                        "val_metrics": res.get("val_metrics"),
+                        "test_metrics": res.get("test_metrics"),
+                        "history": res.get("history", []),
+                        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+                    }
+                    run_json_path = runs_dir / f"{run_id}.json"
+                    _atomic_save_json(single_run_payload, run_json_path)
+                    save_provenance_metadata(run_json_path, active_config, extra={"run_id": run_id})
+
                     runs.append(
                         BenchmarkRunResult(
                             scenario=scenario,
                             strategy=strat,
-                            tree_type=tree_type if strat.startswith("mcts") else "none",
+                            tree_type=t_str,
                             seed=seed,
                             final_metrics=final_metrics,
                             imbalance_ratio=rho,
+                            run_id=run_id,
                         )
                     )
 

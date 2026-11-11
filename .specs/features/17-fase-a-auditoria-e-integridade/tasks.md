@@ -247,14 +247,14 @@ T9
 
 **Done when**:
 
-- [ ] Each run produces an isolated `run_id` file with configuration and step history
-- [ ] Paired statistical tests check matching seeds, split hashes, target classes, and budgets, raising `ValueError` on mismatch
-- [ ] Unit tests in `tests/test_phase_a_persistence.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_a_persistence.py`
+- [x] Each run produces an isolated `run_id` file with configuration and step history
+- [x] Paired statistical tests check matching seeds, split hashes, target classes, and budgets, raising `ValueError` on mismatch
+- [x] Unit tests in `tests/test_phase_a_persistence.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_a_persistence.py`
 
 **Tests**: unit
 **Gate**: quick
-**Commit**: `feat(persistence): implement fine-grained run_id serialization and strictly paired statistics`
+**Commit**: `feat(persistence): implement run_id serialization and paired statistics`
 
 ---
 
