@@ -212,11 +212,11 @@ T6 → T7
 
 **Done when**:
 
-- [ ] `run_diagnostic_pilot()` runs Scenarios 1 and 2 under configurable small update budgets
-- [ ] Outputs are isolated to `results/pilot/` or `results/smoke/` without modifying legacy files
-- [ ] Serializes per-run JSON records with step histories and diagnostics
-- [ ] Integration tests in `tests/test_phase_b_gate.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_b_gate.py`  
+- [x] `run_diagnostic_pilot()` runs Scenarios 1 and 2 under configurable small update budgets
+- [x] Outputs are isolated to `results/pilot/` or `results/smoke/` without modifying legacy files
+- [x] Serializes per-run JSON records with step histories and diagnostics
+- [x] Integration tests in `tests/test_phase_b_gate.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_b_gate.py`  
 
 **Tests**: integration  
 **Gate**: quick  
