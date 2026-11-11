@@ -204,14 +204,14 @@ T9
 
 **Done when**:
 
-- [ ] `estimate_validation_confusion_matrix()` rejects test data and accepts validation or calibration data
-- [ ] Fallback from validation to test in `benchmark_runner.py` is removed, failing fast with `ValueError`
-- [ ] Unit tests in `tests/test_phase_a_data_segregation.py::test_tree_calibration_rejects_test_data` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_a_data_segregation.py`
+- [x] `estimate_validation_confusion_matrix()` rejects test data and accepts validation or calibration data
+- [x] Fallback from validation to test in `benchmark_runner.py` is removed, failing fast with `ValueError`
+- [x] Unit tests in `tests/test_phase_a_data_segregation.py::test_tree_calibration_rejects_test_data` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_a_data_segregation.py`
 
 **Tests**: unit
 **Gate**: quick
-**Commit**: `refactor(trees): prevent test data leakage in confusion matrix estimation`
+**Commit**: `refactor(trees): prevent test data leakage in tree calibration`
 
 ---
 

@@ -237,20 +237,40 @@ def build_confusion_tree(
 
 
 def estimate_validation_confusion_matrix(
-    train_embeddings: np.ndarray | torch.Tensor,
-    train_labels: np.ndarray | torch.Tensor,
-    val_embeddings: np.ndarray | torch.Tensor,
-    val_labels: np.ndarray | torch.Tensor,
+    train_embeddings: np.ndarray | torch.Tensor | None = None,
+    train_labels: np.ndarray | torch.Tensor | None = None,
+    val_embeddings: np.ndarray | torch.Tensor | None = None,
+    val_labels: np.ndarray | torch.Tensor | None = None,
     num_classes: int = 100,
     smoothing: float = 1e-3,
     seed: int = 42,
+    is_test_data: bool = False,
+    val_features: torch.Tensor | None = None,
+    device: torch.device | None = None,
 ) -> np.ndarray:
     r"""Estimate a baseline $K \times K$ validation confusion matrix from Tier-1 feature embeddings.
 
     Fits a deterministic L2-regularized multinomial logistic classifier on `train_embeddings`
     and accumulates predicted probabilities / hard confusion counts on `val_embeddings` with
     additive Laplace `smoothing` so every class row has a strictly positive sum.
+
+    Raises:
+        ValueError: If is_test_data is True, or if validation data is missing.
     """
+    if is_test_data:
+        raise ValueError("Estimating confusion matrix on test data is strictly prohibited to prevent data leakage.")
+
+    # Resolve aliases
+    if val_embeddings is None and val_features is not None:
+        val_embeddings = val_features
+
+    if val_embeddings is None or val_labels is None:
+        raise ValueError("val_embeddings and val_labels must be provided to estimate validation confusion matrix.")
+
+    if train_embeddings is None or train_labels is None:
+        train_embeddings = val_embeddings
+        train_labels = val_labels
+
     set_global_seed(seed)
     if num_classes < 2:
         raise ValueError(f"num_classes must be >= 2, got {num_classes}.")
