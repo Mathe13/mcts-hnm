@@ -562,3 +562,75 @@ def test_generate_scenario1_table_rejects_empty_ratios(tmp_path):
         generate_scenario1_table(data, output_dir=tmp_path / "tables")
 
 
+def test_regression_exclusively_1_50_end_to_end(tmp_path):
+    """REG-01: Regression test: An experiment exclusively run at 1:50 must appear exclusively as 1:50 in the generated table."""
+    res_dir = tmp_path / "results" / "real"
+    res_dir.mkdir(parents=True)
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.REAL)
+
+    # 1. Provide axis1 benchmark JSON with runs exclusively at imbalance_ratio = 1:50
+    axis1_file = res_dir / "tier1_axis1_samplers.json"
+    axis1_data = {
+        "runs": [
+            {
+                "strategy": strat,
+                "imbalance_ratio": "1:50",
+                "final_metrics": {
+                    "f1": 0.40,
+                    "auprc": 0.38,
+                    "fpr_at_95_recall": 0.30,
+                },
+            }
+            for strat in ("uniform", "ohem", "mcts_strict", "mcts_enhanced")
+        ]
+    }
+    axis1_file.write_text(json.dumps(axis1_data), encoding="utf-8")
+    save_provenance_metadata(axis1_file, config=cfg)
+
+    # 2. Provide scenario2 and ablation files to satisfy full suite completeness
+    scen2_file = res_dir / "tier1_scenario2_curriculum.json"
+    scen2_file.write_text(json.dumps({
+        "scenario2": {
+            strat: {
+                "top1_accuracy": {"mean": 0.65, "std": 0.01},
+                "macro_f1": {"mean": 0.62, "std": 0.01},
+                "worst_10_recall": {"mean": 0.40, "std": 0.01},
+            }
+            for strat in ("uniform", "ohem", "mcts_strict", "mcts_enhanced")
+        }
+    }), encoding="utf-8")
+    save_provenance_metadata(scen2_file, config=cfg)
+
+    ablation_file = res_dir / "tier1_axis2_tree_ablation.json"
+    ablation_file.write_text(json.dumps({
+        "ablation": {
+            "semantic_tree": {"f1": 0.50, "auprc": 0.48},
+            "confusion_ward_tree": {"f1": 0.54, "auprc": 0.52},
+        }
+    }), encoding="utf-8")
+    save_provenance_metadata(ablation_file, config=cfg)
+
+    # 3. Load via load_real_benchmark_results
+    loaded = load_real_benchmark_results(res_dir, expected_mode=ExecutionMode.REAL)
+    assert "scenario1" in loaded
+    scen1 = loaded["scenario1"]
+
+    for strat in ("uniform", "ohem", "mcts_strict", "mcts_enhanced"):
+        assert "50" in scen1[strat], f"Strategy {strat} missing key '50'"
+        assert "10" not in scen1[strat], f"Strategy {strat} erroneously classified under '10'!"
+        assert "100" not in scen1[strat], f"Strategy {strat} erroneously classified under '100'!"
+
+    # 4. Generate LaTeX table
+    tables_dir = tmp_path / "tables"
+    tex_path = generate_scenario1_table(loaded, output_dir=tables_dir)
+    assert tex_path.exists()
+    content = tex_path.read_text(encoding="utf-8")
+
+    # 5. Assert 1:50 appears exclusively
+    assert "1:50" in content
+    assert "1:10" not in content, "Found '1:10' in table generated from 1:50 experiment!"
+    assert "1:100" not in content, "Found '1:100' in table generated from 1:50 experiment!"
+    assert "at imbalance ratio $\\rho = 1:50$" in content
+
+
+
