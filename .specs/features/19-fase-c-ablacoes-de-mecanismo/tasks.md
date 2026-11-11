@@ -215,15 +215,15 @@ T7
 
 **Done when**:
 
-- [ ] `build_random_tree()` constructs a valid `FastHierarchyTree` with 100 leaves and 20 groups of 5
-- [ ] Structural invariants (root=0, contiguous IDs, parent-child links) hold
-- [ ] Average Linkage (UPGMA) produces valid hierarchy from confusion dissimilarity
-- [ ] Unit tests in `tests/test_phase_c_hierarchies.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_c_hierarchies.py`  
+- [x] `build_random_tree()` constructs a valid `FastHierarchyTree` with 100 leaves and 20 groups of 5
+- [x] Structural invariants (root=0, contiguous IDs, parent-child links) hold
+- [x] Average Linkage (UPGMA) produces valid hierarchy from confusion dissimilarity
+- [x] Unit tests in `tests/test_phase_c_hierarchies.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_c_hierarchies.py`  
 
 **Tests**: unit  
 **Gate**: quick  
-**Commit**: `feat(trees): implement random balanced hierarchy baseline and UPGMA validation`  
+**Commit**: `feat(trees): implement random balanced hierarchy and UPGMA`  
 
 ---
 
