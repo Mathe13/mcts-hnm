@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/19-fase-c-ablacoes-de-mecanismo/design.md`  
-**Status**: In Progress  
+**Status**: Complete  
 **Approved**: 2026-11-11 - user: "prossiga"  
 **Build**: `.venv/bin/python -m compileall -q src tests`  
 **Run unit**: `.venv/bin/pytest -v tests/test_phase_c_ablations.py tests/test_phase_c_selectors.py tests/test_phase_c_hierarchies.py tests/test_phase_c_gate.py`  
@@ -237,11 +237,11 @@ T7
 
 **Done when**:
 
-- [ ] `verify_gate_c()` verifies that paired ablation runs differ only in targeted factors
-- [ ] Rejects runs with NaN/Inf or missing batch diversity telemetry
-- [ ] Evaluates Uniform vs Uniform Grouped vs Enhanced and outputs diagnostic cause classification
-- [ ] Integration tests in `tests/test_phase_c_gate.py` pass with exit code 0
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_phase_c_*.py`  
+- [x] `verify_gate_c()` verifies that paired ablation runs differ only in targeted factors
+- [x] Rejects runs with NaN/Inf or missing batch diversity telemetry
+- [x] Evaluates Uniform vs Uniform Grouped vs Enhanced and outputs diagnostic cause classification
+- [x] Integration tests in `tests/test_phase_c_gate.py` pass with exit code 0
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_phase_c_*.py`  
 
 **Tests**: integration  
 **Gate**: build  
@@ -334,12 +334,12 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 
 ## Task Granularity Check
 
-| Task | Scope | Status |
-| ---- | ----- | ------ |
-| T1 | `src/training/batch_diversity.py` | pending |
-| T2 | `src/mcts/sampler.py` | pending |
-| T3 | `src/training/trainer.py` | pending |
-| T4 | `src/training/selectors.py` | pending |
-| T5 | `src/trees/hierarchy_metrics.py` | pending |
-| T6 | `src/trees/random_tree.py` | pending |
-| T7 | `src/utils/gate_c_verifier.py` | pending |
+| Task | Scope | Status | Commit |
+| ---- | ----- | ------ | ------ |
+| T1 | `src/training/batch_diversity.py` | complete | `6a0d574` |
+| T2 | `src/mcts/sampler.py` | complete | `039c8fc` |
+| T3 | `src/training/trainer.py` | complete | `ef837d5` |
+| T4 | `src/training/selectors.py` | complete | `c050f96` |
+| T5 | `src/trees/hierarchy_metrics.py` | complete | `ecffb78` |
+| T6 | `src/trees/random_tree.py` | complete | `d465f0a` |
+| T7 | `src/utils/gate_c_verifier.py` | complete | pending |
