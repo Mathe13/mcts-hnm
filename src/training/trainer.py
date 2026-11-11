@@ -203,8 +203,10 @@ def train_scenario1(
     train_binary_labels: np.ndarray | torch.Tensor,
     positive_indices: np.ndarray,
     negative_indices: np.ndarray,
-    test_features: torch.Tensor,
-    test_binary_labels: np.ndarray | torch.Tensor,
+    val_features: torch.Tensor | None = None,
+    val_binary_labels: np.ndarray | torch.Tensor | None = None,
+    test_features: torch.Tensor | None = None,
+    test_binary_labels: np.ndarray | torch.Tensor | None = None,
     strategy: str = "mcts_enhanced",
     tree: FastHierarchyTree | None = None,
     num_steps: int = 1000,
@@ -221,7 +223,16 @@ def train_scenario1(
     seed: int = 42,
     device: torch.device | None = None,
 ) -> dict[str, object]:
-    """Train downstream MLP classifier under Scenario 1 (Imbalanced Binary One-vs-Rest)."""
+    """Train downstream MLP classifier under Scenario 1 (Imbalanced Binary One-vs-Rest).
+
+    Periodic evaluations at eval_every steps are computed strictly on validation data (val_features),
+    preventing scientific data leakage from the test split.
+    """
+    if val_features is None or val_binary_labels is None:
+        raise ValueError(
+            "val_features and val_binary_labels must be provided for validation evaluation during training. "
+            "Periodic evaluation on test data is prohibited."
+        )
     if strategy not in SUPPORTED_STRATEGIES:
         raise ValueError(
             f"Unknown strategy '{strategy}'. Supported: {SUPPORTED_STRATEGIES}."
@@ -348,8 +359,8 @@ def train_scenario1(
         if step % eval_every == 0 or step == num_steps:
             metrics = evaluate_scenario1_metrics(
                 model=model,
-                features=test_features,
-                binary_labels=test_binary_labels,
+                features=val_features,
+                binary_labels=val_binary_labels,
                 device=dev,
             )
             metrics["step"] = step
@@ -372,11 +383,18 @@ def train_scenario1(
                 })
             history.append(metrics)
 
-    final_eval = history[-1] if history else evaluate_scenario1_metrics(model, test_features, test_binary_labels, device=dev)
+    final_val_eval = history[-1] if history else evaluate_scenario1_metrics(model, val_features, val_binary_labels, device=dev)
+    final_test_eval = None
+    if test_features is not None and test_binary_labels is not None:
+        final_test_eval = evaluate_scenario1_metrics(model, test_features, test_binary_labels, device=dev)
+
+    final_eval = final_test_eval if final_test_eval is not None else final_val_eval
     return {
         "strategy": strategy,
         "history": history,
         "final_metrics": final_eval,
+        "val_metrics": final_val_eval,
+        "test_metrics": final_test_eval,
         "model": model,
         "diagnostics": diagnostics_tracker.summary() if diagnostics_tracker is not None else None,
         "final_num_leaves": tree.num_leaves if tree is not None else None,
@@ -387,8 +405,10 @@ def train_scenario1(
 def train_scenario2(
     train_features: torch.Tensor,
     train_labels: np.ndarray | torch.Tensor,
-    test_features: torch.Tensor,
-    test_labels: np.ndarray | torch.Tensor,
+    val_features: torch.Tensor | None = None,
+    val_labels: np.ndarray | torch.Tensor | None = None,
+    test_features: torch.Tensor | None = None,
+    test_labels: np.ndarray | torch.Tensor | None = None,
     strategy: str = "mcts_enhanced",
     tree: FastHierarchyTree | None = None,
     num_classes: int = 100,
@@ -406,7 +426,16 @@ def train_scenario2(
     seed: int = 42,
     device: torch.device | None = None,
 ) -> dict[str, object]:
-    """Train downstream MLP classifier under Scenario 2 (100-way Multi-Class Curriculum)."""
+    """Train downstream MLP classifier under Scenario 2 (100-way Multi-Class Curriculum).
+
+    Periodic evaluations at eval_every steps are computed strictly on validation data (val_features),
+    preventing scientific data leakage from the test split.
+    """
+    if val_features is None or val_labels is None:
+        raise ValueError(
+            "val_features and val_labels must be provided for validation evaluation during training. "
+            "Periodic evaluation on test data is prohibited."
+        )
     if strategy not in SUPPORTED_STRATEGIES:
         raise ValueError(
             f"Unknown strategy '{strategy}'. Supported: {SUPPORTED_STRATEGIES}."
@@ -534,8 +563,8 @@ def train_scenario2(
         if step % eval_every == 0 or step == num_steps:
             metrics = evaluate_scenario2_metrics(
                 model=model,
-                features=test_features,
-                labels=test_labels,
+                features=val_features,
+                labels=val_labels,
                 num_classes=num_classes,
                 device=dev,
             )
@@ -559,11 +588,18 @@ def train_scenario2(
                 })
             history.append(metrics)
 
-    final_eval = history[-1] if history else evaluate_scenario2_metrics(model, test_features, test_labels, num_classes=num_classes, device=dev)
+    final_val_eval = history[-1] if history else evaluate_scenario2_metrics(model, val_features, val_labels, num_classes=num_classes, device=dev)
+    final_test_eval = None
+    if test_features is not None and test_labels is not None:
+        final_test_eval = evaluate_scenario2_metrics(model, test_features, test_labels, num_classes=num_classes, device=dev)
+
+    final_eval = final_test_eval if final_test_eval is not None else final_val_eval
     return {
         "strategy": strategy,
         "history": history,
         "final_metrics": final_eval,
+        "val_metrics": final_val_eval,
+        "test_metrics": final_test_eval,
         "model": model,
         "diagnostics": diagnostics_tracker.summary() if diagnostics_tracker is not None else None,
         "final_num_leaves": tree.num_leaves if tree is not None else None,

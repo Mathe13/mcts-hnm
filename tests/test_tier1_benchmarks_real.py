@@ -64,6 +64,8 @@ def test_run_benchmark_provenance_metadata(tmp_path):
     rng = np.random.default_rng(42)
     train_feats = torch.randn(100, 32)
     train_labels = np.array([i % 10 for i in range(100)])
+    val_feats = torch.randn(20, 32)
+    val_labels = np.array([i % 10 for i in range(20)])
     test_feats = torch.randn(20, 32)
     test_labels = np.array([i % 10 for i in range(20)])
 
@@ -71,6 +73,8 @@ def test_run_benchmark_provenance_metadata(tmp_path):
         scenario="scenario1",
         train_features=train_feats,
         train_labels=train_labels,
+        val_features=val_feats,
+        val_labels=val_labels,
         test_features=test_feats,
         test_labels=test_labels,
         strategies=("uniform",),
@@ -139,6 +143,8 @@ def test_sampler_negative_batch_budget_equivalence(tmp_path):
 
     train_feats = torch.randn(100, 32)
     train_labels = np.array([i % 10 for i in range(100)])
+    val_feats = torch.randn(20, 32)
+    val_labels = np.array([i % 10 for i in range(20)])
     test_feats = torch.randn(20, 32)
     test_labels = np.array([i % 10 for i in range(20)])
 
@@ -146,6 +152,8 @@ def test_sampler_negative_batch_budget_equivalence(tmp_path):
         scenario="scenario1",
         train_features=train_feats,
         train_labels=train_labels,
+        val_features=val_feats,
+        val_labels=val_labels,
         test_features=test_feats,
         test_labels=test_labels,
         strategies=("uniform", "ohem", "mcts_strict", "mcts_enhanced"),
@@ -171,6 +179,8 @@ def test_scenario1_results_contain_imbalance_audit(tmp_path):
 
     train_feats = torch.randn(100, 32)
     train_labels = np.array([i % 10 for i in range(100)])
+    val_feats = torch.randn(20, 32)
+    val_labels = np.array([i % 10 for i in range(20)])
     test_feats = torch.randn(20, 32)
     test_labels = np.array([i % 10 for i in range(20)])
 
@@ -178,6 +188,8 @@ def test_scenario1_results_contain_imbalance_audit(tmp_path):
         scenario="scenario1",
         train_features=train_feats,
         train_labels=train_labels,
+        val_features=val_feats,
+        val_labels=val_labels,
         test_features=test_feats,
         test_labels=test_labels,
         strategies=("uniform",),
@@ -202,6 +214,8 @@ def test_scenario2_mcts_diagnostics_tracking(tmp_path):
 
     train_feats = torch.randn(100, 32)
     train_labels = np.array([i % 10 for i in range(100)])
+    val_feats = torch.randn(20, 32)
+    val_labels = np.array([i % 10 for i in range(20)])
     test_feats = torch.randn(20, 32)
     test_labels = np.array([i % 10 for i in range(20)])
 
@@ -209,6 +223,8 @@ def test_scenario2_mcts_diagnostics_tracking(tmp_path):
         scenario="scenario2",
         train_features=train_feats,
         train_labels=train_labels,
+        val_features=val_feats,
+        val_labels=val_labels,
         test_features=test_feats,
         test_labels=test_labels,
         strategies=("mcts_enhanced",),
@@ -234,6 +250,8 @@ def test_scenario2_results_contain_class_coverage_and_recall(tmp_path):
 
     train_feats = torch.randn(100, 32)
     train_labels = np.array([i % 10 for i in range(100)])
+    val_feats = torch.randn(20, 32)
+    val_labels = np.array([i % 10 for i in range(20)])
     test_feats = torch.randn(20, 32)
     test_labels = np.array([i % 10 for i in range(20)])
 
@@ -241,6 +259,8 @@ def test_scenario2_results_contain_class_coverage_and_recall(tmp_path):
         scenario="scenario2",
         train_features=train_feats,
         train_labels=train_labels,
+        val_features=val_feats,
+        val_labels=val_labels,
         test_features=test_feats,
         test_labels=test_labels,
         strategies=("mcts_enhanced",),
@@ -266,12 +286,16 @@ def test_run_sensitivity_ablation(tmp_path):
 
     train_feats = torch.randn(100, 32)
     train_labels = np.array([i % 10 for i in range(100)])
+    val_feats = torch.randn(20, 32)
+    val_labels = np.array([i % 10 for i in range(20)])
     test_feats = torch.randn(20, 32)
     test_labels = np.array([i % 10 for i in range(20)])
 
     res = run_sensitivity_ablation(
         train_features=train_feats,
         train_labels=train_labels,
+        val_features=val_feats,
+        val_labels=val_labels,
         test_features=test_feats,
         test_labels=test_labels,
         c_values=(1.0, 2.0),
@@ -296,6 +320,8 @@ def test_individual_seeds_and_aggregated_export(tmp_path):
 
     train_feats = torch.randn(100, 32)
     train_labels = np.array([i % 10 for i in range(100)])
+    val_feats = torch.randn(20, 32)
+    val_labels = np.array([i % 10 for i in range(20)])
     test_feats = torch.randn(20, 32)
     test_labels = np.array([i % 10 for i in range(20)])
 
@@ -303,6 +329,8 @@ def test_individual_seeds_and_aggregated_export(tmp_path):
         scenario="scenario1",
         train_features=train_feats,
         train_labels=train_labels,
+        val_features=val_feats,
+        val_labels=val_labels,
         test_features=test_feats,
         test_labels=test_labels,
         strategies=("uniform",),
@@ -340,6 +368,8 @@ def test_benchmark_runner_custom_output_dir_validation(tmp_path):
             "scenario1",
             train_features=feats,
             train_labels=labels,
+            val_features=feats,
+            val_labels=labels,
             test_features=feats,
             test_labels=labels,
             output_dir=repo / "results" / "real",
@@ -354,6 +384,8 @@ def test_benchmark_runner_custom_output_dir_validation(tmp_path):
         run_sensitivity_ablation(
             train_features=feats,
             train_labels=labels,
+            val_features=feats,
+            val_labels=labels,
             test_features=feats,
             test_labels=labels,
             output_dir=repo / "results" / "unsegregated_custom",
@@ -368,6 +400,8 @@ def test_scenario1_imbalance_ratio_parameterization(tmp_path):
 
     train_feats = torch.randn(100, 32)
     train_labels = np.array([i % 10 for i in range(100)])
+    val_feats = torch.randn(20, 32)
+    val_labels = np.array([i % 10 for i in range(20)])
     test_feats = torch.randn(20, 32)
     test_labels = np.array([i % 10 for i in range(20)])
 
@@ -375,6 +409,8 @@ def test_scenario1_imbalance_ratio_parameterization(tmp_path):
         scenario="scenario1",
         train_features=train_feats,
         train_labels=train_labels,
+        val_features=val_feats,
+        val_labels=val_labels,
         test_features=test_feats,
         test_labels=test_labels,
         strategies=("uniform",),

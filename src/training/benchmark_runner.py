@@ -137,6 +137,11 @@ def run_benchmark(
         raise ValueError(f"scenario must be 'scenario1' or 'scenario2', got '{scenario}'.")
     if len(seeds) < 1:
         raise ValueError("At least 1 seed required.")
+    if val_features is None or val_labels is None:
+        raise ValueError(
+            "val_features and val_labels are required in run_benchmark to prevent data leakage. "
+            "Falling back to test data is strictly prohibited."
+        )
 
     if config is not None:
         active_config = config
@@ -191,17 +196,21 @@ def run_benchmark(
         )
         imbalance_audit["configured_ratios"] = list(imbalance_ratios)
 
+    val_lbl_np = (
+        val_labels.detach().cpu().numpy()
+        if isinstance(val_labels, torch.Tensor)
+        else np.asarray(val_labels)
+    ).astype(np.int64)
+
     # Pre-build validation confusion matrix if tree_type requires confusion_ward
     conf_mat: np.ndarray | None = None
     if "confusion_ward" in tree_types:
-        v_feat = val_features if val_features is not None else test_features
-        v_lbl = val_labels if val_labels is not None else test_labels
         num_cls = 100 if scenario == "scenario2" else max(int(np.max(train_lbl_np)) + 1, 2)
         conf_mat = estimate_validation_confusion_matrix(
             train_embeddings=train_features,
             train_labels=train_labels,
-            val_embeddings=v_feat,
-            val_labels=v_lbl,
+            val_embeddings=val_features,
+            val_labels=val_labels,
             num_classes=num_cls,
         )
 
@@ -238,11 +247,15 @@ def run_benchmark(
                                 assert conf_mat is not None
                                 tree = build_confusion_tree(conf_mat, class_to_indices)
 
+                        binary_val_lbl = (val_lbl_np == target_class_scenario1).astype(np.int64)
+
                         res = train_scenario1(
                             train_features=train_features,
                             train_binary_labels=binary_train_lbl,
                             positive_indices=pos_idx,
                             negative_indices=neg_idx,
+                            val_features=val_features,
+                            val_binary_labels=binary_val_lbl,
                             test_features=test_features,
                             test_binary_labels=binary_test_lbl,
                             strategy=strat,
@@ -270,6 +283,8 @@ def run_benchmark(
                         res = train_scenario2(
                             train_features=train_features,
                             train_labels=train_lbl_np,
+                            val_features=val_features,
+                            val_labels=val_lbl_np,
                             test_features=test_features,
                             test_labels=test_lbl_np,
                             strategy=strat,
@@ -481,6 +496,8 @@ def run_benchmark(
 def run_sensitivity_ablation(
     train_features: torch.Tensor,
     train_labels: np.ndarray | torch.Tensor,
+    val_features: torch.Tensor,
+    val_labels: np.ndarray | torch.Tensor,
     test_features: torch.Tensor,
     test_labels: np.ndarray | torch.Tensor,
     c_values: tuple[float, ...] = (0.5, 1.0, 2.0, 4.0),
@@ -495,6 +512,10 @@ def run_sensitivity_ablation(
     device: torch.device | None = None,
 ) -> dict[str, Any]:
     """Evaluate grid sensitivity over exploration coefficient c and momentum alpha."""
+    if val_features is None or val_labels is None:
+        raise ValueError(
+            "val_features and val_labels are required in run_sensitivity_ablation to prevent data leakage."
+        )
     if config is not None:
         active_config = config
     elif get_active_session_mode() is not None:
@@ -520,10 +541,17 @@ def run_sensitivity_ablation(
         else np.asarray(test_labels)
     ).astype(np.int64)
 
+    val_lbl_np = (
+        val_labels.detach().cpu().numpy()
+        if isinstance(val_labels, torch.Tensor)
+        else np.asarray(val_labels)
+    ).astype(np.int64)
+
     pos_mask = train_lbl_np == target_class_scenario1
     pos_idx = np.flatnonzero(pos_mask).astype(np.int64)
     neg_idx = np.flatnonzero(~pos_mask).astype(np.int64)
     binary_train_lbl = pos_mask.astype(np.int64)
+    binary_val_lbl = (val_lbl_np == target_class_scenario1).astype(np.int64)
     binary_test_lbl = (test_lbl_np == target_class_scenario1).astype(np.int64)
 
     neg_classes = np.unique(train_lbl_np[neg_idx])
@@ -545,6 +573,8 @@ def run_sensitivity_ablation(
                     train_binary_labels=binary_train_lbl,
                     positive_indices=pos_idx,
                     negative_indices=neg_idx,
+                    val_features=val_features,
+                    val_binary_labels=binary_val_lbl,
                     test_features=test_features,
                     test_binary_labels=binary_test_lbl,
                     strategy="mcts_enhanced",

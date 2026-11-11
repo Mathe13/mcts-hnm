@@ -182,15 +182,15 @@ T9
 
 **Done when**:
 
-- [ ] `train_scenario1()` and `train_scenario2()` require `val_features` and `val_labels`
-- [ ] Periodic history logging evaluates exclusively on validation data
-- [ ] Test features are evaluated strictly once at final evaluation
-- [ ] Unit tests in `tests/test_phase_a_data_segregation.py::test_periodic_eval_uses_validation_strictly` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_a_data_segregation.py`
+- [x] `train_scenario1()` and `train_scenario2()` require `val_features` and `val_labels`
+- [x] Periodic history logging evaluates exclusively on validation data
+- [x] Test features are evaluated strictly once at final evaluation
+- [x] Unit tests in `tests/test_phase_a_data_segregation.py::test_periodic_eval_uses_validation_strictly` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_a_data_segregation.py`
 
 **Tests**: unit
 **Gate**: quick
-**Commit**: `refactor(trainer): restrict periodic evaluation curves strictly to validation data`
+**Commit**: `refactor(trainer): restrict periodic evaluation to validation data`
 
 ---
 
