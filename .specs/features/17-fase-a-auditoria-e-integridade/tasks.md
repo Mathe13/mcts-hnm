@@ -159,16 +159,16 @@ T9
 
 **Done when**:
 
-- [ ] `build_stratified_imbalanced_split()` produces exact ratio $N_{\text{neg}}/N_{\text{pos}}$ and exact positive count
-- [ ] `build_nested_imbalanced_splits()` guarantees identical positives across 50, 100, 500 and strict negative subset containment $N_{50} \subset N_{100} \subset N_{500}$
-- [ ] Infeasible counts raise explicit `ValueError`
-- [ ] Official test split is un-resampled
-- [ ] Unit tests in `tests/test_phase_a_splits.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_a_splits.py`
+- [x] `build_stratified_imbalanced_split()` produces exact ratio $N_{\text{neg}}/N_{\text{pos}}$ and exact positive count
+- [x] `build_nested_imbalanced_splits()` guarantees identical positives across 50, 100, 500 and strict negative subset containment $N_{50} \subset N_{100} \subset N_{500}$
+- [x] Infeasible counts raise explicit `ValueError`
+- [x] Official test split is un-resampled
+- [x] Unit tests in `tests/test_phase_a_splits.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_a_splits.py`
 
 **Tests**: unit
 **Gate**: quick
-**Commit**: `feat(data): implement stratified imbalanced splitter with nested negative sampling`
+**Commit**: `feat(data): implement stratified split with nested negative sampling`
 
 ---
 
