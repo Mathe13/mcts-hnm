@@ -2,24 +2,14 @@
 \begin{table}[t]
 \centering
 \small
-\caption{Ablation study on CIFAR-100 ($\rho=1:10$) isolating tree hierarchy structure, $Q$-normalization, Dual-Stream sampling ratio, and dynamic prediction-entropy leaf sub-clustering.}
+\caption{Ablation study on CIFAR-100 ($\rho=1:50$) isolating tree hierarchy structure, $Q$-normalization, Dual-Stream sampling ratio, and dynamic prediction-entropy leaf sub-clustering.}
 \label{tab:ablation_study}
 \begin{tabular}{llccc}
 \toprule
 Ablation Axis & Configuration & F1-Score & AUPRC & $\Delta$ F1 vs. Strict \\
 \midrule
-  Hierarchy Geometry & Native Semantic Tree (20 superclasses) & 0.548 & 0.536 & +3.6\% \\
-   & Ward Confusion Tree (Empirical) & 0.564 & 0.552 & +5.2\% \\
-\midrule
-  UCB1 Normalization & Raw Unnormalized Q (Strict GiantHunter) & 0.512 & 0.501 & +0.0\% \\
-   & Min-Max Sibling Q-Normalization & 0.564 & 0.552 & +5.2\% \\
-\midrule
-  Dual-Stream Batch & 100\% MCTS Negatives ($\beta=0.0$) & 0.508 & 0.498 & -0.4\% \\
-   & 50/50 Dual-Stream Hybrid ($\beta=0.5$) & 0.564 & 0.552 & +5.2\% \\
-   & 100\% Uniform Random ($\beta=1.0$) & 0.421 & 0.405 & -9.1\% \\
-\midrule
-  Leaf Granularity & Fixed 100 Class Leaves (P1 MVP) & 0.564 & 0.552 & +5.2\% \\
-   & Dynamic Entropy Sub-Clustering (P2) & 0.581 & 0.572 & +6.9\% \\
+  Hierarchy Geometry & Native Semantic Tree (20 superclasses) & 0.658 & 0.739 & +0.0\% \\
+   & Ward Confusion Tree (Empirical) & 0.633 & 0.733 & -2.5\% \\
 \bottomrule
 \end{tabular}
 \end{table}
