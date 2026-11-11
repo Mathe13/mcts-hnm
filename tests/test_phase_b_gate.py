@@ -53,3 +53,51 @@ def test_pilot_output_isolation(tmp_path: Path):
     # Ensure no file was written to results/legacy
     legacy_files = list(Path("results/legacy").glob("pilot*.json"))
     assert len(legacy_files) == 0
+
+
+def test_verify_gate_b_passes(tmp_path: Path):
+    """Verify that verify_gate_b audits pilot records and returns exit code 0 (GATE-02, AC 2)."""
+    from src.utils.gate_b_verifier import verify_gate_b
+
+    records = run_diagnostic_pilot(
+        output_dir=tmp_path / "valid_pilot",
+        seeds=(42,),
+        num_steps=2,
+        eval_every=2,
+        ratios=(50, 100),
+        num_positives=10,
+    )
+
+    exit_code = verify_gate_b(run_records=records, verbose=True)
+    assert exit_code == 0
+
+
+def test_verify_gate_b_rejects_nan_and_invariants():
+    """Verify that verify_gate_b returns exit code 1 on NaN values or broken invariants (GATE-02, AC 3)."""
+    from src.utils.gate_b_verifier import verify_gate_b
+
+    # Case 1: NaN in step_history
+    corrupted_records = [{
+        "run_id": "test_corrupt",
+        "scenario": "scenario1",
+        "imbalance_ratio": 50,
+        "num_positives": 10,
+        "num_negatives": 500,
+        "step_history": [{"train_loss": float("nan"), "val_loss": 0.5, "step": 1}],
+        "exposure_diagnostics": {"normalized_exposure_entropy": 0.5},
+        "val_metrics": {"val_loss": 0.5},
+    }]
+    assert verify_gate_b(run_records=corrupted_records, verbose=False) == 1
+
+    # Case 2: Ratio mismatch (10 positives * ratio 50 != 400 negatives)
+    mismatched_records = [{
+        "run_id": "test_mismatch",
+        "scenario": "scenario1",
+        "imbalance_ratio": 50,
+        "num_positives": 10,
+        "num_negatives": 400,
+        "step_history": [{"train_loss": 0.4, "val_loss": 0.5, "step": 1}],
+        "exposure_diagnostics": {"normalized_exposure_entropy": 0.5},
+        "val_metrics": {"val_loss": 0.5},
+    }]
+    assert verify_gate_b(run_records=mismatched_records, verbose=False) == 1

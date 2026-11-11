@@ -234,12 +234,12 @@ T6 → T7
 
 **Done when**:
 
-- [ ] `verify_gate_b()` verifies complete `step_history` and `exposure_diagnostics` across all pilot records
-- [ ] `verify_gate_b()` validates no NaN/Inf in losses, gradients, or metrics
-- [ ] `verify_gate_b()` validates exact 80 positives and 40,000 negatives without replacement for 1:500
-- [ ] `verify_gate_b()` returns 1 when any record violates invariants
-- [ ] Integration test `tests/test_phase_b_gate.py::test_verify_gate_b_passes` passes with exit code 0
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_phase_b_*.py`  
+- [x] `verify_gate_b()` verifies complete `step_history` and `exposure_diagnostics` across all pilot records
+- [x] `verify_gate_b()` validates no NaN/Inf in losses, gradients, or metrics
+- [x] `verify_gate_b()` validates exact 80 positives and 40,000 negatives without replacement for 1:500
+- [x] `verify_gate_b()` returns 1 when any record violates invariants
+- [x] Integration test `tests/test_phase_b_gate.py::test_verify_gate_b_passes` passes with exit code 0
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_phase_b_*.py`  
 
 **Tests**: integration  
 **Gate**: build  
