@@ -154,19 +154,23 @@
 - **Date**: 2026-11-10
 - **Status**: active (AD-019)
 
+### AD-020
+- **Decision**: Standardize experimental protocol under Phase A of the revised experimental roadmap (`roadmap_mcts_hnm_proxima_run_v2.md`): operational imbalance definition separating training set real ratios (1:50, 1:100, 1:500) with fixed 80 unique positives in `train_fit` and nested stratified negatives ($N_{50} \subset N_{100} \subset N_{500}$); strict data segregation prohibiting in-training test evaluation or tree calibration on test data; shared immutable runner configuration (`ResolvedTrainingConfig`); atomic per-`run_id` serialization with strict key pairing in statistical tests; and mathematically validated Euclidean row-normalized confusion profiling for Ward clustering with Average Linkage (UPGMA) for general dissimilarity matrices.
+- **Reason**: Fixes P0 methodological audit findings: eliminates the false equivalence between `pos_fraction=0.02` and 1:50; prevents test-set data leakage into training curves and tree construction; eliminates parameter divergences between runners; prevents run overwrites; and replaces heuristic `sqrt(2*distance)` transformations with legitimate Euclidean representations.
+- **Trade-off**: Requires passing validation data to training loops and runners (failing fast if omitted), and mandates structured run metadata.
+- **Scope**: `src/data/splits.py`, `src/training/`, `src/trees/confusion_tree.py`, `src/utils/`, `docs/`, `tests/`
+- **Date**: 2026-11-11
+- **Status**: active (AD-020)
+
 ## Handoff
 
-- **Feature**: `16-scenario1-imbalance-grid-and-scope-adaptation` (`.specs/features/16-scenario1-imbalance-grid-and-scope-adaptation/`)
-- **Phase / Task**: Done & Verified.
+- **Feature**: `17-fase-a-auditoria-e-integridade` (`.specs/features/17-fase-a-auditoria-e-integridade/`)
+- **Phase / Task**: Tasks Phase completed, awaiting user approval of `tasks.md` to begin execution.
 - **Completed**:
-  - [P1] Parameterized Scenario 1 positive class subsampling in `run_benchmark()` via `imbalance_ratios` with `build_scenario1_split()` (`RUN-01`).
-  - [P1] Embedded `imbalance_ratio` in `BenchmarkRunResult`, JSON runs, and CSV rows (`RUN-01`).
-  - [P1] Normalized `imbalance_ratio` extraction in `load_real_benchmark_results()`, eliminating hardcoded `"10"` and defaulting legacy runs to `"50"` (`LOAD-01`).
-  - [P1] Enabled dynamic scope adaptation in `generate_scenario1_table()`, generating single-ratio tables ($\rho = 1:50$) or full multi-ratio grids ($\rho \in \{1:10, 1:50, 1:100\}$) with dynamic captions and clean table boundaries (`TAB-01`).
-  - [P1] Configured Notebook 03 Axis 1 with explicit `imbalance_ratios=IMBALANCE_RATIOS_AXIS1` and documented single-ratio default vs full grid expansion (`NB-01`).
-  - Added negative and positive unit tests in `tests/test_tier1_benchmarks_real.py` and `tests/test_paper_artifacts_real.py`.
-  - Full automated regression verified (163 passed in 41.62s).
-- **In-progress**: None
-- **Next step**: Ready for user review or full cluster scientific execution.
+  - Specified requirements in `spec.md` (validated with 0 errors, 0 warnings).
+  - Designed architecture and components in `design.md`.
+  - Structured 9 atomic tasks across 7 phases in `tasks.md` with 16 verifiable checks (validated with 0 errors, 0 warnings).
+- **In-progress**: Awaiting user approval of `tasks.md`.
+- **Next step**: Execute Task T1 upon user approval.
 - **Blockers**: None
 - **Branch**: `main`
