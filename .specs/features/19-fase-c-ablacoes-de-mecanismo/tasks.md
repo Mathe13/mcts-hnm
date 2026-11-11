@@ -124,15 +124,15 @@ T7
 
 **Done when**:
 
-- [ ] `UniformGroupedBatchSampler` draws $B/2$ focal instances from a random class and $B/2$ uniform instances
-- [ ] Raises `ValueError` for invalid `dual_stream_ratio` outside $[0.0, 1.0]$
-- [ ] `train_scenario2()` executes with `strategy="uniform_grouped"`
-- [ ] Unit tests in `tests/test_phase_c_ablations.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_c_ablations.py`  
+- [x] `UniformGroupedBatchSampler` draws $B/2$ focal instances from a random class and $B/2$ uniform instances
+- [x] Raises `ValueError` for invalid `dual_stream_ratio` outside $[0.0, 1.0]$
+- [x] `train_scenario2()` executes with `strategy="uniform_grouped"`
+- [x] Unit tests in `tests/test_phase_c_ablations.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_c_ablations.py`  
 
 **Tests**: unit  
 **Gate**: quick  
-**Commit**: `feat(samplers): implement UniformGroupedBatchSampler and trainer strategy`  
+**Commit**: `feat(samplers): implement UniformGroupedBatchSampler strategy`  
 
 ---
 

@@ -15,7 +15,7 @@ import torch.nn.functional as F
 from src.mcts.agent import MCTSHNMAgent, compute_mcts_reward
 from src.mcts.diagnostics import MCTSDiagnosticsTracker, compute_superclass_visit_distribution, compute_visitation_entropy
 from src.mcts.expansion import maybe_expand_leaf
-from src.mcts.sampler import DualStreamBatchSampler
+from src.mcts.sampler import DualStreamBatchSampler, UniformGroupedBatchSampler
 from src.models.mlp_head import Tier1MLPHead, create_mlp_optimizer
 from src.training.baselines import OHEMSampler, UniformSampler
 from src.training.exposure import ExposureTracker
@@ -24,7 +24,13 @@ from src.utils.seed import set_global_seed
 
 logger = logging.getLogger(__name__)
 
-SUPPORTED_STRATEGIES = ("uniform", "ohem", "mcts_strict", "mcts_enhanced")
+SUPPORTED_STRATEGIES = (
+    "uniform",
+    "uniform_grouped",
+    "ohem",
+    "mcts_strict",
+    "mcts_enhanced",
+)
 
 
 def evaluate_scenario1_metrics(
@@ -259,6 +265,7 @@ def train_scenario1(
     diagnostics_tracker: MCTSDiagnosticsTracker | None = None
     uni_sampler: UniformSampler | None = None
     ohem_sampler: OHEMSampler | None = None
+    uniform_grouped_sampler: UniformGroupedBatchSampler | None = None
 
     if strategy in ("mcts_strict", "mcts_enhanced"):
         if tree is None:
@@ -497,6 +504,7 @@ def train_scenario2(
     diagnostics_tracker: MCTSDiagnosticsTracker | None = None
     uni_sampler: UniformSampler | None = None
     ohem_sampler: OHEMSampler | None = None
+    uniform_grouped_sampler: UniformGroupedBatchSampler | None = None
 
     if strategy in ("mcts_strict", "mcts_enhanced"):
         if tree is None:
@@ -530,6 +538,18 @@ def train_scenario2(
             neg_batch_size=batch_size,
             ohem_ratio=4,
             pos_batch_size=0,
+            seed=seed,
+        )
+    elif strategy == "uniform_grouped":
+        c2i = (
+            tree.class_to_indices
+            if tree is not None
+            else {c: np.where(train_lbl_arr == c)[0] for c in range(num_classes)}
+        )
+        uniform_grouped_sampler = UniformGroupedBatchSampler(
+            class_to_indices=c2i,
+            batch_size=batch_size,
+            dual_stream_ratio=dual_stream_ratio,
             seed=seed,
         )
 
@@ -567,6 +587,11 @@ def train_scenario2(
                 is_binary=False,
                 target_labels=train_lbl_arr,
             )
+        elif strategy == "uniform_grouped":
+            assert uniform_grouped_sampler is not None
+            batch = uniform_grouped_sampler.sample_batch()
+            step_indices = batch.all_indices
+            leaf_cls_id = batch.leaf_class_id
 
         batch_x = train_features[step_indices].to(dev)
         batch_y = torch.as_tensor(train_lbl_arr[step_indices], dtype=torch.long, device=dev)

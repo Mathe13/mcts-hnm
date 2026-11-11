@@ -13,7 +13,11 @@ from src.mcts.diagnostics import (
     compute_superclass_visit_distribution,
     compute_visitation_entropy,
 )
-from src.mcts.sampler import DualStreamBatch, DualStreamBatchSampler
+from src.mcts.sampler import (
+    DualStreamBatch,
+    DualStreamBatchSampler,
+    UniformGroupedBatchSampler,
+)
 
 __all__ = [
     "DualStreamBatch",
@@ -21,6 +25,7 @@ __all__ = [
     "MCTSDiagnosticsTracker",
     "MCTSHNMAgent",
     "MCTSStepDiagnostic",
+    "UniformGroupedBatchSampler",
     "compute_leaf_visit_distribution",
     "compute_mcts_reward",
     "compute_superclass_visit_distribution",

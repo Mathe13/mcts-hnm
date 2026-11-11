@@ -195,3 +195,103 @@ class DualStreamBatchSampler:
             all_indices=all_indices,
             sampled_with_replacement=sampled_with_replacement,
         )
+
+
+class UniformGroupedBatchSampler:
+    r"""Uniform Grouped batch sampler (Phase C1 control).
+
+    Samples a random focal class $c_{\text{focal}} \sim \text{Uniform}(\mathcal{C})$ at each step,
+    drawing $K_{\text{focal}} = \lfloor (1 - \beta) B \rfloor$ from that class and
+    $K_{\text{uni}} = \lceil \beta B \rceil$ uniformly from all classes.
+    """
+
+    def __init__(
+        self,
+        class_to_indices: dict[int, np.ndarray] | None = None,
+        tree: FastHierarchyTree | None = None,
+        batch_size: int = 64,
+        dual_stream_ratio: float = 0.5,
+        seed: int = 42,
+    ) -> None:
+        if tree is not None:
+            c2i = tree.class_to_indices
+        elif class_to_indices is not None:
+            c2i = class_to_indices
+        else:
+            raise ValueError("Either tree or class_to_indices must be provided.")
+
+        if isinstance(dual_stream_ratio, bool) or not isinstance(
+            dual_stream_ratio, (int, float, np.number)
+        ):
+            raise ValueError(f"dual_stream_ratio must be a float in [0.0, 1.0], got {dual_stream_ratio!r}.")
+        beta = float(dual_stream_ratio)
+        if not np.isfinite(beta) or beta < 0.0 or beta > 1.0:
+            raise ValueError(f"dual_stream_ratio must be in [0.0, 1.0], got {beta}.")
+
+        if isinstance(batch_size, bool) or not isinstance(batch_size, (int, np.integer)):
+            raise ValueError(f"batch_size must be a positive int, got {batch_size!r}.")
+        b = int(batch_size)
+        if b <= 0:
+            raise ValueError(f"batch_size must be >= 1, got {b}.")
+
+        self.class_to_indices = {int(k): np.asarray(v, dtype=np.int64) for k, v in c2i.items()}
+        self.classes = sorted(self.class_to_indices.keys())
+        if len(self.classes) == 0:
+            raise ValueError("class_to_indices must be non-empty.")
+
+        self.batch_size = b
+        self.dual_stream_ratio = beta
+        self.seed = int(seed)
+        self._rng = np.random.default_rng(self.seed)
+
+        mcts_exact = round((1.0 - beta) * b, 9)
+        uni_exact = round(beta * b, 9)
+        self.focal_sub_batch_size = int(math.floor(mcts_exact))
+        self.uniform_sub_batch_size = int(math.ceil(uni_exact))
+        assert self.focal_sub_batch_size + self.uniform_sub_batch_size == self.batch_size
+
+        self.global_pool = np.concatenate(
+            [self.class_to_indices[cid] for cid in self.classes]
+        ).astype(np.int64, copy=False)
+
+    def sample_batch(self) -> DualStreamBatch:
+        """Sample a batch of focal samples from a uniformly random class and uniform background samples."""
+        focal_class = int(self._rng.choice(self.classes))
+        focal_pool = self.class_to_indices[focal_class]
+
+        k_focal = self.focal_sub_batch_size
+        sampled_with_replacement = False
+        if k_focal == 0:
+            focal_indices = np.empty(0, dtype=np.int64)
+        elif focal_pool.size >= k_focal:
+            focal_indices = self._rng.choice(focal_pool, size=k_focal, replace=False).astype(
+                np.int64, copy=False
+            )
+        else:
+            sampled_with_replacement = True
+            focal_indices = self._rng.choice(focal_pool, size=k_focal, replace=True).astype(
+                np.int64, copy=False
+            )
+
+        k_uni = self.uniform_sub_batch_size
+        if k_uni == 0:
+            uni_indices = np.empty(0, dtype=np.int64)
+        else:
+            replace_uni = self.global_pool.size < k_uni
+            uni_indices = self._rng.choice(self.global_pool, size=k_uni, replace=replace_uni).astype(
+                np.int64, copy=False
+            )
+
+        all_indices = np.concatenate((focal_indices, uni_indices)).astype(np.int64, copy=False)
+
+        return DualStreamBatch(
+            leaf_node_id=-1,
+            leaf_class_id=focal_class,
+            mcts_indices=focal_indices,
+            uniform_indices=uni_indices,
+            negative_indices=all_indices,
+            positive_indices=np.empty(0, dtype=np.int64),
+            all_indices=all_indices,
+            sampled_with_replacement=sampled_with_replacement,
+        )
+
