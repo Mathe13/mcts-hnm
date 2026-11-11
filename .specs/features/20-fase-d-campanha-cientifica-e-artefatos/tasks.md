@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/20-fase-d-campanha-cientifica-e-artefatos/design.md`  
-**Status**: In Progress  
+**Status**: Complete  
 **Approved**: 2026-11-11 - user: "prosseguir"  
 **Build**: `.venv/bin/python -m compileall -q src tests`  
 **Run unit**: `.venv/bin/pytest -v tests/test_phase_d_metrics.py tests/test_phase_d_statistics.py tests/test_phase_d_campaign.py tests/test_phase_d_artifacts.py tests/test_phase_d_gate.py`  
@@ -190,16 +190,16 @@ T5
 
 **Done when**:
 
-- [ ] `verify_gate_d()` audits that all required scenarios, ratios, methods, and paired seeds are present
-- [ ] Rejects runs with NaN/Inf metrics or unverified synthetic smoke data in REAL mode
-- [ ] Verifies that generated LaTeX tables and figures match empirical JSON outputs
-- [ ] Generates signed `campaign_audit_manifest.json` certifying full reproducibility
-- [ ] Integration tests in `tests/test_phase_d_gate.py` pass with exit code 0
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_phase_d_*.py`  
+- [x] `verify_gate_d()` audits that all required scenarios, ratios, methods, and paired seeds are present
+- [x] Rejects runs with NaN/Inf metrics or unverified synthetic smoke data in REAL mode
+- [x] Verifies that generated LaTeX tables and figures match empirical JSON outputs
+- [x] Generates signed `campaign_audit_manifest.json` certifying full reproducibility
+- [x] Integration tests in `tests/test_phase_d_gate.py` pass with exit code 0
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_phase_d_*.py`  
 
 **Tests**: integration  
 **Gate**: build  
-**Commit**: `feat(verification): implement Gate D scientific audit and manifest verifier`  
+**Commit**: `feat(verification): gate d scientific audit and manifest verifier`  
 
 ---
 
