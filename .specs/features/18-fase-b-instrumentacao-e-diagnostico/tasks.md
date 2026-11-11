@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/18-fase-b-instrumentacao-e-diagnostico/design.md`  
-**Status**: In Progress  
+**Status**: Complete  
 **Approved**: 2026-11-11 - user: "sim"  
 **Build**: `.venv/bin/python -m compileall -q src tests`  
 **Run unit**: `.venv/bin/pytest -v tests/test_phase_b_observability.py tests/test_phase_b_mcts_diagnostics.py tests/test_phase_b_checkpoints.py tests/test_phase_b_gate.py`  
@@ -301,8 +301,8 @@ Proof: run unit | tests/test_phase_b_gate.py::test_verify_gate_b_rejects_nan_and
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none  
-**Dispatched:** none  
-**Walked:** none  
+**Dispatched:** independent verifier sub-agent 77c2356b-33db-4827-b701-494f8bfa805a  
+**Walked:** verified all T1-T7 tasks and proofs passed (16/16)  
 
 ---
 
@@ -320,12 +320,12 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 
 ## Task Granularity Check
 
-| Task | Scope | Status |
-| ---- | ----- | ------ |
-| T1 | `src/training/exposure.py` | pending |
-| T2 | `src/training/trainer.py` | pending |
-| T3 | `src/mcts/mcts_agent.py` | pending |
-| T4 | `src/training/checkpoints.py` | pending |
-| T5 | `src/utils/metrics.py` | pending |
-| T6 | `src/training/pilot_runner.py` | pending |
-| T7 | `src/utils/gate_b_verifier.py` | pending |
+| Task | Scope | Status | Commit |
+| ---- | ----- | ------ | ------ |
+| T1 | `src/training/exposure.py` | complete | `7a7b6a1` |
+| T2 | `src/training/trainer.py` | complete | `416e6ed` |
+| T3 | `src/mcts/mcts_agent.py` | complete | `d2596fe` |
+| T4 | `src/training/checkpoints.py` | complete | `563cc6e` |
+| T5 | `src/utils/metrics.py` | complete | `a4ffe6f` |
+| T6 | `src/training/pilot_runner.py` | complete | `05f9e85` |
+| T7 | `src/utils/gate_b_verifier.py` | complete | `5ac79e2` |
