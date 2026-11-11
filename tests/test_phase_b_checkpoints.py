@@ -77,3 +77,50 @@ def test_checkpoint_save_and_restore_roundtrip(tmp_path: Path):
     # Check tree state restored
     assert np.array_equal(fresh_tree.visits, np.array([5, 3, 2]))
     assert np.allclose(fresh_tree.q_values, np.array([0.5, 0.6, 0.4]))
+
+
+def test_binary_threshold_calibration_optimizes_f1():
+    """Verify that calibrate_binary_threshold finds tau_val maximizing validation F1 (CKPT-02, AC 2)."""
+    from src.utils.metrics import calibrate_binary_threshold
+
+    # Synthetic imbalanced validation probabilities where positive signals peak around 0.35
+    # targets: 10 positives, 90 negatives
+    np.random.seed(42)
+    val_probs = np.concatenate([
+        np.random.uniform(0.3, 0.6, size=10),   # positives centered at ~0.45
+        np.random.uniform(0.01, 0.25, size=90), # negatives centered at ~0.13
+    ])
+    val_targets = np.concatenate([np.ones(10, dtype=np.int64), np.zeros(90, dtype=np.int64)])
+
+    tau_val = calibrate_binary_threshold(val_probs, val_targets, num_thresholds=100)
+
+    # Optimal threshold should be around 0.20 to 0.40 to perfectly separate positives
+    assert 0.20 <= tau_val <= 0.40
+
+    # Under tau_val, F1 must be higher than or equal to default tau = 0.5
+    from sklearn.metrics import f1_score
+    f1_calibrated = f1_score(val_targets, (val_probs >= tau_val).astype(int))
+    f1_default = f1_score(val_targets, (val_probs >= 0.5).astype(int))
+    assert f1_calibrated >= f1_default
+
+
+def test_scenario1_reports_calibrated_f1_and_auprc():
+    """Verify that evaluate_scenario1_with_calibration reports default F1, calibrated F1, and AUPRC (CKPT-02, AC 3)."""
+    from src.utils.metrics import evaluate_scenario1_with_calibration
+
+    val_probs = np.array([0.1, 0.2, 0.4, 0.8, 0.3, 0.15])
+    val_targets = np.array([0, 0, 1, 1, 1, 0])
+
+    test_probs = np.array([0.1, 0.35, 0.7, 0.12])
+    test_targets = np.array([0, 1, 1, 0])
+
+    eval_res = evaluate_scenario1_with_calibration(val_probs, val_targets, test_probs, test_targets)
+
+    assert "default_f1" in eval_res
+    assert "calibrated_f1" in eval_res
+    assert "calibrated_threshold" in eval_res
+    assert "auprc" in eval_res
+    assert 0.0 <= eval_res["default_f1"] <= 1.0
+    assert 0.0 <= eval_res["calibrated_f1"] <= 1.0
+    assert 0.0 <= eval_res["auprc"] <= 1.0
+    assert 0.01 <= eval_res["calibrated_threshold"] <= 0.99

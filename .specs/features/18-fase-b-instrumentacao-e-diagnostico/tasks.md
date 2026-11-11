@@ -191,10 +191,10 @@ T6 → T7
 
 **Done when**:
 
-- [ ] `calibrate_binary_threshold(val_probs, val_targets)` finds $\tau_{\text{val}} \in [0.01, 0.99]$ maximizing validation F1
-- [ ] Scenario 1 test evaluation reports default F1 ($\tau=0.5$), calibrated F1 ($\tau=\tau_{\text{val}}$), and AUPRC
-- [ ] Unit tests in `tests/test_phase_b_checkpoints.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_b_checkpoints.py`  
+- [x] `calibrate_binary_threshold(val_probs, val_targets)` finds $\tau_{\text{val}} \in [0.01, 0.99]$ maximizing validation F1
+- [x] Scenario 1 test evaluation reports default F1 ($\tau=0.5$), calibrated F1 ($\tau=\tau_{\text{val}}$), and AUPRC
+- [x] Unit tests in `tests/test_phase_b_checkpoints.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_b_checkpoints.py`  
 
 **Tests**: unit  
 **Gate**: quick  
