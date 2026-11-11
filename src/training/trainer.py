@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from typing import Literal
 
 import numpy as np
@@ -17,6 +18,7 @@ from src.mcts.expansion import maybe_expand_leaf
 from src.mcts.sampler import DualStreamBatchSampler
 from src.models.mlp_head import Tier1MLPHead, create_mlp_optimizer
 from src.training.baselines import OHEMSampler, UniformSampler
+from src.training.exposure import ExposureTracker
 from src.trees.base_tree import FastHierarchyTree
 from src.utils.seed import set_global_seed
 
@@ -298,6 +300,10 @@ def train_scenario1(
 
     history: list[dict[str, float]] = []
     visitation_snapshots: list[dict[str, Any]] = []
+    exposure_tracker = ExposureTracker(num_classes=100)
+    start_time = time.time()
+    accumulated_train_loss = 0.0
+    loss_count = 0
 
     for step in range(1, num_steps + 1):
         model.train()
@@ -332,6 +338,16 @@ def train_scenario1(
         loss.backward()
         optimizer.step()
 
+        accumulated_train_loss += float(loss.item())
+        loss_count += 1
+
+        batch_classes = train_binary_labels[step_indices]
+        exposure_tracker.record_batch(batch_classes, step_indices)
+        if mcts_leaf_id is not None:
+            exposure_tracker.record_leaf_selection(mcts_leaf_id)
+            if tree is not None:
+                exposure_tracker.record_node_visit(mcts_leaf_id)
+
         if strategy in ("mcts_strict", "mcts_enhanced") and mcts_leaf_id is not None:
             assert agent is not None and diagnostics_tracker is not None
             # Compute MCTS reward on the MCTS sub-batch
@@ -363,7 +379,20 @@ def train_scenario1(
                 binary_labels=val_binary_labels,
                 device=dev,
             )
+            step_train_loss = float(accumulated_train_loss / max(1, loss_count))
+            accumulated_train_loss = 0.0
+            loss_count = 0
+            current_lr = float(optimizer.param_groups[0]["lr"])
+            elapsed_time = float(time.time() - start_time)
+
             metrics["step"] = step
+            metrics["train_loss"] = step_train_loss
+            metrics["val_loss"] = metrics["loss"]
+            metrics["val_F1"] = metrics["f1"]
+            metrics["val_AUPRC"] = metrics["auprc"]
+            metrics["learning_rate"] = current_lr
+            metrics["elapsed_time"] = elapsed_time
+
             if tree is not None:
                 ent_nats, ent_norm = compute_visitation_entropy(tree)
                 metrics["entropy_nats"] = ent_nats
@@ -389,9 +418,12 @@ def train_scenario1(
         final_test_eval = evaluate_scenario1_metrics(model, test_features, test_binary_labels, device=dev)
 
     final_eval = final_test_eval if final_test_eval is not None else final_val_eval
+    exposure_diag = exposure_tracker.compute_diagnostics()
     return {
         "strategy": strategy,
         "history": history,
+        "step_history": history,
+        "exposure_diagnostics": exposure_diag,
         "final_metrics": final_eval,
         "val_metrics": final_val_eval,
         "test_metrics": final_test_eval,
@@ -503,6 +535,10 @@ def train_scenario2(
 
     history: list[dict[str, float]] = []
     visitation_snapshots: list[dict[str, Any]] = []
+    exposure_tracker = ExposureTracker(num_classes=num_classes)
+    start_time = time.time()
+    accumulated_train_loss = 0.0
+    loss_count = 0
 
     for step in range(1, num_steps + 1):
         model.train()
@@ -540,6 +576,15 @@ def train_scenario2(
         loss.backward()
         optimizer.step()
 
+        accumulated_train_loss += float(loss.item())
+        loss_count += 1
+
+        exposure_tracker.record_batch(train_lbl_arr[step_indices], step_indices)
+        if mcts_leaf_id is not None:
+            exposure_tracker.record_leaf_selection(mcts_leaf_id)
+            if tree is not None:
+                exposure_tracker.record_node_visit(mcts_leaf_id)
+
         if strategy in ("mcts_strict", "mcts_enhanced") and mcts_leaf_id is not None:
             assert agent is not None and diagnostics_tracker is not None
             mcts_logits = logits[:mcts_batch_len]
@@ -568,7 +613,22 @@ def train_scenario2(
                 num_classes=num_classes,
                 device=dev,
             )
+            step_train_loss = float(accumulated_train_loss / max(1, loss_count))
+            accumulated_train_loss = 0.0
+            loss_count = 0
+            current_lr = float(optimizer.param_groups[0]["lr"])
+            elapsed_time = float(time.time() - start_time)
+
             metrics["step"] = step
+            metrics["train_loss"] = step_train_loss
+            metrics["val_loss"] = metrics["loss"]
+            metrics["val_F1"] = metrics["macro_f1"]
+            metrics["val_AUPRC"] = 0.0
+            metrics["macro_f1"] = metrics["macro_f1"]
+            metrics["accuracy"] = metrics["top1_accuracy"]
+            metrics["learning_rate"] = current_lr
+            metrics["elapsed_time"] = elapsed_time
+
             if tree is not None:
                 ent_nats, ent_norm = compute_visitation_entropy(tree)
                 metrics["entropy_nats"] = ent_nats
@@ -594,9 +654,12 @@ def train_scenario2(
         final_test_eval = evaluate_scenario2_metrics(model, test_features, test_labels, num_classes=num_classes, device=dev)
 
     final_eval = final_test_eval if final_test_eval is not None else final_val_eval
+    exposure_diag = exposure_tracker.compute_diagnostics()
     return {
         "strategy": strategy,
         "history": history,
+        "step_history": history,
+        "exposure_diagnostics": exposure_diag,
         "final_metrics": final_eval,
         "val_metrics": final_val_eval,
         "test_metrics": final_test_eval,

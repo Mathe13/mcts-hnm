@@ -52,3 +52,92 @@ def test_exposure_entropy_and_worst10_calculation():
     skewed_diag = skewed_tracker.compute_diagnostics()
     assert skewed_diag["normalized_exposure_entropy"] == 0.0
     assert skewed_diag["unexposed_classes_count"] == k - 1
+
+
+def test_scenario1_step_history_logging():
+    """Verify that train_scenario1 logs complete step_history with loss, metrics, and lr (OBS-01, AC 1, 3)."""
+    import torch
+    from src.training.trainer import train_scenario1
+
+    num_samples = 40
+    feat_dim = 16
+    train_f = torch.randn(num_samples, feat_dim)
+    train_y = np.array([0] * 20 + [1] * 20, dtype=np.int64)
+    pos_idx = np.arange(20, dtype=np.int64)
+    neg_idx = np.arange(20, 40, dtype=np.int64)
+
+    val_f = torch.randn(10, feat_dim)
+    val_y = np.array([0] * 5 + [1] * 5, dtype=np.int64)
+
+    res = train_scenario1(
+        train_features=train_f,
+        train_binary_labels=train_y,
+        positive_indices=pos_idx,
+        negative_indices=neg_idx,
+        val_features=val_f,
+        val_binary_labels=val_y,
+        strategy="uniform",
+        num_steps=10,
+        eval_every=5,
+        pos_batch_size=4,
+        neg_batch_size=8,
+    )
+
+    assert "step_history" in res
+    assert "exposure_diagnostics" in res
+    step_history = res["step_history"]
+    assert len(step_history) == 2  # steps 5 and 10
+
+    for entry in step_history:
+        assert "train_loss" in entry and np.isfinite(entry["train_loss"])
+        assert "val_loss" in entry and np.isfinite(entry["val_loss"])
+        assert "val_F1" in entry and 0.0 <= entry["val_F1"] <= 1.0
+        assert "val_AUPRC" in entry and 0.0 <= entry["val_AUPRC"] <= 1.0
+        assert "learning_rate" in entry and entry["learning_rate"] > 0
+        assert "step" in entry
+        assert "elapsed_time" in entry and entry["elapsed_time"] >= 0.0
+
+    diag = res["exposure_diagnostics"]
+    assert diag["total_instances_selected"] > 0
+    assert 0.0 <= diag["normalized_exposure_entropy"] <= 1.0
+
+
+def test_scenario2_step_history_logging():
+    """Verify that train_scenario2 logs macro_f1 and accuracy in step_history (OBS-01, AC 2)."""
+    import torch
+    from src.training.trainer import train_scenario2
+
+    num_classes = 4
+    samples_per_class = 15
+    feat_dim = 16
+    train_f = torch.randn(num_classes * samples_per_class, feat_dim)
+    train_y = np.repeat(np.arange(num_classes), samples_per_class)
+
+    val_f = torch.randn(num_classes * 5, feat_dim)
+    val_y = np.repeat(np.arange(num_classes), 5)
+
+    res = train_scenario2(
+        train_features=train_f,
+        train_labels=train_y,
+        val_features=val_f,
+        val_labels=val_y,
+        strategy="uniform",
+        num_classes=num_classes,
+        num_steps=6,
+        eval_every=3,
+        batch_size=8,
+    )
+
+    assert "step_history" in res
+    assert "exposure_diagnostics" in res
+    step_history = res["step_history"]
+    assert len(step_history) == 2  # steps 3 and 6
+
+    for entry in step_history:
+        assert "macro_f1" in entry and 0.0 <= entry["macro_f1"] <= 1.0
+        assert "accuracy" in entry and 0.0 <= entry["accuracy"] <= 1.0
+        assert "train_loss" in entry and np.isfinite(entry["train_loss"])
+        assert "val_loss" in entry and np.isfinite(entry["val_loss"])
+
+    diag = res["exposure_diagnostics"]
+    assert diag["total_instances_selected"] == 6 * 8

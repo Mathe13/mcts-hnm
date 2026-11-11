@@ -124,11 +124,11 @@ T6 → T7
 
 **Done when**:
 
-- [ ] `train_scenario1()` logs `train_loss`, `val_loss`, `val_F1`, `val_AUPRC`, `learning_rate`, `step`, and time in `step_history`
-- [ ] `train_scenario2()` logs `macro_f1` and top-1 `accuracy` in `step_history`
-- [ ] Training return dictionary contains complete `step_history` and `exposure_diagnostics`
-- [ ] Integration tests in `tests/test_phase_b_observability.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_b_observability.py`  
+- [x] `train_scenario1()` logs `train_loss`, `val_loss`, `val_F1`, `val_AUPRC`, `learning_rate`, `step`, and time in `step_history`
+- [x] `train_scenario2()` logs `macro_f1` and top-1 `accuracy` in `step_history`
+- [x] Training return dictionary contains complete `step_history` and `exposure_diagnostics`
+- [x] Integration tests in `tests/test_phase_b_observability.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_b_observability.py`  
 
 **Tests**: integration  
 **Gate**: quick  
