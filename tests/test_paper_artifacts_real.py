@@ -401,3 +401,104 @@ def test_load_real_benchmark_results_re_raises_parsing_errors(tmp_path):
 
     with pytest.raises(json.JSONDecodeError):
         load_real_benchmark_results(res_dir, expected_mode=ExecutionMode.REAL)
+
+
+def test_load_real_benchmark_results_extracts_imbalance_ratio(tmp_path):
+    """LOAD-01: load_real_benchmark_results normalizes imbalance_ratio from runs without hardcoding 1:10."""
+    res_dir = tmp_path / "results" / "real"
+    res_dir.mkdir(parents=True)
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.REAL)
+
+    axis1_file = res_dir / "tier1_axis1_samplers.json"
+    axis1_data = {
+        "runs": [
+            {
+                "strategy": "uniform",
+                "imbalance_ratio": "1:50",
+                "final_metrics": {"f1": 0.35, "auprc": 0.32, "fpr_at_95_recall": 0.45},
+            },
+            {
+                "strategy": "uniform",
+                "imbalance_ratio": "1:100",
+                "final_metrics": {"f1": 0.25, "auprc": 0.22, "fpr_at_95_recall": 0.55},
+            },
+            {
+                "strategy": "mcts_enhanced",
+                "imbalance_ratio": "1:50",
+                "final_metrics": {"f1": 0.45, "auprc": 0.42, "fpr_at_95_recall": 0.35},
+            },
+            {
+                "strategy": "mcts_enhanced",
+                "imbalance_ratio": "1:100",
+                "final_metrics": {"f1": 0.35, "auprc": 0.32, "fpr_at_95_recall": 0.42},
+            },
+        ]
+    }
+    axis1_file.write_text(json.dumps(axis1_data), encoding="utf-8")
+    save_provenance_metadata(axis1_file, config=cfg)
+
+    # Provide minimal scenario2 and ablation files to satisfy completeness in REAL mode
+    scen2_file = res_dir / "tier1_scenario2_curriculum.json"
+    scen2_file.write_text(json.dumps({
+        "scenario2": {
+            "uniform": {
+                "top1_accuracy": {"mean": 0.60, "std": 0.01},
+                "macro_f1": {"mean": 0.58, "std": 0.01},
+                "worst_10_recall": {"mean": 0.35, "std": 0.01},
+            },
+            "mcts_enhanced": {
+                "top1_accuracy": {"mean": 0.70, "std": 0.01},
+                "macro_f1": {"mean": 0.68, "std": 0.01},
+                "worst_10_recall": {"mean": 0.45, "std": 0.01},
+            },
+        }
+    }), encoding="utf-8")
+    save_provenance_metadata(scen2_file, config=cfg)
+
+    ablation_file = res_dir / "tier1_axis2_tree_ablation.json"
+    ablation_file.write_text(json.dumps({
+        "ablation": {
+            "semantic_tree": {"f1": 0.50, "auprc": 0.48},
+            "confusion_ward_tree": {"f1": 0.54, "auprc": 0.52},
+        }
+    }), encoding="utf-8")
+    save_provenance_metadata(ablation_file, config=cfg)
+
+    parsed = load_real_benchmark_results(res_dir, expected_mode=ExecutionMode.REAL)
+    assert "scenario1" in parsed
+    scen1 = parsed["scenario1"]
+    assert "50" in scen1["uniform"]
+    assert "100" in scen1["uniform"]
+    assert scen1["uniform"]["50"]["f1"]["mean"] == 0.35
+    assert scen1["uniform"]["100"]["f1"]["mean"] == 0.25
+
+
+def test_generate_scenario1_table_adapts_to_single_ratio(tmp_path):
+    """TAB-01: generate_scenario1_table adapts to single executed ratio (1:50) with clean formatting."""
+    out_dir = tmp_path / "tables"
+    data = {
+        "is_smoke": False,
+        "scenario1": {
+            strat: {
+                "50": {
+                    "f1": {"mean": 0.40, "std": 0.01, "values": [0.39, 0.41]},
+                    "auprc": {"mean": 0.38, "std": 0.01, "values": [0.37, 0.39]},
+                    "fpr95": {"mean": 0.30, "std": 0.01, "values": [0.29, 0.31]},
+                }
+            }
+            for strat in ("uniform", "ohem", "mcts_strict", "mcts_enhanced")
+        }
+    }
+
+    tex_path = generate_scenario1_table(data, output_dir=out_dir)
+    assert tex_path.exists()
+    content = tex_path.read_text(encoding="utf-8")
+
+    assert "at imbalance ratio $\\rho = 1:50$" in content
+    assert "1:50" in content
+    assert "1:10" not in content
+    assert "1:100" not in content
+    # Ensure there is no trailing \midrule immediately before \bottomrule
+    assert "\\midrule\n\\bottomrule" not in content
+    assert "\\bottomrule" in content
+

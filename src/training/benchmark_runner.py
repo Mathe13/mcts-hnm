@@ -12,7 +12,12 @@ from typing import Any
 import numpy as np
 import torch
 
-from src.data.splits import Scenario1Split, Scenario2Split
+from src.data.splits import (
+    IMBALANCE_RATIOS,
+    Scenario1Split,
+    Scenario2Split,
+    build_scenario1_split,
+)
 from src.mcts.diagnostics import compute_visitation_entropy
 from src.training.trainer import train_scenario1, train_scenario2
 from src.trees.base_tree import FastHierarchyTree
@@ -78,6 +83,7 @@ class BenchmarkRunResult:
     tree_type: str
     seed: int
     final_metrics: dict[str, float]
+    imbalance_ratio: str | None = None
 
 
 def _atomic_save_json(data: Any, path: Path) -> None:
@@ -116,6 +122,7 @@ def run_benchmark(
     val_labels: np.ndarray | torch.Tensor | None = None,
     device: torch.device | None = None,
     config: ExperimentConfig | None = None,
+    imbalance_ratios: tuple[str, ...] = ("1:50",),
 ) -> dict[str, Any]:
     r"""Execute multi-seed benchmark grid across strategies and tree types.
 
@@ -167,29 +174,21 @@ def run_benchmark(
 
     imbalance_audit: dict[str, Any] | None = None
     if scenario == "scenario1":
-        pos_mask_all = train_lbl_np == target_class_scenario1
-        pos_idx_all = np.flatnonzero(pos_mask_all).astype(np.int64)
-        neg_idx_all = np.flatnonzero(~pos_mask_all).astype(np.int64)
-        neg_classes_all = np.unique(train_lbl_np[neg_idx_all])
-        neg_cls_to_idx = {
-            int(c): np.flatnonzero(train_lbl_np == c).astype(np.int64)
-            for c in neg_classes_all
-        }
-        dummy_split = Scenario1Split(
-            target_class_id=target_class_scenario1,
-            target_class_name=str(target_class_scenario1),
-            pos_fraction=1.0,
-            positive_indices=pos_idx_all,
-            negative_indices=neg_idx_all,
-            negative_class_to_indices=neg_cls_to_idx,
-            binary_labels=pos_mask_all.astype(np.int64),
+        primary_ratio = imbalance_ratios[0] if imbalance_ratios else "1:50"
+        pos_frac = IMBALANCE_RATIOS.get(primary_ratio, 0.02)
+        audit_split = build_scenario1_split(
+            fine_labels=train_lbl_np,
+            target_class=target_class_scenario1,
+            pos_fraction=pos_frac,
+            seed=seeds[0] if seeds else 42,
         )
         imbalance_audit = audit_scenario1_imbalance(
-            split=dummy_split,
+            split=audit_split,
             pos_batch_size=16,
             neg_batch_size=48,
             num_steps=num_steps,
         )
+        imbalance_audit["configured_ratios"] = list(imbalance_ratios)
 
     # Pre-build validation confusion matrix if tree_type requires confusion_ward
     conf_mat: np.ndarray | None = None
@@ -207,133 +206,138 @@ def run_benchmark(
 
     diagnostics_per_strat: dict[str, Any] = {}
 
-    for tree_type in tree_types:
-        for strat in strategies:
-            for seed in seeds:
-                set_global_seed(seed)
+    ratios_to_run: tuple[str | None, ...] = imbalance_ratios if scenario == "scenario1" else (None,)
 
-                if scenario == "scenario1":
-                    # Build binary split for target class
-                    pos_mask = train_lbl_np == target_class_scenario1
-                    pos_idx = np.flatnonzero(pos_mask).astype(np.int64)
-                    neg_idx = np.flatnonzero(~pos_mask).astype(np.int64)
-                    binary_train_lbl = pos_mask.astype(np.int64)
-                    binary_test_lbl = (test_lbl_np == target_class_scenario1).astype(np.int64)
+    for rho in ratios_to_run:
+        pos_frac = IMBALANCE_RATIOS.get(rho, 0.02) if rho is not None else 1.0
+        for tree_type in tree_types:
+            for strat in strategies:
+                for seed in seeds:
+                    set_global_seed(seed)
 
-                    tree: FastHierarchyTree | None = None
-                    if strat in ("mcts_strict", "mcts_enhanced"):
-                        neg_classes = np.unique(train_lbl_np[neg_idx])
-                        class_to_indices = {
-                            c: np.flatnonzero(train_lbl_np == c).astype(np.int64)
-                            for c in neg_classes
-                        }
-                        if tree_type == "semantic":
-                            tree = build_semantic_tree(class_to_indices)
-                        elif tree_type == "confusion_ward":
-                            assert conf_mat is not None
-                            tree = build_confusion_tree(conf_mat, class_to_indices)
+                    if scenario == "scenario1":
+                        split = build_scenario1_split(
+                            fine_labels=train_lbl_np,
+                            target_class=target_class_scenario1,
+                            pos_fraction=pos_frac,
+                            seed=seed,
+                        )
+                        pos_idx = split.positive_indices
+                        neg_idx = split.negative_indices
+                        binary_train_lbl = split.binary_labels
+                        binary_test_lbl = (test_lbl_np == target_class_scenario1).astype(np.int64)
 
-                    res = train_scenario1(
-                        train_features=train_features,
-                        train_binary_labels=binary_train_lbl,
-                        positive_indices=pos_idx,
-                        negative_indices=neg_idx,
-                        test_features=test_features,
-                        test_binary_labels=binary_test_lbl,
-                        strategy=strat,
-                        tree=tree,
-                        num_steps=num_steps,
-                        eval_every=eval_every,
-                        seed=seed,
-                        device=device,
+                        tree: FastHierarchyTree | None = None
+                        if strat in ("mcts_strict", "mcts_enhanced"):
+                            class_to_indices = split.negative_class_to_indices
+                            if tree_type == "semantic":
+                                tree = build_semantic_tree(class_to_indices)
+                            elif tree_type == "confusion_ward":
+                                assert conf_mat is not None
+                                tree = build_confusion_tree(conf_mat, class_to_indices)
+
+                        res = train_scenario1(
+                            train_features=train_features,
+                            train_binary_labels=binary_train_lbl,
+                            positive_indices=pos_idx,
+                            negative_indices=neg_idx,
+                            test_features=test_features,
+                            test_binary_labels=binary_test_lbl,
+                            strategy=strat,
+                            tree=tree,
+                            num_steps=num_steps,
+                            eval_every=eval_every,
+                            seed=seed,
+                            device=device,
+                        )
+                    else:
+                        # Scenario 2
+                        num_cls = max(int(np.max(train_lbl_np)) + 1, 2)
+                        tree = None
+                        if strat in ("mcts_strict", "mcts_enhanced"):
+                            class_to_indices = {
+                                c: np.flatnonzero(train_lbl_np == c).astype(np.int64)
+                                for c in range(num_cls)
+                            }
+                            if tree_type == "semantic":
+                                tree = build_semantic_tree(class_to_indices)
+                            elif tree_type == "confusion_ward":
+                                assert conf_mat is not None
+                                tree = build_confusion_tree(conf_mat, class_to_indices)
+
+                        res = train_scenario2(
+                            train_features=train_features,
+                            train_labels=train_lbl_np,
+                            test_features=test_features,
+                            test_labels=test_lbl_np,
+                            strategy=strat,
+                            tree=tree,
+                            num_classes=num_cls,
+                            num_steps=num_steps,
+                            eval_every=eval_every,
+                            seed=seed,
+                            device=device,
+                        )
+
+                        if tree is not None:
+                            leaf_ids = tree.leaf_node_ids()
+                            class_visits: dict[int, int] = {}
+                            for lid in leaf_ids:
+                                cls_id = int(tree.leaf_to_class_id[int(lid)])
+                                class_visits[cls_id] = class_visits.get(cls_id, 0) + int(tree.visits[int(lid)])
+                            for c in range(num_cls):
+                                class_visits.setdefault(c, 0)
+
+                            unvisited_classes = sum(1 for c in range(num_cls) if class_visits.get(c, 0) == 0)
+                            ent_nats, ent_norm = compute_visitation_entropy(tree)
+                            coverage_pct = float((num_cls - unvisited_classes) / num_cls * 100.0) if num_cls > 0 else 0.0
+
+                            trained_model = res["model"]
+                            trained_model.eval()
+                            m_dev = device if device is not None else next(trained_model.parameters()).device
+                            with torch.no_grad():
+                                all_p: list[torch.Tensor] = []
+                                for bi in range(0, test_features.shape[0], 512):
+                                    bx = test_features[bi : bi + 512].to(m_dev)
+                                    logits_b = trained_model(bx)
+                                    all_p.append(torch.argmax(logits_b, dim=1).detach().cpu())
+                            preds_arr = torch.cat(all_p, dim=0).numpy()
+
+                            per_class_recall: list[float] = []
+                            for c in range(num_cls):
+                                c_mask = (test_lbl_np == c)
+                                if np.any(c_mask):
+                                    per_class_recall.append(float(np.mean(preds_arr[c_mask] == c)))
+                                else:
+                                    per_class_recall.append(0.0)
+
+                            diagnostics_per_strat[strat] = {
+                                "class_visit_distribution": class_visits,
+                                "unvisited_classes_count": unvisited_classes,
+                                "visitation_entropy": ent_norm,
+                                "entropy_nats": ent_nats,
+                                "class_coverage_pct": coverage_pct,
+                                "per_class_recall": per_class_recall,
+                            }
+
+                    final_metrics = res["final_metrics"]
+                    if "history" in res and res["history"] and f"{strat}_f1" not in convergence_history:
+                        steps_seq = [int(h.get("step", 0)) for h in res["history"]]
+                        convergence_history["steps"] = steps_seq
+                        primary_key = "f1" if scenario == "scenario1" else "macro_f1"
+                        convergence_history[f"{strat}_f1"] = [float(h.get(primary_key, h.get("f1", 0.0))) for h in res["history"]]
+                        convergence_history[f"{strat}_loss"] = [float(h.get("loss", 0.0)) for h in res["history"]]
+
+                    runs.append(
+                        BenchmarkRunResult(
+                            scenario=scenario,
+                            strategy=strat,
+                            tree_type=tree_type if strat.startswith("mcts") else "none",
+                            seed=seed,
+                            final_metrics=final_metrics,
+                            imbalance_ratio=rho,
+                        )
                     )
-                else:
-                    # Scenario 2
-                    num_cls = max(int(np.max(train_lbl_np)) + 1, 2)
-                    tree = None
-                    if strat in ("mcts_strict", "mcts_enhanced"):
-                        class_to_indices = {
-                            c: np.flatnonzero(train_lbl_np == c).astype(np.int64)
-                            for c in range(num_cls)
-                        }
-                        if tree_type == "semantic":
-                            tree = build_semantic_tree(class_to_indices)
-                        elif tree_type == "confusion_ward":
-                            assert conf_mat is not None
-                            tree = build_confusion_tree(conf_mat, class_to_indices)
-
-                    res = train_scenario2(
-                        train_features=train_features,
-                        train_labels=train_lbl_np,
-                        test_features=test_features,
-                        test_labels=test_lbl_np,
-                        strategy=strat,
-                        tree=tree,
-                        num_classes=num_cls,
-                        num_steps=num_steps,
-                        eval_every=eval_every,
-                        seed=seed,
-                        device=device,
-                    )
-
-                    if tree is not None:
-                        leaf_ids = tree.leaf_node_ids()
-                        class_visits: dict[int, int] = {}
-                        for lid in leaf_ids:
-                            cls_id = int(tree.leaf_to_class_id[int(lid)])
-                            class_visits[cls_id] = class_visits.get(cls_id, 0) + int(tree.visits[int(lid)])
-                        for c in range(num_cls):
-                            class_visits.setdefault(c, 0)
-
-                        unvisited_classes = sum(1 for c in range(num_cls) if class_visits.get(c, 0) == 0)
-                        ent_nats, ent_norm = compute_visitation_entropy(tree)
-                        coverage_pct = float((num_cls - unvisited_classes) / num_cls * 100.0) if num_cls > 0 else 0.0
-
-                        trained_model = res["model"]
-                        trained_model.eval()
-                        m_dev = device if device is not None else next(trained_model.parameters()).device
-                        with torch.no_grad():
-                            all_p: list[torch.Tensor] = []
-                            for bi in range(0, test_features.shape[0], 512):
-                                bx = test_features[bi : bi + 512].to(m_dev)
-                                logits_b = trained_model(bx)
-                                all_p.append(torch.argmax(logits_b, dim=1).detach().cpu())
-                        preds_arr = torch.cat(all_p, dim=0).numpy()
-
-                        per_class_recall: list[float] = []
-                        for c in range(num_cls):
-                            c_mask = (test_lbl_np == c)
-                            if np.any(c_mask):
-                                per_class_recall.append(float(np.mean(preds_arr[c_mask] == c)))
-                            else:
-                                per_class_recall.append(0.0)
-
-                        diagnostics_per_strat[strat] = {
-                            "class_visit_distribution": class_visits,
-                            "unvisited_classes_count": unvisited_classes,
-                            "visitation_entropy": ent_norm,
-                            "entropy_nats": ent_nats,
-                            "class_coverage_pct": coverage_pct,
-                            "per_class_recall": per_class_recall,
-                        }
-
-                final_metrics = res["final_metrics"]
-                if "history" in res and res["history"] and f"{strat}_f1" not in convergence_history:
-                    steps_seq = [int(h.get("step", 0)) for h in res["history"]]
-                    convergence_history["steps"] = steps_seq
-                    primary_key = "f1" if scenario == "scenario1" else "macro_f1"
-                    convergence_history[f"{strat}_f1"] = [float(h.get(primary_key, h.get("f1", 0.0))) for h in res["history"]]
-                    convergence_history[f"{strat}_loss"] = [float(h.get("loss", 0.0)) for h in res["history"]]
-
-                runs.append(
-                    BenchmarkRunResult(
-                        scenario=scenario,
-                        strategy=strat,
-                        tree_type=tree_type if strat.startswith("mcts") else "none",
-                        seed=seed,
-                        final_metrics=final_metrics,
-                    )
-                )
 
     # Metric aggregation
     primary_metric = "auprc" if scenario == "scenario1" else "top1_accuracy"
@@ -383,21 +387,22 @@ def run_benchmark(
 
     # Flatten summary rows for CSV export
     csv_rows: list[dict[str, Any]] = []
-    all_fieldnames: set[str] = {"scenario", "strategy", "tree_type", "seed"}
+    all_fieldnames: set[str] = {"scenario", "strategy", "tree_type", "seed", "imbalance_ratio"}
     for r in runs:
         row: dict[str, Any] = {
             "scenario": r.scenario,
             "strategy": r.strategy,
             "tree_type": r.tree_type,
             "seed": r.seed,
+            "imbalance_ratio": r.imbalance_ratio,
         }
         for k, v in r.final_metrics.items():
             row[k] = v
             all_fieldnames.add(k)
         csv_rows.append(row)
 
-    ordered_fields = ["scenario", "strategy", "tree_type", "seed"] + sorted(
-        [f for f in all_fieldnames if f not in ("scenario", "strategy", "tree_type", "seed")]
+    ordered_fields = ["scenario", "strategy", "tree_type", "seed", "imbalance_ratio"] + sorted(
+        [f for f in all_fieldnames if f not in ("scenario", "strategy", "tree_type", "seed", "imbalance_ratio")]
     )
     for row in csv_rows:
         for f in ordered_fields:

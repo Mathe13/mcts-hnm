@@ -146,19 +146,26 @@
 - **Date**: 2026-11-10
 - **Status**: active (AD-018)
 
+### AD-019
+- **Decision**: Parameterize Scenario 1 positive class subsampling in `run_benchmark()` via `imbalance_ratios: tuple[str, ...] = ("1:50",)` (using `build_scenario1_split` and `IMBALANCE_RATIOS`), embed `imbalance_ratio` metadata in `BenchmarkRunResult` and JSON/CSV outputs, normalize ratio extraction in `load_real_benchmark_results` without hardcoded fallbacks (defaulting legacy unlabeled runs to `"50"`), and dynamically adapt `generate_scenario1_table` and table captions to the set of executed ratios without failing or requiring unexecuted ratios.
+- **Reason**: Resolves P1 audit finding where Notebook 05 expected 1:10, 1:50, 1:100 while Notebook 03 only executed 1:50. Eliminates data fabrication risks, provides immediate execution support for arbitrary ratio subsets or the full grid (`"1:10"`, `"1:50"`, `"1:100"`), and ensures publication tables dynamically and explicitly adapt to available empirical data without formatting defects.
+- **Trade-off**: Requires passing `imbalance_ratios` if evaluating multi-ratio grids; single-ratio runs generate single-ratio LaTeX tables with adapted captions.
+- **Scope**: `src/training/benchmark_runner.py`, `src/utils/paper_artifacts.py`, `notebooks/03_tier1_mcts_benchmarks.ipynb`, `tests/`
+- **Date**: 2026-11-10
+- **Status**: active (AD-019)
+
 ## Handoff
 
-- **Feature**: `15-artifact-completeness-and-isolation-hardening` (`.specs/features/15-artifact-completeness-and-isolation-hardening/`)
+- **Feature**: `16-scenario1-imbalance-grid-and-scope-adaptation` (`.specs/features/16-scenario1-imbalance-grid-and-scope-adaptation/`)
 - **Phase / Task**: Done & Verified.
 - **Completed**:
-  - [P0] Eliminated all `.get(..., 0.0)` metric fallbacks in `src/utils/paper_artifacts.py` (`METRIC-01`).
-  - [P0] Enforced benchmark suite completeness and eliminated warning-swallowing on parsing exceptions (`COMP-01`).
-  - [P1] Modernized notebook 00 test in `tests/test_paper_artifacts.py` to assert `ExecutionMode` and remove `FAST_MODE` (`TEST-01`).
-  - [P1] Changed default `migrate_legacy` parameter to `False` in `get_isolated_paths()` (`MIG-01`).
-  - [P1] Mandated `validate_mode_isolated_path` for custom output directories in `benchmark_runner.py` (`ISO-01`).
-  - Full automated regression verified (160 passed in 38.26s).
-  - Grep audit verified 0 occurrences of `metrics.get(` in `paper_artifacts.py` and 0 active references to `FAST_MODE`.
-  - Zero files written to `results/real/` during SMOKE regression.
+  - [P1] Parameterized Scenario 1 positive class subsampling in `run_benchmark()` via `imbalance_ratios` with `build_scenario1_split()` (`RUN-01`).
+  - [P1] Embedded `imbalance_ratio` in `BenchmarkRunResult`, JSON runs, and CSV rows (`RUN-01`).
+  - [P1] Normalized `imbalance_ratio` extraction in `load_real_benchmark_results()`, eliminating hardcoded `"10"` and defaulting legacy runs to `"50"` (`LOAD-01`).
+  - [P1] Enabled dynamic scope adaptation in `generate_scenario1_table()`, generating single-ratio tables ($\rho = 1:50$) or full multi-ratio grids ($\rho \in \{1:10, 1:50, 1:100\}$) with dynamic captions and clean table boundaries (`TAB-01`).
+  - [P1] Configured Notebook 03 Axis 1 with explicit `imbalance_ratios=IMBALANCE_RATIOS_AXIS1` and documented single-ratio default vs full grid expansion (`NB-01`).
+  - Added negative and positive unit tests in `tests/test_tier1_benchmarks_real.py` and `tests/test_paper_artifacts_real.py`.
+  - Full automated regression verified (163 passed in 41.62s).
 - **In-progress**: None
 - **Next step**: Ready for user review or full cluster scientific execution.
 - **Blockers**: None

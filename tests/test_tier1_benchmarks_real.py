@@ -359,3 +359,38 @@ def test_benchmark_runner_custom_output_dir_validation(tmp_path):
             output_dir=repo / "results" / "unsegregated_custom",
             config=config,
         )
+
+
+def test_scenario1_imbalance_ratio_parameterization(tmp_path):
+    """RUN-01: run_benchmark executes configured imbalance ratios and embeds imbalance_ratio metadata."""
+    config = ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
+    paths = get_isolated_paths(config, repo_root=tmp_path)
+
+    train_feats = torch.randn(100, 32)
+    train_labels = np.array([i % 10 for i in range(100)])
+    test_feats = torch.randn(20, 32)
+    test_labels = np.array([i % 10 for i in range(20)])
+
+    res = run_benchmark(
+        scenario="scenario1",
+        train_features=train_feats,
+        train_labels=train_labels,
+        test_features=test_feats,
+        test_labels=test_labels,
+        strategies=("uniform",),
+        tree_types=("semantic",),
+        seeds=(42,),
+        imbalance_ratios=("1:10", "1:50"),
+        output_dir=paths.results_dir,
+        benchmark_name="tier1_multi_ratio_test",
+        num_steps=5,
+        eval_every=5,
+        config=config,
+    )
+
+    assert "runs" in res
+    assert len(res["runs"]) == 2
+    ratios_found = {r["imbalance_ratio"] for r in res["runs"]}
+    assert ratios_found == {"1:10", "1:50"}
+    assert res["imbalance_audit"]["configured_ratios"] == ["1:10", "1:50"]
+
