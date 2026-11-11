@@ -178,19 +178,28 @@
 - **Date**: 2026-11-11
 - **Status**: active (AD-022)
 
+### AD-023
+- **Decision**: Finalize scientific campaign orchestration and publication deliverables under Phase D of `roadmap_mcts_hnm_proxima_run_v2.md`: (1) `run_scientific_campaign` in `src/training/campaign_runner.py` executing the frozen protocol matrix across Scenarios 1 and 2 with 5 paired seeds, persisting atomic run records and `campaign_manifest.json`; (2) computational efficiency telemetry (`total_updates`, `gradient_samples`, `mining_forwards`, `elapsed_seconds`) and dual checkpoints (`last` vs. `best_validation` tracking AUPRC, decision-calibrated F1 at $\tau_{\text{val}}$, and Worst-10 recall); (3) inferential paired statistics (`compute_paired_method_differences`, `compute_method_by_ratio_interaction`) calculating Cohen's d, paired t-tests, and difference-of-differences interaction effects across imbalance ratios; (4) automated publication-grade paper artifacts in `src/utils/paper_artifacts.py` producing validation curves with shaded variability bands ($\text{mean} \pm \text{std}$), class exposure frequency heatmaps, $2 \times 2$ QNorm $\times$ DualStream factorial ablation plots, and LaTeX `booktabs` tables with strict anti-synthetic validation in REAL mode; and (5) automated Gate D verifier (`verify_gate_d`) generating signed `campaign_audit_manifest.json` with SHA-256 integrity hashes.
+- **Reason**: Fulfills items D1, D2, D3, D4, and Gate D of Roadmap v2, certifying complete reproducibility and scientific integrity for all paper deliverables.
+- **Trade-off**: Increases telemetry payload and results directory files, with each run artifact carrying provenance sidecars and SHA-256 verification.
+- **Scope**: `src/training/`, `src/utils/`, `tests/`
+- **Date**: 2026-11-11
+- **Status**: active (AD-023)
+
 ## Handoff
 
-- **Feature**: `19-fase-c-ablacoes-de-mecanismo` (`.specs/features/19-fase-c-ablacoes-de-mecanismo/`)
-- **Status**: Complete & Verified (Gate C PASS, Verification PASS)
+- **Feature**: `20-fase-d-campanha-cientifica-e-artefatos` (`.specs/features/20-fase-d-campanha-cientifica-e-artefatos/`)
+- **Status**: Complete & Verified (Gate D PASS, Verification PASS)
 - **Completed**:
   - Specified requirements in `spec.md` with explicit user approval (validated with 0 errors, 0 warnings).
   - Designed architecture and components in `design.md`.
-  - Structured 7 atomic tasks across 5 phases in `tasks.md` with 19 verifiable checks.
-  - Executed T1–T7 with atomic commits (`6a0d574` through `ca4aeb4`).
-  - Ran `check_proofs.py` (20/20 passed at `ca4aeb4`).
+  - Structured 5 atomic tasks across 5 phases in `tasks.md` with 17 verifiable checks.
+  - Executed T1–T5 with atomic commits (`fe74914` through `fcf6dd1`).
+  - Ran `check_proofs.py` (18/18 passed at `fcf6dd1`).
   - Independent Verifier sub-agent audit passed with Verdict: PASS.
-  - Recorded Decision AD-022.
-- **In-progress**: Completed Fase C (Gate C). Ready to proceed to Fase D (Campanha Científica Final e Artefatos).
-- **Next step**: Present Gate C completion and scaffold Feature 20 (`20-fase-d-campanha-cientifica-e-artefatos`).
+  - Validated verification with `validate_verification.py` (0 errors, 0 warnings).
+  - Recorded Decision AD-023.
+- **In-progress**: Completed Fase D (Gate D). All 4 phases of `roadmap_mcts_hnm_proxima_run_v2.md` (Fases A, B, C, D) are now fully implemented, verified, and certified!
+- **Next step**: Present the final completion of the entire Roadmap v2 to the user.
 - **Blockers**: None
 - **Branch**: `main`
