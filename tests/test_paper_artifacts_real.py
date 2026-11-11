@@ -502,3 +502,63 @@ def test_generate_scenario1_table_adapts_to_single_ratio(tmp_path):
     assert "\\midrule\n\\bottomrule" not in content
     assert "\\bottomrule" in content
 
+
+def test_load_real_benchmark_results_rejects_missing_imbalance_ratio(tmp_path):
+    """LOAD-02: load_real_benchmark_results strictly rejects missing imbalance_ratio in runs and aggregated_summary."""
+    res_dir = tmp_path / "results" / "real"
+    res_dir.mkdir(parents=True)
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.REAL)
+
+    # 1. Missing imbalance_ratio in runs
+    axis1_file = res_dir / "tier1_axis1_samplers.json"
+    axis1_data = {
+        "runs": [
+            {
+                "strategy": "uniform",
+                "final_metrics": {"f1": 0.35, "auprc": 0.32, "fpr_at_95_recall": 0.45},
+                # Missing imbalance_ratio
+            }
+        ]
+    }
+    axis1_file.write_text(json.dumps(axis1_data), encoding="utf-8")
+    save_provenance_metadata(axis1_file, config=cfg)
+
+    with pytest.raises(ValueError, match="Missing imbalance_ratio in benchmark metadata"):
+        load_real_benchmark_results(res_dir, expected_mode=ExecutionMode.REAL)
+
+    # 2. Missing imbalance_ratio in aggregated_summary
+    axis1_data_agg = {
+        "aggregated_summary": {
+            "semantic": {
+                "uniform": {
+                    "f1_mean": 0.35,
+                    "f1_std": 0.01,
+                    "auprc_mean": 0.32,
+                    "auprc_std": 0.01,
+                    "fpr_at_95_recall_mean": 0.45,
+                    "fpr_at_95_recall_std": 0.01,
+                    # Missing imbalance_ratio
+                }
+            }
+        }
+    }
+    axis1_file.write_text(json.dumps(axis1_data_agg), encoding="utf-8")
+    save_provenance_metadata(axis1_file, config=cfg)
+
+    with pytest.raises(ValueError, match="Missing imbalance_ratio in benchmark metadata"):
+        load_real_benchmark_results(res_dir, expected_mode=ExecutionMode.REAL)
+
+
+def test_generate_scenario1_table_rejects_empty_ratios(tmp_path):
+    """TAB-02: generate_scenario1_table raises ValueError when no imbalance ratios exist in data."""
+    data = {
+        "is_smoke": False,
+        "scenario1": {
+            strat: {}
+            for strat in ("uniform", "ohem", "mcts_strict", "mcts_enhanced")
+        }
+    }
+    with pytest.raises(ValueError, match="has no imbalance ratio data|has no valid imbalance ratios"):
+        generate_scenario1_table(data, output_dir=tmp_path / "tables")
+
+

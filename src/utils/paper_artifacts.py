@@ -278,11 +278,12 @@ def load_real_benchmark_results(
                 else:
                     raise ValueError(f"Missing required metric 'fpr_at_95_recall' / 'fpr95' for strategy '{strat}' in {axis1_file}")
 
-                raw_rho = r.get("imbalance_ratio")
-                if raw_rho is not None:
-                    rho_clean = str(raw_rho).replace("1:", "").strip()
-                else:
-                    rho_clean = "50"
+                rho = r.get("imbalance_ratio")
+                if rho is None:
+                    raise ValueError(
+                        f"Missing imbalance_ratio in benchmark metadata for strategy '{strat}' in {axis1_file}"
+                    )
+                rho_clean = str(rho).replace("1:", "").strip()
                 scen1_norm.setdefault(strat, {}).setdefault(rho_clean, {"f1": [], "auprc": [], "fpr95": []})
                 scen1_norm[strat][rho_clean]["f1"].append(float(metrics["f1"]))
                 scen1_norm[strat][rho_clean]["auprc"].append(float(metrics["auprc"]))
@@ -315,11 +316,16 @@ def load_real_benchmark_results(
                         fpr_s = s_metrics["fpr95_std"] if "fpr95_std" in s_metrics and s_metrics["fpr95_std"] is not None else 0.0
                     else:
                         raise ValueError(f"Scenario 1 strategy '{strat}' missing 'fpr_at_95_recall_mean' / 'fpr95_mean' in aggregated summary in {axis1_file}")
-                    raw_rho = s_metrics.get("imbalance_ratio")
-                    if raw_rho is not None:
-                        rho_clean = str(raw_rho).replace("1:", "").strip()
-                    else:
-                        rho_clean = "50"
+                    rho = (
+                        s_metrics.get("imbalance_ratio")
+                        or (d1.get("imbalance_audit", {}).get("configured_ratios", [None])[0] if isinstance(d1.get("imbalance_audit"), dict) else None)
+                        or d1.get("imbalance_ratio")
+                    )
+                    if rho is None:
+                        raise ValueError(
+                            f"Missing imbalance_ratio in benchmark metadata for strategy '{strat}' in {axis1_file}"
+                        )
+                    rho_clean = str(rho).replace("1:", "").strip()
                     scen1_norm.setdefault(strat, {})[rho_clean] = {
                         "f1": {"mean": float(s_metrics["f1_mean"]), "std": float(s_metrics["f1_std"]), "values": [float(s_metrics["f1_mean"])]},
                         "auprc": {"mean": float(s_metrics["auprc_mean"]), "std": float(s_metrics["auprc_std"]), "values": [float(s_metrics["auprc_mean"])]},
@@ -684,7 +690,8 @@ def load_or_synthesize_benchmark_results(
     steps = [0, 500, 1000, 1500, 2000, 3000, 4000, 6000, 8000, 10000]
     convergence = {"steps": steps}
     for strat in strategies:
-        final_f1 = scenario1_results[strat]["10"]["f1"]["mean"]
+        first_rho = next(iter(scenario1_results[strat].keys()))
+        final_f1 = scenario1_results[strat][first_rho]["f1"]["mean"]
         final_loss = 0.12 if "enhanced" in strat else (0.16 if "strict" in strat else (0.21 if "ohem" in strat else 0.28))
         f1_curve = [round(float(final_f1 * (1.0 - np.exp(-0.0006 * s)) + rng.normal(0, 0.008)), 4) for s in steps]
         f1_curve[0] = 0.05
@@ -861,7 +868,14 @@ def generate_convergence_plot(
             vals = conv[f1_key]
             ax1.plot(steps, vals, label=label, color=color, linestyle=style, linewidth=2.0)
 
-    ax1.set_title(r"(a) Test Minority F1-Score ($\rho=1:10$)", fontsize=11, fontweight="bold")
+    rho_label = conv.get("imbalance_ratio")
+    if not rho_label and "scenario1" in data and isinstance(data["scenario1"], dict):
+        present_keys = [k for sk, rdict in data["scenario1"].items() if isinstance(rdict, dict) for k in rdict.keys()]
+        if present_keys:
+            pk = present_keys[0]
+            rho_label = pk if str(pk).startswith("1:") else f"1:{pk}"
+    title_suffix = f" ($\\rho={rho_label}$)" if rho_label else ""
+    ax1.set_title(f"(a) Test Minority F1-Score{title_suffix}", fontsize=11, fontweight="bold")
     ax1.set_xlabel("Training Steps", fontsize=10)
     ax1.set_ylabel("F1-Score", fontsize=10)
     ax1.grid(True, linestyle=":", alpha=0.6)
@@ -1082,10 +1096,12 @@ def generate_scenario1_table(
         if any(rk in scen1.get(sk, {}) for sk, _ in strategies)
     ]
     if not imbalance_ratios:
-        present_keys = sorted(list({k for sk, rdict in scen1.items() for k in rdict.keys()}))
+        present_keys = sorted(list({k for sk, rdict in scen1.items() if isinstance(rdict, dict) for k in rdict.keys()}))
         imbalance_ratios = [(k, f"1:{k}" if not str(k).startswith("1:") else str(k)) for k in present_keys]
     if not imbalance_ratios:
-        imbalance_ratios = [("50", "1:50")]
+        raise ValueError(
+            "Scenario 1 results dictionary has no valid imbalance ratios; cannot generate table without experimental data."
+        )
 
     caption_ratios = ", ".join([rl for _, rl in imbalance_ratios])
     if len(imbalance_ratios) == 1:
@@ -1321,13 +1337,21 @@ def generate_ablation_table(
 
     baseline_f1 = float(ablation["q_norm_off"]["f1"]) if "q_norm_off" in ablation and "f1" in ablation["q_norm_off"] else rows[0][2]
 
+    rho_label = None
+    if "scenario1" in data and isinstance(data["scenario1"], dict):
+        present_keys = [k for sk, rdict in data["scenario1"].items() if isinstance(rdict, dict) for k in rdict.keys()]
+        if present_keys:
+            pk = present_keys[0]
+            rho_label = pk if str(pk).startswith("1:") else f"1:{pk}"
+    caption_rho = f" ($\\rho={rho_label}$)" if rho_label else ""
+
     lines = [
         r"% Auto-generated by src/utils/paper_artifacts.py",
         r"% SMOKE TEST — NOT VALID FOR SCIENTIFIC PUBLICATION" if data.get("is_smoke") else "",
         r"\begin{table}[t]",
         r"\centering",
         r"\small",
-        r"\caption{Ablation study on CIFAR-100 ($\rho=1:10$) isolating tree hierarchy structure, $Q$-normalization, "
+        f"\\caption{{Ablation study on CIFAR-100{caption_rho} isolating tree hierarchy structure, $Q$-normalization, "
         r"Dual-Stream sampling ratio, and dynamic prediction-entropy leaf sub-clustering.}",
         r"\label{tab:ablation_study}",
         r"\begin{tabular}{llccc}",

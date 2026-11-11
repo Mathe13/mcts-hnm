@@ -327,6 +327,8 @@ def run_benchmark(
                         primary_key = "f1" if scenario == "scenario1" else "macro_f1"
                         convergence_history[f"{strat}_f1"] = [float(h.get(primary_key, h.get("f1", 0.0))) for h in res["history"]]
                         convergence_history[f"{strat}_loss"] = [float(h.get("loss", 0.0)) for h in res["history"]]
+                        if rho is not None and "imbalance_ratio" not in convergence_history:
+                            convergence_history["imbalance_ratio"] = rho
 
                     runs.append(
                         BenchmarkRunResult(
@@ -383,6 +385,10 @@ def run_benchmark(
             if "f1_mean" in summary_strat and "macro_f1_mean" not in summary_strat:
                 summary_strat["macro_f1_mean"] = summary_strat["f1_mean"]
                 summary_strat["macro_f1_std"] = summary_strat["f1_std"]
+            if scenario == "scenario1" and strat_runs:
+                ratios_in_runs = {r.imbalance_ratio for r in strat_runs if r.imbalance_ratio is not None}
+                if len(ratios_in_runs) == 1:
+                    summary_strat["imbalance_ratio"] = next(iter(ratios_in_runs))
             aggregated_summary[tt][strat] = summary_strat
 
     # Flatten summary rows for CSV export
@@ -419,6 +425,9 @@ def run_benchmark(
         "runs": [asdict(r) for r in runs],
         "per_seed_results": [asdict(r) for r in runs],
     }
+
+    if scenario == "scenario1" and imbalance_ratios:
+        json_export["imbalance_ratio"] = imbalance_ratios[0] if len(imbalance_ratios) == 1 else list(imbalance_ratios)
 
     if imbalance_audit is not None:
         json_export["imbalance_audit"] = imbalance_audit
