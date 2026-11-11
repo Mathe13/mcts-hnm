@@ -634,3 +634,383 @@ def test_regression_exclusively_1_50_end_to_end(tmp_path):
 
 
 
+
+
+# ==============================================================================
+# Phase 4 Automated Test Suite
+# ==============================================================================
+
+def _setup_mock_real_suite(tmp_path: Path, include_heatmap: bool = True, include_sensitivity: bool = True, malform_heatmap: bool = False, remove_metric: str | None = None) -> tuple[Path, Path, Path, ExperimentConfig]:
+    res_dir = tmp_path / "results"
+    res_dir.mkdir(parents=True, exist_ok=True)
+    paper_dir = tmp_path / "paper"
+    paper_dir.mkdir(parents=True, exist_ok=True)
+    meta_path = tmp_path / "paper_metadata.yaml"
+    meta_path.write_text("title: \"Test Paper\"\nauthors: []\n", encoding="utf-8")
+
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.REAL)
+
+    # 1. Axis 1
+    axis1_metrics = {
+        "f1": 0.45,
+        "auprc": 0.42,
+        "fpr_at_95_recall": 0.28,
+    }
+    if remove_metric and remove_metric in axis1_metrics:
+        del axis1_metrics[remove_metric]
+
+    conv_dict = {
+        "steps": [10, 20, 30],
+        "uniform_f1": [0.2, 0.3, 0.4],
+        "ohem_f1": [0.22, 0.32, 0.42],
+        "mcts_strict_f1": [0.25, 0.35, 0.45],
+        "mcts_enhanced_f1": [0.28, 0.38, 0.48],
+        "uniform_loss": [1.0, 0.8, 0.6],
+        "ohem_loss": [1.0, 0.8, 0.6],
+        "mcts_strict_loss": [1.0, 0.8, 0.6],
+        "mcts_enhanced_loss": [1.0, 0.8, 0.6],
+    }
+
+    axis1_data = {
+        "benchmark_name": "tier1_axis1_samplers",
+        "imbalance_ratios": ["1:10"],
+        "convergence": conv_dict,
+        "convergence_history": conv_dict,
+        "runs": [
+            {
+                "strategy": strat,
+                "tree_type": "semantic" if strat.startswith("mcts") else "none",
+                "seed": 42,
+                "imbalance_ratio": "1:10",
+                "final_metrics": dict(axis1_metrics),
+            }
+            for strat in ("uniform", "ohem", "mcts_strict", "mcts_enhanced")
+        ],
+        "convergence_history": {
+            "steps": [10, 20, 30],
+            "uniform_f1": [0.2, 0.3, 0.4],
+            "ohem_f1": [0.22, 0.32, 0.42],
+            "mcts_strict_f1": [0.25, 0.35, 0.45],
+            "mcts_enhanced_f1": [0.28, 0.38, 0.48],
+            "uniform_loss": [1.0, 0.8, 0.6],
+            "ohem_loss": [1.0, 0.8, 0.6],
+            "mcts_strict_loss": [1.0, 0.8, 0.6],
+            "mcts_enhanced_loss": [1.0, 0.8, 0.6],
+        }
+    }
+    if include_heatmap:
+        if malform_heatmap:
+            axis1_data["heatmap"] = {"matrix": []}
+        else:
+            axis1_data["heatmap"] = {
+                "steps": [10, 20],
+                "superclasses": ["aquatic_mammals", "fish"],
+                "matrix": [[0.5, 0.6], [0.4, 0.3]],
+            }
+
+    axis1_path = res_dir / "tier1_axis1_samplers.json"
+    axis1_path.write_text(json.dumps(axis1_data), encoding="utf-8")
+    save_provenance_metadata(axis1_path, config=cfg)
+
+    # 2. Scenario 2
+    scen2_data = {
+        "scenario2": {
+            strat: {
+                "top1_accuracy": {"mean": 0.70, "std": 0.01},
+                "macro_f1": {"mean": 0.65, "std": 0.01},
+                "worst_10_recall": {"mean": 0.45, "std": 0.01},
+            }
+            for strat in ("uniform", "ohem", "mcts_strict", "mcts_enhanced")
+        }
+    }
+    scen2_path = res_dir / "tier1_scenario2_curriculum.json"
+    scen2_path.write_text(json.dumps(scen2_data), encoding="utf-8")
+    save_provenance_metadata(scen2_path, config=cfg)
+
+    # 3. Axis 2 Ablation
+    abl_data = {
+        "ablation": {
+            "semantic_tree": {"f1": 0.50, "auprc": 0.48},
+            "confusion_ward_tree": {"f1": 0.54, "auprc": 0.52},
+        }
+    }
+    abl_path = res_dir / "tier1_axis2_tree_ablation.json"
+    abl_path.write_text(json.dumps(abl_data), encoding="utf-8")
+    save_provenance_metadata(abl_path, config=cfg)
+
+    # 4. Sensitivity (Optional)
+    if include_sensitivity:
+        sens_data = {
+            "benchmark_name": "tier1_hyperparameter_sensitivity",
+            "grid": [
+                {"c": 0.5, "alpha": 0.3, "f1_mean": 0.42, "auprc_mean": 0.40},
+                {"c": 1.0, "alpha": 0.3, "f1_mean": 0.46, "auprc_mean": 0.44},
+                {"c": 2.0, "alpha": 0.3, "f1_mean": 0.45, "auprc_mean": 0.43},
+                {"c": 1.0, "alpha": 0.1, "f1_mean": 0.43, "auprc_mean": 0.41},
+                {"c": 1.0, "alpha": 0.5, "f1_mean": 0.44, "auprc_mean": 0.42},
+            ]
+        }
+        sens_path = res_dir / "tier1_hyperparameter_sensitivity.json"
+        sens_path.write_text(json.dumps(sens_data), encoding="utf-8")
+        save_provenance_metadata(sens_path, config=cfg)
+
+    return res_dir, paper_dir, meta_path, cfg
+
+
+def test_phase4_real_complete_generates_all_mandatory_and_optional(tmp_path: Path):
+    res_dir, paper_dir, meta_path, cfg = _setup_mock_real_suite(tmp_path, include_heatmap=True, include_sensitivity=True)
+    artifacts = generate_all_paper_artifacts(
+        results_dir=res_dir,
+        paper_dir=paper_dir,
+        metadata_path=meta_path,
+        config=cfg,
+    )
+    assert artifacts["status"] == "complete"
+    assert len(artifacts["skipped"]) == 0
+
+    # Mandatory and optional figures
+    fig_dir = paper_dir / "figures"
+    assert (fig_dir / "fig_convergence_curves.pdf").exists()
+    assert (fig_dir / "fig_convergence_curves.png").exists()
+    assert (fig_dir / "fig_tree_visitation_heatmap.pdf").exists()
+    assert (fig_dir / "fig_tree_visitation_heatmap.png").exists()
+    assert (fig_dir / "fig_hyperparameter_sensitivity.pdf").exists()
+    assert (fig_dir / "fig_hyperparameter_sensitivity.png").exists()
+
+    # Mandatory tables
+    tab_dir = paper_dir / "tables"
+    assert (tab_dir / "tab_scenario1_imbalanced.tex").exists()
+    assert (tab_dir / "tab_scenario2_multiclass.tex").exists()
+    assert (tab_dir / "tab_ablation_study.tex").exists()
+
+    # Manifest
+    manifest_file = paper_dir / "artifact_manifest.json"
+    assert manifest_file.exists()
+    manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
+    assert manifest_data["status"] == "complete"
+    assert len(manifest_data["skipped_artifacts"]) == 0
+
+
+def test_phase4_real_missing_heatmap_records_omission_without_fake_matrix(tmp_path: Path):
+    res_dir, paper_dir, meta_path, cfg = _setup_mock_real_suite(tmp_path, include_heatmap=False, include_sensitivity=True)
+    artifacts = generate_all_paper_artifacts(
+        results_dir=res_dir,
+        paper_dir=paper_dir,
+        metadata_path=meta_path,
+        config=cfg,
+        optional_artifacts=("visitation_heatmap", "sensitivity_plot"),
+    )
+    assert artifacts["status"] == "partial"
+    assert "visitation_heatmap" in artifacts["skipped"]
+    assert "visitation" in artifacts["skipped"]["visitation_heatmap"].lower()
+
+    # Ensure heatmap figures were NOT generated
+    fig_dir = paper_dir / "figures"
+    assert not (fig_dir / "fig_tree_visitation_heatmap.pdf").exists()
+    assert not (fig_dir / "fig_tree_visitation_heatmap.png").exists()
+
+    # Ensure mandatory artifacts are still present
+    tab_dir = paper_dir / "tables"
+    assert (tab_dir / "tab_scenario1_imbalanced.tex").exists()
+    assert (fig_dir / "fig_convergence_curves.pdf").exists()
+
+
+def test_phase4_real_missing_sensitivity_records_omission(tmp_path: Path):
+    res_dir, paper_dir, meta_path, cfg = _setup_mock_real_suite(tmp_path, include_heatmap=True, include_sensitivity=False)
+    artifacts = generate_all_paper_artifacts(
+        results_dir=res_dir,
+        paper_dir=paper_dir,
+        metadata_path=meta_path,
+        config=cfg,
+        optional_artifacts=("visitation_heatmap", "sensitivity_plot"),
+    )
+    assert artifacts["status"] == "partial"
+    assert "sensitivity_plot" in artifacts["skipped"]
+    assert "sensitivity" in artifacts["skipped"]["sensitivity_plot"].lower()
+
+    # Ensure sensitivity figure was NOT generated
+    fig_dir = paper_dir / "figures"
+    assert not (fig_dir / "fig_hyperparameter_sensitivity.pdf").exists()
+    assert not (fig_dir / "fig_hyperparameter_sensitivity.png").exists()
+
+
+def test_phase4_real_malformed_heatmap_fails_explicitly(tmp_path: Path):
+    res_dir, paper_dir, meta_path, cfg = _setup_mock_real_suite(tmp_path, include_heatmap=True, malform_heatmap=True)
+    with pytest.raises(ValueError, match="Tree visitation heatmap matrix missing or empty"):
+        generate_all_paper_artifacts(
+            results_dir=res_dir,
+            paper_dir=paper_dir,
+            metadata_path=meta_path,
+            config=cfg,
+        )
+
+
+def test_phase4_real_missing_mandatory_metric_fails(tmp_path: Path):
+    res_dir, paper_dir, meta_path, cfg = _setup_mock_real_suite(tmp_path, remove_metric="f1")
+    with pytest.raises(ValueError, match="Missing required metric 'f1'"):
+        generate_all_paper_artifacts(
+            results_dir=res_dir,
+            paper_dir=paper_dir,
+            metadata_path=meta_path,
+            config=cfg,
+        )
+
+
+def test_phase4_real_rejects_smoke_or_missing_provenance(tmp_path: Path):
+    res_dir, paper_dir, meta_path, cfg = _setup_mock_real_suite(tmp_path)
+    # 1. Missing sidecar raises FileNotFoundError or ValueError
+    sidecar = res_dir / "tier1_axis1_samplers.json.meta.json"
+    if sidecar.exists():
+        sidecar.unlink()
+
+    with pytest.raises((ValueError, FileNotFoundError)):
+        load_real_benchmark_results(res_dir, expected_mode=ExecutionMode.REAL)
+
+    # 2. Sidecar with SMOKE mode rejected in REAL
+    sidecar.write_text(json.dumps({
+        "execution_mode": "smoke",
+        "provenance": {"execution_mode": "smoke", "synthetic_fallback": True}
+    }), encoding="utf-8")
+    with pytest.raises(ValueError, match="REAL mode rejected synthetic/smoke artifact|Synthetic data is strictly prohibited in REAL mode|mismatches expected mode"):
+        load_real_benchmark_results(res_dir, expected_mode=ExecutionMode.REAL)
+
+
+def test_phase4_smoke_maintains_watermark_and_isolated_outputs(tmp_path: Path):
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
+    paths = get_isolated_paths(cfg, repo_root=tmp_path)
+    assert "smoke" in str(paths.results_dir)
+    assert "smoke" in str(paths.paper_figures_dir)
+
+    # Synthetic smoke generation
+    meta_path = tmp_path / "paper_metadata.yaml"
+    meta_path.write_text("title: \"Smoke Paper\"\n", encoding="utf-8")
+    arts = generate_all_paper_artifacts(
+        results_dir=paths.results_dir,
+        paper_dir=paths.paper_figures_dir.parent,
+        metadata_path=meta_path,
+        config=cfg,
+    )
+    assert arts["status"] in ("complete", "partial")
+    # Verify watermark present on convergence curve png
+    conv_png = paths.paper_figures_dir / "fig_convergence_curves.png"
+    assert conv_png.exists()
+
+
+def test_phase4_sensitivity_ablation_persists_measured_values(tmp_path: Path):
+    import torch
+    import numpy as np
+    from src.training.benchmark_runner import run_sensitivity_ablation
+
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
+    out_dir = tmp_path / "sens_test"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Deterministic toy features (100 samples, 16-dim)
+    torch.manual_seed(42)
+    train_x = torch.randn(100, 16)
+    train_y = np.random.RandomState(42).randint(0, 5, size=(100,))
+    test_x = torch.randn(20, 16)
+    test_y = np.random.RandomState(42).randint(0, 5, size=(20,))
+
+    res = run_sensitivity_ablation(
+        train_features=train_x,
+        train_labels=train_y,
+        test_features=test_x,
+        test_labels=test_y,
+        c_values=(0.5, 1.0),
+        alpha_values=(0.1, 0.3),
+        output_dir=out_dir,
+        benchmark_name="tier1_hyperparameter_sensitivity",
+        num_steps=10,
+        eval_every=5,
+        seeds=(42,),
+        config=cfg,
+    )
+
+    assert "grid" in res
+    assert len(res["grid"]) == 4  # 2x2 grid
+    for entry in res["grid"]:
+        assert "c" in entry
+        assert "alpha" in entry
+        assert "f1_mean" in entry
+        assert "auprc_mean" in entry
+        assert isinstance(entry["f1_mean"], float)
+
+    json_file = out_dir / "tier1_hyperparameter_sensitivity.json"
+    assert json_file.exists()
+    sidecar_file = out_dir / "tier1_hyperparameter_sensitivity.json.meta.json"
+    assert sidecar_file.exists()
+
+
+def test_phase4_visitation_diagnostics_records_real_counters():
+    import torch
+    import numpy as np
+    from src.training.trainer import train_scenario1
+    from src.trees.semantic_tree import build_semantic_tree
+
+    torch.manual_seed(42)
+    train_x = torch.randn(120, 16)
+    train_y = np.zeros(120, dtype=np.int64)
+    train_y[:20] = 1  # 20 positives
+
+    # Negative class mapping for semantic tree
+    neg_classes = {c: np.where(train_y == 0)[0][:5] for c in range(1, 10)}
+    tree = build_semantic_tree(neg_classes)
+
+    res = train_scenario1(
+        train_features=train_x,
+        train_binary_labels=train_y,
+        positive_indices=np.where(train_y == 1)[0],
+        negative_indices=np.where(train_y == 0)[0],
+        test_features=train_x[:20],
+        test_binary_labels=train_y[:20],
+        strategy="mcts_enhanced",
+        tree=tree,
+        num_steps=15,
+        eval_every=5,
+        seed=42,
+    )
+
+    assert "visitation_checkpoints" in res
+    chks = res["visitation_checkpoints"]
+    assert len(chks) >= 2
+    for chk in chks:
+        assert "step" in chk
+        assert "tree_id" in chk
+        assert "seed" in chk
+        assert "visited_node_ids" in chk
+        assert "visit_counts" in chk
+        assert "superclass_visit_distribution" in chk
+        assert "normalization_method" in chk
+        # Ensure counters are numbers, not loss values
+        assert isinstance(chk["visit_counts"], dict)
+
+
+def test_phase4_manifest_correctly_identifies_produced_and_omitted(tmp_path: Path):
+    manifest_dir = tmp_path / "manifest_test"
+    manifest_dir.mkdir(parents=True, exist_ok=True)
+    art1 = manifest_dir / "art1.pdf"
+    art1.write_text("dummy", encoding="utf-8")
+    src1 = manifest_dir / "src1.json"
+    src1.write_text("{}", encoding="utf-8")
+
+    skipped = {
+        "visitation_heatmap": "Tree visitation matrix was not generated in tier1_axis1.",
+        "sensitivity_plot": "Sensitivity analysis was not performed.",
+    }
+
+    manifest_path = generate_artifact_manifest(
+        output_dir=manifest_dir,
+        artifacts=[art1],
+        source_files=[src1],
+        mode=ExecutionMode.REAL,
+        skipped=skipped,
+    )
+
+    assert manifest_path.exists()
+    content = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert content["status"] == "partial"
+    assert len(content["artifacts"]) == 1
+    assert "skipped_artifacts" in content
+    assert content["skipped_artifacts"]["visitation_heatmap"] == skipped["visitation_heatmap"]
+    assert content["skipped_artifacts"]["sensitivity_plot"] == skipped["sensitivity_plot"]

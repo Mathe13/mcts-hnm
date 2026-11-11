@@ -12,6 +12,7 @@ from typing import Any
 import numpy as np
 import torch
 
+from src.data.cifar100_taxonomy import get_cifar100_taxonomy
 from src.data.splits import (
     IMBALANCE_RATIOS,
     Scenario1Split,
@@ -205,6 +206,7 @@ def run_benchmark(
         )
 
     diagnostics_per_strat: dict[str, Any] = {}
+    visitation_payload: dict[str, Any] | None = None
 
     ratios_to_run: tuple[str | None, ...] = imbalance_ratios if scenario == "scenario1" else (None,)
 
@@ -330,6 +332,29 @@ def run_benchmark(
                         if rho is not None and "imbalance_ratio" not in convergence_history:
                             convergence_history["imbalance_ratio"] = rho
 
+                    if strat == "mcts_enhanced" and tree_type == "semantic" and "visitation_checkpoints" in res and res["visitation_checkpoints"] and visitation_payload is None:
+                        vis_chks = res["visitation_checkpoints"]
+                        tax = get_cifar100_taxonomy()
+                        sc_names = list(tax.coarse_names)
+                        mat = [
+                            [float(chk["superclass_visit_distribution"].get(sc, 0.0)) for chk in vis_chks]
+                            for sc in sc_names
+                        ]
+                        steps_h = [int(chk["step"]) for chk in vis_chks]
+                        visitation_payload = {
+                            "benchmark_name": "tier1_visitation_diagnostics",
+                            "scenario": scenario,
+                            "strategy": strat,
+                            "tree_type": tree_type,
+                            "seed": seed,
+                            "checkpoints": vis_chks,
+                            "heatmap": {
+                                "steps": steps_h,
+                                "superclasses": sc_names,
+                                "matrix": mat,
+                            },
+                        }
+
                     runs.append(
                         BenchmarkRunResult(
                             scenario=scenario,
@@ -435,6 +460,12 @@ def run_benchmark(
         json_export["diagnostics"] = diagnostics_per_strat
     if convergence_history:
         json_export["convergence"] = convergence_history
+    if visitation_payload is not None:
+        json_export["heatmap"] = visitation_payload["heatmap"]
+        json_export["visitation_diagnostics"] = visitation_payload
+        vis_path = out_path / "tier1_visitation_diagnostics.json"
+        _atomic_save_json(visitation_payload, vis_path)
+        save_provenance_metadata(vis_path, active_config)
 
     json_path = out_path / f"{benchmark_name}.json"
     csv_path = out_path / f"{benchmark_name}.csv"

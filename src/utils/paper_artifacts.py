@@ -337,6 +337,8 @@ def load_real_benchmark_results(
 
         if "convergence" in d1:
             merged["convergence"] = d1["convergence"]
+        elif "convergence_history" in d1:
+            merged["convergence"] = d1["convergence_history"]
         if "heatmap" in d1:
             merged["heatmap"] = d1["heatmap"]
 
@@ -352,6 +354,8 @@ def load_real_benchmark_results(
                         raise ValueError(f"Scenario 2 strategy '{strat}' missing required metric '{mk}' in {scen2_file}")
                     if "mean" not in m_dict[mk] or "std" not in m_dict[mk]:
                         raise ValueError(f"Scenario 2 strategy '{strat}' missing summary stats for '{mk}' in {scen2_file}")
+                    if "values" not in m_dict[mk] or not m_dict[mk]["values"]:
+                        m_dict[mk]["values"] = [float(m_dict[mk]["mean"])]
             merged["scenario2"] = d2["scenario2"]
         elif "runs" in d2:
             scen2_norm: dict[str, Any] = {}
@@ -517,6 +521,15 @@ def load_real_benchmark_results(
             }
         else:
             raise ValueError(f"Invalid format in {sensitivity_file}: expected 'sensitivity' or 'grid'")
+
+    visitation_file = res_path / "tier1_visitation_diagnostics.json"
+    if visitation_file.exists():
+        found_any = True
+        _validate_meta(visitation_file)
+        with open(visitation_file, "r", encoding="utf-8") as f:
+            dv = json.load(f)
+        if "heatmap" in dv and isinstance(dv["heatmap"], dict) and "matrix" in dv["heatmap"]:
+            merged["heatmap"] = dv["heatmap"]
 
     if not found_any:
         raise FileNotFoundError(
@@ -1394,6 +1407,7 @@ def generate_artifact_manifest(
     source_files: list[Path | str],
     mode: ExecutionMode | str,
     git_commit: Optional[str] = None,
+    skipped: Optional[dict[str, str]] = None,
 ) -> Path:
     """Generate artifact_manifest.json with SHA-256 hashes and provenance metadata.
 
@@ -1403,6 +1417,7 @@ def generate_artifact_manifest(
         source_files: List of input data file paths.
         mode: ExecutionMode (REAL or SMOKE).
         git_commit: Optional git commit hash.
+        skipped: Optional mapping of skipped artifact names to rationale.
 
     Returns:
         Path to the generated artifact_manifest.json.
@@ -1439,14 +1454,16 @@ def generate_artifact_manifest(
         "timestamp_utc": datetime.now(timezone.utc).isoformat(),
         "execution_mode": mode_str,
         "git_commit": commit_str,
+        "status": "partial" if skipped else "complete",
         "artifacts": art_entries,
         "source_files": src_entries,
+        "skipped_artifacts": skipped or {},
     }
 
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest_data, f, indent=2)
 
-    logger.info("Saved artifact manifest to %s (%d artifacts)", manifest_path, len(art_entries))
+    logger.info("Saved artifact manifest to %s (%d artifacts, %d skipped)", manifest_path, len(art_entries), len(skipped or {}))
     return manifest_path
 
 
@@ -1455,6 +1472,7 @@ def generate_all_paper_artifacts(
     paper_dir: str | Path = "paper",
     metadata_path: str | Path = "paper_metadata.yaml",
     config: Optional[ExperimentConfig] = None,
+    optional_artifacts: tuple[str, ...] = ("visitation_heatmap", "sensitivity_plot"),
 ) -> dict[str, Any]:
     """High-level pipeline: generate all figures and tables into isolated paper directories.
 
@@ -1463,9 +1481,10 @@ def generate_all_paper_artifacts(
         paper_dir: Root paper directory.
         metadata_path: Path to paper_metadata.yaml.
         config: Optional ExperimentConfig for mode-segregated paths and execution rules.
+        optional_artifacts: Tuple of artifact names that may be omitted if input data is absent.
 
     Returns:
-        Dictionary mapping 'figures', 'tables', and 'manifest' to generated file Paths.
+        Dictionary mapping 'figures', 'tables', 'manifest', 'skipped', and 'status' metadata.
     """
     if config is not None:
         mode = config.execution_mode
@@ -1498,41 +1517,91 @@ def generate_all_paper_artifacts(
 
     watermark = "SMOKE TEST — NOT FOR PUBLICATION" if (mode == ExecutionMode.SMOKE or data.get("is_smoke")) else None
 
-    # 1. Figures
-    c_pdf, c_png = generate_convergence_plot(data, output_dir=fig_dir, watermark=watermark)
-    h_pdf, h_png = generate_tree_visitation_heatmap(data, output_dir=fig_dir, watermark=watermark)
-    s_pdf, s_png = generate_hyperparameter_sensitivity_plot(data, output_dir=fig_dir, watermark=watermark)
+    figures: list[Path] = []
+    tables: list[Path] = []
+    skipped: dict[str, str] = {}
 
-    # 2. Tables
+    # 1. Figures: Convergence Plot (Mandatory)
+    c_pdf, c_png = generate_convergence_plot(data, output_dir=fig_dir, watermark=watermark)
+    figures.extend([c_pdf, c_png])
+
+    # 2. Figures: Tree Visitation Heatmap (Optional if data absent)
+    heat = data.get("heatmap")
+    heat_missing = (
+        heat is None
+        or not heat
+        or (isinstance(heat, dict) and "matrix" not in heat and "steps" not in heat)
+    )
+    if heat_missing:
+        if "visitation_heatmap" in optional_artifacts:
+            skipped["visitation_heatmap"] = (
+                "Tree visitation density matrix not found in benchmark results "
+                "(Axis 1 benchmark does not export visitation matrix unless instrumented)."
+            )
+            logger.info("Skipped optional artifact: visitation_heatmap (%s)", skipped["visitation_heatmap"])
+        else:
+            h_pdf, h_png = generate_tree_visitation_heatmap(data, output_dir=fig_dir, watermark=watermark)
+            figures.extend([h_pdf, h_png])
+    else:
+        h_pdf, h_png = generate_tree_visitation_heatmap(data, output_dir=fig_dir, watermark=watermark)
+        figures.extend([h_pdf, h_png])
+
+    # 3. Figures: Hyperparameter Sensitivity Plot (Optional if data absent)
+    sens = data.get("sensitivity")
+    sens_missing = (
+        sens is None
+        or not sens
+        or (isinstance(sens, dict) and "c_values" not in sens and "grid" not in sens)
+    )
+    if sens_missing:
+        if "sensitivity_plot" in optional_artifacts:
+            skipped["sensitivity_plot"] = (
+                "Hyperparameter sensitivity data not found in results directory "
+                "(tier1_hyperparameter_sensitivity.json was not generated)."
+            )
+            logger.info("Skipped optional artifact: sensitivity_plot (%s)", skipped["sensitivity_plot"])
+        else:
+            s_pdf, s_png = generate_hyperparameter_sensitivity_plot(data, output_dir=fig_dir, watermark=watermark)
+            figures.extend([s_pdf, s_png])
+    else:
+        s_pdf, s_png = generate_hyperparameter_sensitivity_plot(data, output_dir=fig_dir, watermark=watermark)
+        figures.extend([s_pdf, s_png])
+
+    # 4. Tables: Scenario 1, Scenario 2, Ablation (Mandatory)
     t_scen1 = generate_scenario1_table(data, output_dir=tab_dir)
     t_scen2 = generate_scenario2_table(data, output_dir=tab_dir)
     t_ablation = generate_ablation_table(data, output_dir=tab_dir)
+    tables.extend([t_scen1, t_scen2, t_ablation])
 
-    all_artifacts = [c_pdf, c_png, h_pdf, h_png, s_pdf, s_png, t_scen1, t_scen2, t_ablation]
+    all_artifacts = list(figures) + list(tables)
 
-    # 3. Provenance Source Files
+    # 5. Provenance Source Files
     source_candidates = [
         res_dir / "tier1_benchmark_summary.json",
         res_dir / "tier1_axis1_samplers.json",
         res_dir / "tier1_scenario2_curriculum.json",
         res_dir / "tier1_axis2_tree_ablation.json",
         res_dir / "tier1_hyperparameter_sensitivity.json",
+        res_dir / "tier1_visitation_diagnostics.json",
         Path(metadata_path),
     ]
     source_files = [p for p in source_candidates if p.exists()]
 
-    # 4. Manifest
+    # 6. Manifest
     manifest_path = generate_artifact_manifest(
         output_dir=manifest_dir,
         artifacts=all_artifacts,
         source_files=source_files,
         mode=mode,
+        skipped=skipped,
     )
 
     return {
-        "figures": [c_pdf, c_png, h_pdf, h_png, s_pdf, s_png],
-        "tables": [t_scen1, t_scen2, t_ablation],
+        "figures": figures,
+        "tables": tables,
         "manifest": manifest_path,
+        "skipped": skipped,
+        "status": "partial" if skipped else "complete",
     }
 
 

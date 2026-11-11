@@ -12,7 +12,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from src.mcts.agent import MCTSHNMAgent, compute_mcts_reward
-from src.mcts.diagnostics import MCTSDiagnosticsTracker, compute_visitation_entropy
+from src.mcts.diagnostics import MCTSDiagnosticsTracker, compute_superclass_visit_distribution, compute_visitation_entropy
 from src.mcts.expansion import maybe_expand_leaf
 from src.mcts.sampler import DualStreamBatchSampler
 from src.models.mlp_head import Tier1MLPHead, create_mlp_optimizer
@@ -286,6 +286,7 @@ def train_scenario1(
         )
 
     history: list[dict[str, float]] = []
+    visitation_snapshots: list[dict[str, Any]] = []
 
     for step in range(1, num_steps + 1):
         model.train()
@@ -356,6 +357,19 @@ def train_scenario1(
                 ent_nats, ent_norm = compute_visitation_entropy(tree)
                 metrics["entropy_nats"] = ent_nats
                 metrics["normalized_entropy"] = ent_norm
+
+                leaf_ids = tree.leaf_node_ids()
+                active_visits = {int(nid): int(tree.visits[nid]) for nid in leaf_ids if tree.visits[nid] > 0}
+                sc_dist = compute_superclass_visit_distribution(tree)
+                visitation_snapshots.append({
+                    "step": int(step),
+                    "tree_id": getattr(tree, "tree_id", "semantic"),
+                    "seed": int(seed),
+                    "visited_node_ids": list(active_visits.keys()),
+                    "visit_counts": active_visits,
+                    "superclass_visit_distribution": sc_dist,
+                    "normalization_method": "ucb1_minmax" if getattr(tree, "normalize_q", True) else "standard_ucb1",
+                })
             history.append(metrics)
 
     final_eval = history[-1] if history else evaluate_scenario1_metrics(model, test_features, test_binary_labels, device=dev)
@@ -366,6 +380,7 @@ def train_scenario1(
         "model": model,
         "diagnostics": diagnostics_tracker.summary() if diagnostics_tracker is not None else None,
         "final_num_leaves": tree.num_leaves if tree is not None else None,
+        "visitation_checkpoints": visitation_snapshots,
     }
 
 
@@ -458,6 +473,7 @@ def train_scenario2(
         )
 
     history: list[dict[str, float]] = []
+    visitation_snapshots: list[dict[str, Any]] = []
 
     for step in range(1, num_steps + 1):
         model.train()
@@ -528,6 +544,19 @@ def train_scenario2(
                 ent_nats, ent_norm = compute_visitation_entropy(tree)
                 metrics["entropy_nats"] = ent_nats
                 metrics["normalized_entropy"] = ent_norm
+
+                leaf_ids = tree.leaf_node_ids()
+                active_visits = {int(nid): int(tree.visits[nid]) for nid in leaf_ids if tree.visits[nid] > 0}
+                sc_dist = compute_superclass_visit_distribution(tree)
+                visitation_snapshots.append({
+                    "step": int(step),
+                    "tree_id": getattr(tree, "tree_id", "semantic"),
+                    "seed": int(seed),
+                    "visited_node_ids": list(active_visits.keys()),
+                    "visit_counts": active_visits,
+                    "superclass_visit_distribution": sc_dist,
+                    "normalization_method": "ucb1_minmax" if getattr(tree, "normalize_q", True) else "standard_ucb1",
+                })
             history.append(metrics)
 
     final_eval = history[-1] if history else evaluate_scenario2_metrics(model, test_features, test_labels, num_classes=num_classes, device=dev)
@@ -538,4 +567,5 @@ def train_scenario2(
         "model": model,
         "diagnostics": diagnostics_tracker.summary() if diagnostics_tracker is not None else None,
         "final_num_leaves": tree.num_leaves if tree is not None else None,
+        "visitation_checkpoints": visitation_snapshots,
     }
