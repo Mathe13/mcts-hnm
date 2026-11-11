@@ -9,7 +9,8 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/19-fase-c-ablacoes-de-mecanismo/design.md`  
-**Status**: Pending Approval  
+**Status**: In Progress  
+**Approved**: 2026-11-11 - user: "prossiga"  
 **Build**: `.venv/bin/python -m compileall -q src tests`  
 **Run unit**: `.venv/bin/pytest -v tests/test_phase_c_ablations.py tests/test_phase_c_selectors.py tests/test_phase_c_hierarchies.py tests/test_phase_c_gate.py`  
 
@@ -101,11 +102,11 @@ T7
 
 **Done when**:
 
-- [ ] `compute_batch_diversity()` returns `unique_classes` and `batch_entropy` for arbitrary label arrays
-- [ ] Returns 0.0 entropy when batch has 1 class or is empty
-- [ ] Integrates diversity tracking into `ExposureTracker.record_batch()`
-- [ ] Unit tests in `tests/test_phase_c_ablations.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_c_ablations.py`  
+- [x] `compute_batch_diversity()` returns `unique_classes` and `batch_entropy` for arbitrary label arrays
+- [x] Returns 0.0 entropy when batch has 1 class or is empty
+- [x] Integrates diversity tracking into `ExposureTracker.record_batch()`
+- [x] Unit tests in `tests/test_phase_c_ablations.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_c_ablations.py`  
 
 **Tests**: unit  
 **Gate**: quick  

@@ -8,6 +8,8 @@ from typing import Any
 import numpy as np
 import torch
 
+from src.training.batch_diversity import compute_batch_diversity
+
 
 @dataclass
 class ExposureTracker:
@@ -30,6 +32,8 @@ class ExposureTracker:
     unique_instances_selected: set[int] = field(default_factory=set)
     class_exposure_counts: np.ndarray = field(default=None)  # type: ignore[assignment]
     leaf_selection_counts: dict[int, int] = field(default_factory=dict)
+    batch_entropies: list[float] = field(default_factory=list)
+    batch_unique_classes: list[float] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if self.class_exposure_counts is None:
@@ -48,6 +52,10 @@ class ExposureTracker:
 
         if c_arr.size == 0:
             return
+
+        div = compute_batch_diversity(c_arr, num_classes=self.num_classes)
+        self.batch_entropies.append(div["batch_entropy"])
+        self.batch_unique_classes.append(div["unique_classes"])
 
         self.total_instances_selected += int(c_arr.size)
 
@@ -101,6 +109,16 @@ class ExposureTracker:
                 worst_k = recalls[: min(10, len(recalls))]
                 worst10_recall = float(np.mean(worst_k))
 
+        cumulative_coverage = (
+            float(np.sum(self.class_exposure_counts > 0)) / float(max(1, self.num_classes))
+        )
+        mean_batch_entropy = (
+            float(np.mean(self.batch_entropies)) if self.batch_entropies else 0.0
+        )
+        mean_unique_classes = (
+            float(np.mean(self.batch_unique_classes)) if self.batch_unique_classes else 0.0
+        )
+
         return {
             "total_node_visits": self.total_node_visits,
             "total_leaf_selections": self.total_leaf_selections,
@@ -110,4 +128,7 @@ class ExposureTracker:
             "unexposed_classes_count": unexposed_count,
             "normalized_exposure_entropy": norm_entropy,
             "worst10_class_recall": worst10_recall,
+            "mean_batch_entropy": mean_batch_entropy,
+            "mean_unique_classes_per_batch": mean_unique_classes,
+            "cumulative_class_coverage": cumulative_coverage,
         }
