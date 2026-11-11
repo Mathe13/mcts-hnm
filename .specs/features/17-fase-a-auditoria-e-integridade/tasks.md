@@ -357,7 +357,7 @@ Proof: run unit | tests/test_phase_a_gate.py::test_verify_gate_a_passes PASSED
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none
-**Dispatched:** none
+**Dispatched:** independent verifier sub-agent 33616c32-93f8-46dc-a45f-7dfd6ec37b41
 **Walked:** none
 
 ---

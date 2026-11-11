@@ -165,12 +165,18 @@
 ## Handoff
 
 - **Feature**: `17-fase-a-auditoria-e-integridade` (`.specs/features/17-fase-a-auditoria-e-integridade/`)
-- **Phase / Task**: Tasks Phase completed, awaiting user approval of `tasks.md` to begin execution.
+- **Status**: COMPLETED and VERIFIED (Gate A passed)
 - **Completed**:
-  - Specified requirements in `spec.md` (validated with 0 errors, 0 warnings).
-  - Designed architecture and components in `design.md`.
-  - Structured 9 atomic tasks across 7 phases in `tasks.md` with 16 verifiable checks (validated with 0 errors, 0 warnings).
-- **In-progress**: Awaiting user approval of `tasks.md`.
-- **Next step**: Execute Task T1 upon user approval.
-- **Blockers**: None
+  - T1: Created `docs/experimental_audit.md` cataloging layouts, embedding hashes, and immutability invariants.
+  - T2: Implemented `generate_run_manifest()` and `assert_path_mutable()` protecting `results/legacy/`.
+  - T3: Implemented `StratifiedImbalancedSplit` and nested imbalanced splits (1:50, 1:100, 1:500) with 80 fixed positives.
+  - T4: Segregated data in `train_scenario1()` and `train_scenario2()`, eliminating test data leakage.
+  - T5: Enforced test data rejection in `estimate_validation_confusion_matrix()`.
+  - T6: Implemented `ResolvedTrainingConfig` unifying hyperparameter governance across runners.
+  - T7: Implemented atomic `run_id` serialization with sidecar manifests and strict key pairing in paired tests.
+  - T8: Implemented Euclidean row-normalized confusion profiling for Ward clustering and Average Linkage with Schoenberg validation.
+  - T9: Implemented `verify_gate_a()` in `src/utils/gate_a_verifier.py` with end-to-end integration test.
+  - Verification: Independent Verifier validated 16/16 criteria (Verdict: PASS) and `validate_verification.py` passed with 0 errors and 0 warnings.
+- **Next step**: Proceed to Fase B (Design Experimental e Plano de Execução dos Benchmarks) per `roadmap_mcts_hnm_proxima_run_v2.md`.
+- **Blockers**: None (Gate A fully cleared)
 - **Branch**: `main`
