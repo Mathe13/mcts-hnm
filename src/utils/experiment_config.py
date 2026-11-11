@@ -327,12 +327,90 @@ def get_git_commit(repo_root: Optional[Path] = None) -> str:
         return "uncommitted"
 
 
+def assert_path_mutable(path: Union[str, Path]) -> Path:
+    """Verify that a path target does not fall inside immutable historical directories like results/legacy."""
+    p = Path(path).resolve()
+    repo = find_repo_root()
+    legacy_dir = (repo / "results" / "legacy").resolve()
+    if p == legacy_dir or legacy_dir in p.parents or any(
+        p.parts[i] == "results" and p.parts[i + 1] == "legacy" for i in range(len(p.parts) - 1)
+    ):
+        raise PermissionError(
+            f"Historical artifacts in 'results/legacy' are strictly immutable; attempted to access/mutate: '{path}'."
+        )
+    return p
+
+
+def generate_run_manifest(
+    run_id: str,
+    config: Union[ExperimentConfig, Dict[str, Any]],
+    seed: Optional[int] = None,
+    paths: Optional[IsolatedPaths] = None,
+    extra: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Generate a comprehensive provenance manifest dictionary for a single experiment run."""
+    import platform
+    import sys
+
+    root = find_repo_root()
+
+    # Hardware info
+    hardware_info: Dict[str, Any] = {
+        "platform": platform.platform(),
+        "processor": platform.processor(),
+        "python_version": sys.version,
+        "cpu_count": os.cpu_count(),
+    }
+    try:
+        import torch
+        hardware_info["cuda_available"] = torch.cuda.is_available()
+        if torch.cuda.is_available():
+            hardware_info["device_name"] = torch.cuda.get_device_name(0)
+            hardware_info["device_count"] = torch.cuda.device_count()
+    except ImportError:
+        pass
+
+    # Dependency versions
+    deps: Dict[str, str] = {}
+    for pkg in ("torch", "numpy", "scipy", "sklearn"):
+        try:
+            mod = __import__(pkg)
+            deps[pkg] = getattr(mod, "__version__", "unknown")
+        except ImportError:
+            deps[pkg] = "not_installed"
+
+    # Resolved configuration
+    if isinstance(config, ExperimentConfig):
+        cfg_dict: Dict[str, Any] = asdict(config)
+        cfg_dict["execution_mode"] = config.execution_mode.value
+    elif isinstance(config, dict):
+        cfg_dict = dict(config)
+    else:
+        cfg_dict = {"config_repr": repr(config)}
+
+    manifest: Dict[str, Any] = {
+        "run_id": run_id,
+        "git_commit": get_git_commit(root),
+        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "hardware": hardware_info,
+        "dependencies": deps,
+        "resolved_config": cfg_dict,
+        "seed": seed if seed is not None else cfg_dict.get("seed"),
+    }
+
+    if extra:
+        manifest.update(extra)
+
+    return manifest
+
+
 def save_provenance_metadata(
     target_file_or_dir: Union[str, Path],
     config: ExperimentConfig,
     extra: Optional[Dict[str, Any]] = None,
 ) -> Path:
     """Persist JSON provenance sidecar metadata for a generated artifact."""
+    assert_path_mutable(target_file_or_dir)
     target_path = Path(target_file_or_dir).resolve()
     if target_path.is_dir():
         meta_path = target_path / "metadata.json"

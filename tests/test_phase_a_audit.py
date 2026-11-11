@@ -21,3 +21,46 @@ def test_audit_documentation_present_and_complete():
     ]
     for section in required_sections:
         assert section.lower() in content.lower(), f"Missing required section '{section}' in audit doc."
+
+
+def test_generate_run_manifest():
+    """Verify that generate_run_manifest produces all required provenance metadata."""
+    from src.utils.experiment_config import ExecutionMode, ExperimentConfig, generate_run_manifest
+
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.REAL, seed=42)
+    manifest = generate_run_manifest(
+        run_id="scen1_cls0_r50_semantic_mcts_enhanced_s42_test1234",
+        config=cfg,
+        seed=42,
+    )
+
+    assert manifest["run_id"] == "scen1_cls0_r50_semantic_mcts_enhanced_s42_test1234"
+    assert "git_commit" in manifest and len(manifest["git_commit"]) > 0
+    assert "timestamp_utc" in manifest
+    assert "hardware" in manifest
+    assert "platform" in manifest["hardware"]
+    assert "dependencies" in manifest
+    assert "torch" in manifest["dependencies"]
+    assert "numpy" in manifest["dependencies"]
+    assert "resolved_config" in manifest
+    assert manifest["resolved_config"]["execution_mode"] == "real"
+
+
+def test_legacy_immutability():
+    """Verify that write operations targeting results/legacy raise PermissionError."""
+    import pytest
+    from src.utils.experiment_config import (
+        ExecutionMode,
+        ExperimentConfig,
+        assert_path_mutable,
+        save_provenance_metadata,
+    )
+
+    legacy_path = Path("results/legacy/test_artifact.json")
+    with pytest.raises(PermissionError, match="immutable"):
+        assert_path_mutable(legacy_path)
+
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.REAL)
+    with pytest.raises(PermissionError, match="immutable"):
+        save_provenance_metadata(legacy_path, cfg)
+

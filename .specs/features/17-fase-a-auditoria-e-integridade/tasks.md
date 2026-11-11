@@ -138,14 +138,14 @@ T9
 
 **Done when**:
 
-- [ ] `generate_run_manifest()` produces dictionary with commit, timestamp, hardware, dependencies, and split/embedding hashes
-- [ ] Attempts to overwrite files in `results/legacy/` raise `PermissionError`
-- [ ] Unit tests in `tests/test_phase_a_audit.py::test_generate_run_manifest` and `test_legacy_immutability` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_a_audit.py`
+- [x] `generate_run_manifest()` produces dictionary with commit, timestamp, hardware, dependencies, and split/embedding hashes
+- [x] Attempts to overwrite files in `results/legacy/` raise `PermissionError`
+- [x] Unit tests in `tests/test_phase_a_audit.py::test_generate_run_manifest` and `test_legacy_immutability` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_a_audit.py`
 
 **Tests**: unit
 **Gate**: quick
-**Commit**: `feat(config): implement run manifest generation and historical immutability`
+**Commit**: `feat(config): implement run manifest generator and legacy immutability`
 
 ---
 
