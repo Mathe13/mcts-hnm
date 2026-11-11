@@ -225,15 +225,15 @@ T9
 
 **Done when**:
 
-- [ ] `ResolvedTrainingConfig` encapsulates and validates all training hyperparameters
-- [ ] `run_benchmark` and `run_sensitivity_ablation` share config resolution and propagate identical parameters
-- [ ] Deterministic equivalence test confirms matching loss/metrics on identical configs
-- [ ] Unit tests in `tests/test_phase_a_runner_equivalence.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_a_runner_equivalence.py`
+- [x] `ResolvedTrainingConfig` encapsulates and validates all training hyperparameters
+- [x] `run_benchmark` and `run_sensitivity_ablation` share config resolution and propagate identical parameters
+- [x] Deterministic equivalence test confirms matching loss/metrics on identical configs
+- [x] Unit tests in `tests/test_phase_a_runner_equivalence.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_a_runner_equivalence.py`
 
 **Tests**: unit
 **Gate**: quick
-**Commit**: `feat(training): implement unified resolved training config and runner governance`
+**Commit**: `feat(training): implement unified resolved training config`
 
 ---
 
