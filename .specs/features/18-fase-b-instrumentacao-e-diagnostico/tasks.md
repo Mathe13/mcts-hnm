@@ -146,12 +146,12 @@ T6 → T7
 
 **Done when**:
 
-- [ ] `get_mcts_policy_diagnostics()` extracts per-node reward, Q, U, UCB, and visit metrics
-- [ ] Traversal guarantees $U > 0$ for unvisited/low-visit siblings when parent visits $> 0$ and $c_{\text{puct}} > 0$
-- [ ] Traversal on synthetic 3-class tree visits all leaves without premature starvation
-- [ ] Backpropagation updates visits and Q-values along full path to root
-- [ ] Unit tests in `tests/test_phase_b_mcts_diagnostics.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_b_mcts_diagnostics.py`  
+- [x] `get_mcts_policy_diagnostics()` extracts per-node reward, Q, U, UCB, and visit metrics
+- [x] Traversal guarantees $U > 0$ for unvisited/low-visit siblings when parent visits $> 0$ and $c_{\text{puct}} > 0$
+- [x] Traversal on synthetic 3-class tree visits all leaves without premature starvation
+- [x] Backpropagation updates visits and Q-values along full path to root
+- [x] Unit tests in `tests/test_phase_b_mcts_diagnostics.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_b_mcts_diagnostics.py`  
 
 **Tests**: unit  
 **Gate**: quick  

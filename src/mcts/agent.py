@@ -200,6 +200,7 @@ class MCTSHNMAgent:
             raise ValueError(f"q_norm must be a bool, got {q_norm!r}.")
         self.q_norm = q_norm
         self.eps = _validate_positive_float(eps, "eps", allow_zero=False)
+        self.last_raw_rewards: dict[int, float] = {}
 
     def select_child(self, node_id: int) -> tuple[int, np.ndarray]:
         """Select a child of internal node `node_id` using UCB1 with unvisited-child priority.
@@ -279,6 +280,7 @@ class MCTSHNMAgent:
             raise ValueError(f"reward must be finite (no NaN or Inf), got {r_val}.")
 
         self.tree.visits[lid] += 1
+        self.last_raw_rewards[lid] = r_val
         prev_q = float(self.tree.q_values[lid])
         new_leaf_q = self.momentum_alpha * r_val + (1.0 - self.momentum_alpha) * prev_q
         self.tree.q_values[lid] = new_leaf_q
@@ -295,6 +297,70 @@ class MCTSHNMAgent:
 
         return new_leaf_q
 
+    def get_policy_diagnostics(self) -> dict[str, Any]:
+        """Extract snapshot of Q-values, visit counts, exploration terms, and UCB scores."""
+        return get_mcts_policy_diagnostics(self.tree, agent=self)
+
     def reset(self) -> None:
         """Reset all MCTS visit counts (`0`) and action-values (`0.0`) on the underlying tree."""
+        self.last_raw_rewards.clear()
         self.tree.reset_mcts_state()
+
+
+def get_mcts_policy_diagnostics(
+    tree: FastHierarchyTree,
+    agent: MCTSHNMAgent | None = None,
+) -> dict[str, Any]:
+    r"""Extract diagnostic snapshot of per-node search statistics from `tree`.
+
+    Returns dictionary containing:
+    - `q_values`: 1D array of estimated action-values $Q$ per node
+    - `visits`: 1D array of visit counts $N$ per node
+    - `exploration_terms`: 1D array of $U_i$ terms
+    - `ucb_scores`: 1D array of composite $Q_i + U_i$ scores
+    - `raw_rewards`: mapping or array of last raw rewards
+    - `smoothed_rewards`: 1D array of current $Q$-values (momentum smoothed)
+    """
+    total_nodes = tree.num_nodes
+    c_val = agent.exploration_c if agent is not None else 2.0
+    q_norm = agent.q_norm if agent is not None else True
+    eps = agent.eps if agent is not None else 1e-5
+
+    q_vals = tree.q_values.copy()
+    visits = tree.visits.copy()
+    u_terms = np.zeros(total_nodes, dtype=np.float64)
+    ucb_scores = np.zeros(total_nodes, dtype=np.float64)
+
+    # For each internal node, compute sibling UCB scores and exploration terms
+    for nid in range(total_nodes):
+        if not bool(tree.is_leaf[nid]):
+            child_ids = tree.get_children(nid)
+            q_children = q_vals[child_ids]
+            n_children = visits[child_ids]
+            parent_visits = int(visits[nid])
+
+            scores = compute_ucb1_scores(
+                q_values=q_children,
+                child_visits=n_children,
+                parent_visits=parent_visits,
+                exploration_c=c_val,
+                q_norm=q_norm,
+                eps=eps,
+            )
+            log_p = np.log(max(parent_visits, 1))
+            exploration = c_val * np.sqrt(log_p / (n_children.astype(np.float64) + eps))
+
+            for idx, cid in enumerate(child_ids):
+                u_terms[cid] = float(exploration[idx])
+                ucb_scores[cid] = float(scores[idx])
+
+    raw_rewards = agent.last_raw_rewards.copy() if agent is not None else {}
+
+    return {
+        "q_values": q_vals,
+        "visits": visits,
+        "exploration_terms": u_terms,
+        "ucb_scores": ucb_scores,
+        "raw_rewards": raw_rewards,
+        "smoothed_rewards": q_vals.copy(),
+    }
