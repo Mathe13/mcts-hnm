@@ -170,19 +170,27 @@
 - **Date**: 2026-11-11
 - **Status**: active (AD-021)
 
+### AD-022
+- **Decision**: Implement mechanistic ablation infrastructure under Phase C of `roadmap_mcts_hnm_proxima_run_v2.md`: (1) `UniformGroupedBatchSampler` with minibatch label diversity telemetry ($N_{\text{unique}}$, $H_{\text{batch}}$) and cumulative coverage $C_{\text{cov}}$ to isolate batch homogeneity from MCTS policy effects; (2) orthogonal $2 \times 2$ factorial grid (`mcts_strict`, `mcts_qnorm_only`, `mcts_dualstream_only`, `mcts_enhanced`) holding initial weights, LR, momentum $\alpha$, $c$, and step budget strictly invariant; (3) simple active selection controls (`GreedyLossEMASelector` without exploration and `FlatUCBSelector` without tree hierarchy); (4) tree topological metrics (`compute_tree_structural_metrics`) and balanced 20-superclass `build_random_tree` null baseline matching CIFAR-100 semantic geometry; and (5) automated Gate C verifier (`verify_gate_c`) auditing strict parameter invariance and causal classification of performance degradation drivers.
+- **Reason**: Fulfills items C1, C2, C3, C5, and Gate C of the roadmap, eliminating confounding factors and enabling definitive scientific attribution of MCTS gains, neutrality, or losses.
+- **Trade-off**: Expands strategy registry in `trainer.py` with 5 new strategies while keeping sampling components strictly modular.
+- **Scope**: `src/mcts/`, `src/training/`, `src/trees/`, `src/utils/`, `tests/`
+- **Date**: 2026-11-11
+- **Status**: active (AD-022)
+
 ## Handoff
 
-- **Feature**: `18-fase-b-instrumentacao-e-diagnostico` (`.specs/features/18-fase-b-instrumentacao-e-diagnostico/`)
-- **Status**: Complete & Verified (Gate B PASS, Verification PASS)
+- **Feature**: `19-fase-c-ablacoes-de-mecanismo` (`.specs/features/19-fase-c-ablacoes-de-mecanismo/`)
+- **Status**: Complete & Verified (Gate C PASS, Verification PASS)
 - **Completed**:
   - Specified requirements in `spec.md` with explicit user approval (validated with 0 errors, 0 warnings).
   - Designed architecture and components in `design.md`.
-  - Structured 7 atomic tasks across 5 phases in `tasks.md` with 15 verifiable checks.
-  - Executed T1–T7 with atomic commits (`7a7b6a1` through `5ac79e2`).
-  - Ran `check_proofs.py` (16/16 passed).
+  - Structured 7 atomic tasks across 5 phases in `tasks.md` with 19 verifiable checks.
+  - Executed T1–T7 with atomic commits (`6a0d574` through `ca4aeb4`).
+  - Ran `check_proofs.py` (20/20 passed at `ca4aeb4`).
   - Independent Verifier sub-agent audit passed with Verdict: PASS.
-  - Recorded Decision AD-021.
-- **In-progress**: Scaffolding Feature 19 (`19-fase-c-ablacoes-de-mecanismo`).
-- **Next step**: Draft `spec.md` for Feature 19 (Fase C: Ablações de mecanismo com variantes imutáveis).
+  - Recorded Decision AD-022.
+- **In-progress**: Completed Fase C (Gate C). Ready to proceed to Fase D (Campanha Científica Final e Artefatos).
+- **Next step**: Present Gate C completion and scaffold Feature 20 (`20-fase-d-campanha-cientifica-e-artefatos`).
 - **Blockers**: None
 - **Branch**: `main`

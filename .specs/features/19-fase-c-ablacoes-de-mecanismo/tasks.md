@@ -315,8 +315,8 @@ Proof: run unit | tests/test_phase_c_gate.py::test_verify_gate_c_passes_valid_ab
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none  
-**Dispatched:** none  
-**Walked:** none  
+**Dispatched:** independent verifier sub-agent 57bd5593-57ec-4701-9b1a-6e0e088e3a4c  
+**Walked:** verified all T1-T7 tasks and proofs passed (20/20)  
 
 ---
 
@@ -342,4 +342,4 @@ T1 → T2 → T3 → T4 → T5 → T6 → T7
 | T4 | `src/training/selectors.py` | complete | `c050f96` |
 | T5 | `src/trees/hierarchy_metrics.py` | complete | `ecffb78` |
 | T6 | `src/trees/random_tree.py` | complete | `d465f0a` |
-| T7 | `src/utils/gate_c_verifier.py` | complete | pending |
+| T7 | `src/utils/gate_c_verifier.py` | complete | `ca4aeb4` |
