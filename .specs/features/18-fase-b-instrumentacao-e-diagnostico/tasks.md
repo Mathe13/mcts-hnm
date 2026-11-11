@@ -169,11 +169,11 @@ T6 → T7
 
 **Done when**:
 
-- [ ] `CheckpointManager.save_checkpoint()` saves `last.pt` and `best_validation.pt`
-- [ ] Checkpoint dictionary stores model state dict, optimizer state dict, tree state, step, metrics, and RNG states
-- [ ] `CheckpointManager.load_checkpoint()` restores state accurately and deterministically resumes training
-- [ ] Unit tests in `tests/test_phase_b_checkpoints.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_b_checkpoints.py`  
+- [x] `CheckpointManager.save_checkpoint()` saves `last.pt` and `best_validation.pt`
+- [x] Checkpoint dictionary stores model state dict, optimizer state dict, tree state, step, metrics, and RNG states
+- [x] `CheckpointManager.load_checkpoint()` restores state accurately and deterministically resumes training
+- [x] Unit tests in `tests/test_phase_b_checkpoints.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_b_checkpoints.py`  
 
 **Tests**: unit  
 **Gate**: quick  
