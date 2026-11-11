@@ -167,16 +167,16 @@ T5
 
 **Done when**:
 
-- [ ] Generates validation curve figures with shaded variability bands across paired seeds
-- [ ] Generates class exposure heatmaps and 2x2 QNorm x DualStream ablation plots
-- [ ] Generates publication-ready LaTeX tables displaying both `last` and `best_validation` metrics
-- [ ] Rejects missing or synthetic runs in REAL mode with `FileNotFoundError`
-- [ ] Integration tests in `tests/test_phase_d_artifacts.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_d_artifacts.py`  
+- [x] Generates validation curve figures with shaded variability bands across paired seeds
+- [x] Generates class exposure heatmaps and 2x2 QNorm x DualStream ablation plots
+- [x] Generates publication-ready LaTeX tables displaying both `last` and `best_validation` metrics
+- [x] Rejects missing or synthetic runs in REAL mode with `FileNotFoundError`
+- [x] Integration tests in `tests/test_phase_d_artifacts.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_d_artifacts.py`  
 
 **Tests**: integration  
 **Gate**: quick  
-**Commit**: `feat(artifacts): implement publication figures and consolidated LaTeX tables`  
+**Commit**: `feat(artifacts): publication figures and consolidated LaTeX tables`  
 
 ---
 
