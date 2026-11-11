@@ -173,12 +173,16 @@
 ## Handoff
 
 - **Feature**: `18-fase-b-instrumentacao-e-diagnostico` (`.specs/features/18-fase-b-instrumentacao-e-diagnostico/`)
-- **Status**: Tasks Phase completed, awaiting user approval of `tasks.md` to begin execution.
+- **Status**: Complete & Verified (Gate B PASS, Verification PASS)
 - **Completed**:
   - Specified requirements in `spec.md` with explicit user approval (validated with 0 errors, 0 warnings).
   - Designed architecture and components in `design.md`.
-  - Structured 7 atomic tasks across 5 phases in `tasks.md` with 15 verifiable checks (validated with 0 errors, 0 warnings).
-- **In-progress**: Awaiting user approval of `tasks.md`.
-- **Next step**: Execute Task T1 upon user approval.
+  - Structured 7 atomic tasks across 5 phases in `tasks.md` with 15 verifiable checks.
+  - Executed T1–T7 with atomic commits (`7a7b6a1` through `5ac79e2`).
+  - Ran `check_proofs.py` (16/16 passed).
+  - Independent Verifier sub-agent audit passed with Verdict: PASS.
+  - Recorded Decision AD-021.
+- **In-progress**: Scaffolding Feature 19 (`19-fase-c-ablacoes-de-mecanismo`).
+- **Next step**: Draft `spec.md` for Feature 19 (Fase C: Ablações de mecanismo com variantes imutáveis).
 - **Blockers**: None
 - **Branch**: `main`
