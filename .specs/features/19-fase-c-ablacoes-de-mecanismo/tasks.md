@@ -193,11 +193,11 @@ T7
 
 **Done when**:
 
-- [ ] `compute_tree_structural_metrics()` returns complete structural dictionary for any `FastHierarchyTree`
-- [ ] Correctly computes maximum depth, mean leaf depth, total nodes, and branching factor
-- [ ] Validates input is a valid `FastHierarchyTree` instance
-- [ ] Unit tests in `tests/test_phase_c_hierarchies.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_c_hierarchies.py`  
+- [x] `compute_tree_structural_metrics()` returns complete structural dictionary for any `FastHierarchyTree`
+- [x] Correctly computes maximum depth, mean leaf depth, total nodes, and branching factor
+- [x] Validates input is a valid `FastHierarchyTree` instance
+- [x] Unit tests in `tests/test_phase_c_hierarchies.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_c_hierarchies.py`  
 
 **Tests**: unit  
 **Gate**: quick  
