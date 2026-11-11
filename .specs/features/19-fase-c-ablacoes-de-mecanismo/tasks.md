@@ -170,12 +170,12 @@ T7
 
 **Done when**:
 
-- [ ] `GreedyLossEMASelector` updates loss EMAs and greedily selects the class with highest loss
-- [ ] `FlatUCBSelector` assigns infinite priority to unvisited classes and applies UCB1 over flat classes
-- [ ] Both selectors update statistics dynamically from minibatch loss
-- [ ] Strategies `"greedy_loss_ema"` and `"flat_ucb"` train downstream models in Scenario 2
-- [ ] Unit tests in `tests/test_phase_c_selectors.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_c_selectors.py`  
+- [x] `GreedyLossEMASelector` updates loss EMAs and greedily selects the class with highest loss
+- [x] `FlatUCBSelector` assigns infinite priority to unvisited classes and applies UCB1 over flat classes
+- [x] Both selectors update statistics dynamically from minibatch loss
+- [x] Strategies `"greedy_loss_ema"` and `"flat_ucb"` train downstream models in Scenario 2
+- [x] Unit tests in `tests/test_phase_c_selectors.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_c_selectors.py`  
 
 **Tests**: unit  
 **Gate**: quick  

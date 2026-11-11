@@ -19,6 +19,7 @@ from src.mcts.sampler import DualStreamBatchSampler, UniformGroupedBatchSampler
 from src.models.mlp_head import Tier1MLPHead, create_mlp_optimizer
 from src.training.baselines import OHEMSampler, UniformSampler
 from src.training.exposure import ExposureTracker
+from src.training.selectors import FlatUCBSelector, GreedyLossEMASelector
 from src.trees.base_tree import FastHierarchyTree
 from src.utils.seed import set_global_seed
 
@@ -39,6 +40,8 @@ SUPPORTED_STRATEGIES = (
     "mcts_qnorm_only",
     "mcts_dualstream_only",
     "mcts_enhanced",
+    "greedy_loss_ema",
+    "flat_ucb",
 )
 
 
@@ -297,6 +300,8 @@ def train_scenario1(
     uni_sampler: UniformSampler | None = None
     ohem_sampler: OHEMSampler | None = None
     uniform_grouped_sampler: UniformGroupedBatchSampler | None = None
+    greedy_selector: GreedyLossEMASelector | None = None
+    flat_ucb_selector: FlatUCBSelector | None = None
 
     if strategy in MCTS_STRATEGIES:
         if tree is None:
@@ -535,6 +540,8 @@ def train_scenario2(
     uni_sampler: UniformSampler | None = None
     ohem_sampler: OHEMSampler | None = None
     uniform_grouped_sampler: UniformGroupedBatchSampler | None = None
+    greedy_selector: GreedyLossEMASelector | None = None
+    flat_ucb_selector: FlatUCBSelector | None = None
 
     if strategy in MCTS_STRATEGIES:
         if tree is None:
@@ -581,6 +588,34 @@ def train_scenario2(
             dual_stream_ratio=dual_stream_ratio,
             seed=seed,
         )
+    elif strategy == "greedy_loss_ema":
+        c2i = (
+            tree.class_to_indices
+            if tree is not None
+            else {c: np.where(train_lbl_arr == c)[0] for c in range(num_classes)}
+        )
+        greedy_selector = GreedyLossEMASelector(
+            class_to_indices=c2i,
+            num_classes=num_classes,
+            batch_size=batch_size,
+            dual_stream_ratio=dual_stream_ratio,
+            alpha=momentum_alpha,
+            seed=seed,
+        )
+    elif strategy == "flat_ucb":
+        c2i = (
+            tree.class_to_indices
+            if tree is not None
+            else {c: np.where(train_lbl_arr == c)[0] for c in range(num_classes)}
+        )
+        flat_ucb_selector = FlatUCBSelector(
+            class_to_indices=c2i,
+            num_classes=num_classes,
+            batch_size=batch_size,
+            dual_stream_ratio=dual_stream_ratio,
+            exploration_c=exploration_c,
+            seed=seed,
+        )
 
     history: list[dict[str, float]] = []
     visitation_snapshots: list[dict[str, Any]] = []
@@ -621,6 +656,16 @@ def train_scenario2(
             batch = uniform_grouped_sampler.sample_batch()
             step_indices = batch.all_indices
             leaf_cls_id = batch.leaf_class_id
+        elif strategy == "greedy_loss_ema":
+            assert greedy_selector is not None
+            batch = greedy_selector.sample_batch()
+            step_indices = batch.all_indices
+            leaf_cls_id = batch.leaf_class_id
+        elif strategy == "flat_ucb":
+            assert flat_ucb_selector is not None
+            batch = flat_ucb_selector.sample_batch()
+            step_indices = batch.all_indices
+            leaf_cls_id = batch.leaf_class_id
 
         batch_x = train_features[step_indices].to(dev)
         batch_y = torch.as_tensor(train_lbl_arr[step_indices], dtype=torch.long, device=dev)
@@ -658,6 +703,12 @@ def train_scenario2(
                     k_sub=k_sub,
                     device=dev,
                 )
+        elif strategy == "greedy_loss_ema" and leaf_cls_id is not None:
+            assert greedy_selector is not None
+            greedy_selector.update(leaf_cls_id, float(loss.item()))
+        elif strategy == "flat_ucb" and leaf_cls_id is not None:
+            assert flat_ucb_selector is not None
+            flat_ucb_selector.update(leaf_cls_id, float(loss.item()))
 
         if step % eval_every == 0 or step == num_steps:
             metrics = evaluate_scenario2_metrics(
