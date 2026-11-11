@@ -24,13 +24,44 @@ from src.utils.seed import set_global_seed
 
 logger = logging.getLogger(__name__)
 
+MCTS_STRATEGIES = (
+    "mcts_strict",
+    "mcts_qnorm_only",
+    "mcts_dualstream_only",
+    "mcts_enhanced",
+)
+
 SUPPORTED_STRATEGIES = (
     "uniform",
     "uniform_grouped",
     "ohem",
     "mcts_strict",
+    "mcts_qnorm_only",
+    "mcts_dualstream_only",
     "mcts_enhanced",
 )
+
+
+def resolve_mcts_hyperparameters(
+    strategy: str,
+    dual_stream_ratio: float = 0.5,
+) -> tuple[bool, float]:
+    """Resolve (q_norm, beta) for MCTS factorial variants.
+
+    - mcts_strict: q_norm=False, beta=0.0
+    - mcts_qnorm_only: q_norm=True, beta=0.0
+    - mcts_dualstream_only: q_norm=False, beta=0.5
+    - mcts_enhanced: q_norm=True, beta=0.5
+    """
+    if strategy == "mcts_strict":
+        return False, 0.0
+    elif strategy == "mcts_qnorm_only":
+        return True, 0.0
+    elif strategy == "mcts_dualstream_only":
+        return False, dual_stream_ratio if dual_stream_ratio > 0.0 else 0.5
+    elif strategy == "mcts_enhanced":
+        return True, dual_stream_ratio if dual_stream_ratio > 0.0 else 0.5
+    raise ValueError(f"Unknown MCTS strategy '{strategy}'. Supported: {MCTS_STRATEGIES}")
 
 
 def evaluate_scenario1_metrics(
@@ -267,11 +298,10 @@ def train_scenario1(
     ohem_sampler: OHEMSampler | None = None
     uniform_grouped_sampler: UniformGroupedBatchSampler | None = None
 
-    if strategy in ("mcts_strict", "mcts_enhanced"):
+    if strategy in MCTS_STRATEGIES:
         if tree is None:
             raise ValueError(f"tree is required for MCTS strategy '{strategy}'.")
-        q_norm = (strategy == "mcts_enhanced")
-        beta = dual_stream_ratio if strategy == "mcts_enhanced" else 0.0
+        q_norm, beta = resolve_mcts_hyperparameters(strategy, dual_stream_ratio=dual_stream_ratio)
         agent = MCTSHNMAgent(
             tree=tree,
             exploration_c=exploration_c,
@@ -319,7 +349,7 @@ def train_scenario1(
         mcts_leaf_id: int | None = None
         mcts_batch_len: int = 0
 
-        if strategy in ("mcts_strict", "mcts_enhanced"):
+        if strategy in MCTS_STRATEGIES:
             assert agent is not None and mcts_sampler is not None
             mcts_leaf_id, _ = agent.select_leaf()
             batch = mcts_sampler.sample_batch(mcts_leaf_id)
@@ -355,7 +385,7 @@ def train_scenario1(
             if tree is not None:
                 exposure_tracker.record_node_visit(mcts_leaf_id)
 
-        if strategy in ("mcts_strict", "mcts_enhanced") and mcts_leaf_id is not None:
+        if strategy in MCTS_STRATEGIES and mcts_leaf_id is not None:
             assert agent is not None and diagnostics_tracker is not None
             # Compute MCTS reward on the MCTS sub-batch
             # In DualStreamBatch, all_indices is concat(positives, negatives), where negatives starts with mcts_indices
@@ -506,11 +536,10 @@ def train_scenario2(
     ohem_sampler: OHEMSampler | None = None
     uniform_grouped_sampler: UniformGroupedBatchSampler | None = None
 
-    if strategy in ("mcts_strict", "mcts_enhanced"):
+    if strategy in MCTS_STRATEGIES:
         if tree is None:
             raise ValueError(f"tree is required for MCTS strategy '{strategy}'.")
-        q_norm = (strategy == "mcts_enhanced")
-        beta = dual_stream_ratio if strategy == "mcts_enhanced" else 0.0
+        q_norm, beta = resolve_mcts_hyperparameters(strategy, dual_stream_ratio=dual_stream_ratio)
         agent = MCTSHNMAgent(
             tree=tree,
             exploration_c=exploration_c,
@@ -568,7 +597,7 @@ def train_scenario2(
         mcts_batch_len: int = 0
         leaf_cls_id: int | None = None
 
-        if strategy in ("mcts_strict", "mcts_enhanced"):
+        if strategy in MCTS_STRATEGIES:
             assert agent is not None and mcts_sampler is not None
             mcts_leaf_id, _ = agent.select_leaf()
             batch = mcts_sampler.sample_batch(mcts_leaf_id)
@@ -610,7 +639,7 @@ def train_scenario2(
             if tree is not None:
                 exposure_tracker.record_node_visit(mcts_leaf_id)
 
-        if strategy in ("mcts_strict", "mcts_enhanced") and mcts_leaf_id is not None:
+        if strategy in MCTS_STRATEGIES and mcts_leaf_id is not None:
             assert agent is not None and diagnostics_tracker is not None
             mcts_logits = logits[:mcts_batch_len]
             mcts_targets = batch_y[:mcts_batch_len]

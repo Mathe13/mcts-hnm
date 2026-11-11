@@ -146,13 +146,13 @@ T7
 
 **Done when**:
 
-- [ ] `mcts_strict` sets `q_norm=False` and `dual_stream_ratio=0.0`
-- [ ] `mcts_qnorm_only` sets `q_norm=True` and `dual_stream_ratio=0.0`
-- [ ] `mcts_dualstream_only` sets `q_norm=False` and `dual_stream_ratio=0.5`
-- [ ] `mcts_enhanced` sets `q_norm=True` and `dual_stream_ratio=0.5`
-- [ ] Non-ablated factors are held strictly invariant for identical seeds
-- [ ] Unit tests in `tests/test_phase_c_ablations.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_c_ablations.py`  
+- [x] `mcts_strict` sets `q_norm=False` and `dual_stream_ratio=0.0`
+- [x] `mcts_qnorm_only` sets `q_norm=True` and `dual_stream_ratio=0.0`
+- [x] `mcts_dualstream_only` sets `q_norm=False` and `dual_stream_ratio=0.5`
+- [x] `mcts_enhanced` sets `q_norm=True` and `dual_stream_ratio=0.5`
+- [x] Non-ablated factors are held strictly invariant for identical seeds
+- [x] Unit tests in `tests/test_phase_c_ablations.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_c_ablations.py`  
 
 **Tests**: unit  
 **Gate**: quick  

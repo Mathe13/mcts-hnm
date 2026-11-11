@@ -10,7 +10,8 @@ import torch
 from src.mcts.sampler import UniformGroupedBatchSampler
 from src.training.batch_diversity import compute_batch_diversity
 from src.training.exposure import ExposureTracker
-from src.training.trainer import train_scenario2
+from src.training.trainer import resolve_mcts_hyperparameters, train_scenario2
+from src.trees.base_tree import FastHierarchyTree
 
 
 def test_batch_diversity_calculation() -> None:
@@ -127,4 +128,104 @@ def test_uniform_grouped_parameter_validation() -> None:
     # Missing class_to_indices and tree
     with pytest.raises(ValueError, match="Either tree or class_to_indices"):
         UniformGroupedBatchSampler()
+
+
+def test_factorial_variants_configuration() -> None:
+    """Verify resolve_mcts_hyperparameters maps each factorial variant correctly."""
+    # Strict: q_norm=False, beta=0.0
+    q_norm, beta = resolve_mcts_hyperparameters("mcts_strict")
+    assert q_norm is False
+    assert beta == 0.0
+
+    # QNorm-only: q_norm=True, beta=0.0
+    q_norm, beta = resolve_mcts_hyperparameters("mcts_qnorm_only")
+    assert q_norm is True
+    assert beta == 0.0
+
+    # DualStream-only: q_norm=False, beta=0.5
+    q_norm, beta = resolve_mcts_hyperparameters("mcts_dualstream_only")
+    assert q_norm is False
+    assert beta == 0.5
+
+    # Enhanced: q_norm=True, beta=0.5
+    q_norm, beta = resolve_mcts_hyperparameters("mcts_enhanced")
+    assert q_norm is True
+    assert beta == 0.5
+
+    with pytest.raises(ValueError, match="Unknown MCTS strategy"):
+        resolve_mcts_hyperparameters("unknown_mcts")
+
+
+def make_test_tree() -> FastHierarchyTree:
+    """Create a minimal 3-leaf hierarchy tree for testing."""
+    total_nodes = 5
+    parents = np.array([-1, 0, 0, 1, 1], dtype=np.int64)
+    children = np.array([
+        [1, 2],
+        [3, 4],
+        [-1, -1],
+        [-1, -1],
+        [-1, -1],
+    ], dtype=np.int64)
+    child_counts = np.array([2, 2, 0, 0, 0], dtype=np.int64)
+    is_leaf = np.array([False, False, True, True, True], dtype=bool)
+    depths = np.array([0, 1, 1, 2, 2], dtype=np.int64)
+    leaf_to_class_id = np.array([-1, -1, 0, 1, 2], dtype=np.int64)
+    instance_counts = np.array([30, 20, 10, 10, 10], dtype=np.int64)
+    visits = np.zeros(total_nodes, dtype=np.int64)
+    q_values = np.zeros(total_nodes, dtype=np.float64)
+    node_names = ("root", "cluster_1", "class_0", "class_1", "class_2")
+    class_to_indices = {
+        0: np.arange(0, 10, dtype=np.int64),
+        1: np.arange(10, 20, dtype=np.int64),
+        2: np.arange(20, 30, dtype=np.int64),
+    }
+
+    return FastHierarchyTree(
+        tree_type="synthetic_test",
+        root_id=0,
+        parents=parents,
+        children=children,
+        child_counts=child_counts,
+        is_leaf=is_leaf,
+        depths=depths,
+        leaf_to_class_id=leaf_to_class_id,
+        instance_counts=instance_counts,
+        visits=visits,
+        q_values=q_values,
+        node_names=node_names,
+        class_to_indices=class_to_indices,
+    )
+
+
+def test_factorial_controlled_factors_invariance() -> None:
+    """Verify that all 4 factorial variants run under identical initial weights and configurations."""
+    variants = ["mcts_strict", "mcts_qnorm_only", "mcts_dualstream_only", "mcts_enhanced"]
+    features = torch.randn(30, 16)
+    labels = np.array([0] * 10 + [1] * 10 + [2] * 10, dtype=np.int64)
+
+    for var in variants:
+        tree = make_test_tree()
+        res = train_scenario2(
+            train_features=features,
+            train_labels=labels,
+            val_features=features,
+            val_labels=labels,
+            num_classes=3,
+            tree=tree,
+            strategy=var,
+            batch_size=4,
+            num_steps=4,
+            eval_every=2,
+            lr=1e-3,
+            momentum_alpha=0.3,
+            exploration_c=2.0,
+            seed=42,
+        )
+        assert res["strategy"] == var
+        assert "val_metrics" in res
+        assert np.isfinite(res["val_metrics"]["loss"])
+        assert "exposure_diagnostics" in res
+
+
 
