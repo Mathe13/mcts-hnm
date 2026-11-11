@@ -102,11 +102,11 @@ T6 → T7
 
 **Done when**:
 
-- [ ] `ExposureTracker` records leaf selections, instance IDs, and class IDs per batch
-- [ ] `compute_diagnostics()` computes $N_v$, $N_l$, $N_s$, $N_u$, $H_{\text{norm}}$, $C_{\text{unexp}}$, and Worst-10 class recall
-- [ ] Returns $0.0$ for $H_{\text{norm}}$ when total selections are zero
-- [ ] Unit tests in `tests/test_phase_b_observability.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_b_observability.py`  
+- [x] `ExposureTracker` records leaf selections, instance IDs, and class IDs per batch
+- [x] `compute_diagnostics()` computes $N_v$, $N_l$, $N_s$, $N_u$, $H_{\text{norm}}$, $C_{\text{unexp}}$, and Worst-10 class recall
+- [x] Returns $0.0$ for $H_{\text{norm}}$ when total selections are zero
+- [x] Unit tests in `tests/test_phase_b_observability.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_b_observability.py`  
 
 **Tests**: unit  
 **Gate**: quick  
