@@ -1,0 +1,101 @@
+{
+  "timestamp_utc": "2026-11-11T23:46:52.832521+00:00",
+  "execution_mode": "real",
+  "git_commit": "e25d122b699068c59ee6e51d7b86a44cdfbbf05c",
+  "status": "complete",
+  "artifacts": [
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_convergence_curves.pdf",
+      "name": "fig_convergence_curves.pdf",
+      "sha256": "a00e1e035937d3ecc734829acbd735d3537c89494fa4edf2db21e18663d827d8",
+      "bytes": 31255
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_convergence_curves.png",
+      "name": "fig_convergence_curves.png",
+      "sha256": "afd3e8b50ed5e47ff838c0060879f756fd56848640245a82b835e5c03a5c6366",
+      "bytes": 216164
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_tree_visitation_heatmap.pdf",
+      "name": "fig_tree_visitation_heatmap.pdf",
+      "sha256": "3f4e8750b872a18faaa0008ff0c3ec4e9ba288aacc6679653fba24f2ae2e9020",
+      "bytes": 44126
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_tree_visitation_heatmap.png",
+      "name": "fig_tree_visitation_heatmap.png",
+      "sha256": "ad84191c4e22da8196337b590aa7413b64d138f009864343768012f69b9acb16",
+      "bytes": 198334
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_hyperparameter_sensitivity.pdf",
+      "name": "fig_hyperparameter_sensitivity.pdf",
+      "sha256": "d045caea589b14576af3f12519dec96e533e408ea3265be838c3e2e4bd15b2f3",
+      "bytes": 28365
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_hyperparameter_sensitivity.png",
+      "name": "fig_hyperparameter_sensitivity.png",
+      "sha256": "7cf48708ac1f7fc9f76ef34f82278d40c11fce3c5df7a72c803c1b1c8ec3a301",
+      "bytes": 235046
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/tables/tab_scenario1_imbalanced.tex",
+      "name": "tab_scenario1_imbalanced.tex",
+      "sha256": "55f770ffae0399cf6aa39fbe61f2d8b033b0c4d812b51ee7b9ecc655c7c33eee",
+      "bytes": 1097
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/tables/tab_scenario2_multiclass.tex",
+      "name": "tab_scenario2_multiclass.tex",
+      "sha256": "95c314427317d16b8ab7aff9a1129dcd1f0395fd3062520dfa9305371821e72c",
+      "bytes": 669
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/tables/tab_ablation_study.tex",
+      "name": "tab_ablation_study.tex",
+      "sha256": "3f1766680699019cd52235dab24043714f058caaebfc05e2f74a0a58fc273d72",
+      "bytes": 609
+    }
+  ],
+  "source_files": [
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/tier1_axis1_samplers.json",
+      "name": "tier1_axis1_samplers.json",
+      "sha256": "d886a4a6c933d910dec110dd00b856136b257186c591798f383e3a4da5c37945",
+      "bytes": 257217
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/tier1_scenario2_curriculum.json",
+      "name": "tier1_scenario2_curriculum.json",
+      "sha256": "61641bd79ff1f8b22169aeba71503dc83902846e1dbd2e85bde1ef9c42c5bb57",
+      "bytes": 593139
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/tier1_axis2_tree_ablation.json",
+      "name": "tier1_axis2_tree_ablation.json",
+      "sha256": "c4e664a4150ef77a0bc35587dfd34fb509cef16c0caaea55d29cebb5557cfed1",
+      "bytes": 235179
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/tier1_hyperparameter_sensitivity.json",
+      "name": "tier1_hyperparameter_sensitivity.json",
+      "sha256": "5bd96a74c59695123117e4c0f5c66386a41b96c69716dd3efe6dd5f88f0eec33",
+      "bytes": 35370
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/tier1_visitation_diagnostics.json",
+      "name": "tier1_visitation_diagnostics.json",
+      "sha256": "a5d0ce7ccc6a49a9344c3464f51e94b72637d0d7fe73b8fcb28237e9a253f2ac",
+      "bytes": 461479
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper_metadata.yaml",
+      "name": "paper_metadata.yaml",
+      "sha256": "9aa1ae0e88775f6b3bafcef6c8d1808fb41ffb33f5e54e6bc5bda7261207834e",
+      "bytes": 2173
+    }
+  ],
+  "skipped_artifacts": {}
+}
