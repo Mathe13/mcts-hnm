@@ -290,9 +290,9 @@ T9
 
 **Done when**:
 
-- [ ] `verify_gate_a()` evaluates splits, data segregation, runner equivalence, persistence granularity, and tree geometry
-- [ ] Integration test `tests/test_phase_a_gate.py` passes with exit code 0
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_phase_a_*.py`
+- [x] `verify_gate_a()` evaluates splits, data segregation, runner equivalence, persistence granularity, and tree geometry
+- [x] Integration test `tests/test_phase_a_gate.py` passes with exit code 0
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_phase_a_*.py`
 
 **Tests**: integration
 **Gate**: build

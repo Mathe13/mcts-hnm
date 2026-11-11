@@ -27,7 +27,7 @@ def test_generate_run_manifest():
     """Verify that generate_run_manifest produces all required provenance metadata."""
     from src.utils.experiment_config import ExecutionMode, ExperimentConfig, generate_run_manifest
 
-    cfg = ExperimentConfig(execution_mode=ExecutionMode.REAL, seed=42)
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.SMOKE, seed=42)
     manifest = generate_run_manifest(
         run_id="scen1_cls0_r50_semantic_mcts_enhanced_s42_test1234",
         config=cfg,
@@ -43,7 +43,7 @@ def test_generate_run_manifest():
     assert "torch" in manifest["dependencies"]
     assert "numpy" in manifest["dependencies"]
     assert "resolved_config" in manifest
-    assert manifest["resolved_config"]["execution_mode"] == "real"
+    assert manifest["resolved_config"]["execution_mode"] == "smoke"
 
 
 def test_legacy_immutability():
@@ -60,7 +60,7 @@ def test_legacy_immutability():
     with pytest.raises(PermissionError, match="immutable"):
         assert_path_mutable(legacy_path)
 
-    cfg = ExperimentConfig(execution_mode=ExecutionMode.REAL)
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
     with pytest.raises(PermissionError, match="immutable"):
         save_provenance_metadata(legacy_path, cfg)
 
