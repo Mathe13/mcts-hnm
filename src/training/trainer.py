@@ -21,6 +21,7 @@ from src.training.baselines import OHEMSampler, UniformSampler
 from src.training.exposure import ExposureTracker
 from src.training.selectors import FlatUCBSelector, GreedyLossEMASelector
 from src.trees.base_tree import FastHierarchyTree
+from src.utils.metrics import calibrate_binary_threshold, evaluate_binary_metrics_at_threshold
 from src.utils.seed import set_global_seed
 
 logger = logging.getLogger(__name__)
@@ -73,6 +74,7 @@ def evaluate_scenario1_metrics(
     binary_labels: np.ndarray | torch.Tensor,
     batch_size: int = 512,
     device: torch.device | None = None,
+    threshold: float = 0.5,
 ) -> dict[str, float]:
     r"""Evaluate test metrics for Scenario 1 (Imbalanced Binary One-vs-Rest).
 
@@ -126,7 +128,7 @@ def evaluate_scenario1_metrics(
     loss = float(F.binary_cross_entropy_with_logits(logits_t, y_true_t).item())
 
     probs = torch.sigmoid(logits_t).numpy()
-    preds = (probs >= 0.5).astype(np.int64)
+    preds = (probs >= float(threshold)).astype(np.int64)
 
     f1 = float(f1_score(y_true, preds, zero_division=0.0))
     precision = float(precision_score(y_true, preds, zero_division=0.0))
@@ -155,6 +157,9 @@ def evaluate_scenario1_metrics(
         "recall": recall,
         "auprc": auprc,
         "fpr_at_95_recall": fpr_95,
+        "threshold": float(threshold),
+        "calibrated_f1": f1,
+        "calibrated_threshold": float(threshold),
     }
 
 
@@ -231,11 +236,14 @@ def evaluate_scenario2_metrics(
     recalls_arr = np.array(recalls, dtype=np.float64)
     worst_k = min(10, num_classes)
     worst_10_recall = float(np.mean(np.sort(recalls_arr)[:worst_k]))
+    balanced_accuracy = float(np.mean(recalls_arr))
 
     return {
         "loss": loss,
         "top1_accuracy": top1,
+        "accuracy": top1,
         "macro_f1": macro_f1,
+        "balanced_accuracy": balanced_accuracy,
         "worst_10_class_recall": worst_10_recall,
     }
 
@@ -347,6 +355,20 @@ def train_scenario1(
     accumulated_train_loss = 0.0
     loss_count = 0
 
+    total_gradient_samples = 0
+    total_mining_forwards = 0
+    best_val_score = -1.0
+    best_val_eval: dict[str, Any] | None = None
+    best_tau_val: float = 0.5
+    tau_val: float = 0.5
+    best_model_state: dict[str, torch.Tensor] | None = None
+
+    val_lbl_arr = (
+        val_binary_labels.detach().cpu().numpy()
+        if isinstance(val_binary_labels, torch.Tensor)
+        else np.asarray(val_binary_labels)
+    ).astype(np.int64)
+
     for step in range(1, num_steps + 1):
         model.train()
         optimizer.zero_grad()
@@ -368,7 +390,9 @@ def train_scenario1(
             _, _, step_indices = ohem_sampler.sample_batch(
                 model=model, features=train_features, device=dev, is_binary=True
             )
+            total_mining_forwards += 4 * int(neg_batch_size)
 
+        total_gradient_samples += int(step_indices.size)
         batch_x = train_features[step_indices].to(dev)
         # binary labels: positives are 1.0, negatives are 0.0
         batch_y = torch.as_tensor(
@@ -415,11 +439,19 @@ def train_scenario1(
                 )
 
         if step % eval_every == 0 or step == num_steps:
+            model.eval()
+            with torch.no_grad():
+                val_x_eval = val_features.to(dev)
+                val_logits_eval = model(val_x_eval).view(-1)
+                val_probs_eval = torch.sigmoid(val_logits_eval).cpu().numpy()
+            tau_val = calibrate_binary_threshold(val_probs_eval, val_lbl_arr)
+
             metrics = evaluate_scenario1_metrics(
                 model=model,
                 features=val_features,
                 binary_labels=val_binary_labels,
                 device=dev,
+                threshold=tau_val,
             )
             step_train_loss = float(accumulated_train_loss / max(1, loss_count))
             accumulated_train_loss = 0.0
@@ -432,8 +464,16 @@ def train_scenario1(
             metrics["val_loss"] = metrics["loss"]
             metrics["val_F1"] = metrics["f1"]
             metrics["val_AUPRC"] = metrics["auprc"]
+            metrics["calibrated_threshold"] = float(tau_val)
             metrics["learning_rate"] = current_lr
             metrics["elapsed_time"] = elapsed_time
+
+            # Update best validation checkpoint (using AUPRC as primary metric)
+            if metrics["auprc"] > best_val_score:
+                best_val_score = float(metrics["auprc"])
+                best_val_eval = dict(metrics)
+                best_tau_val = float(tau_val)
+                best_model_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
 
             if tree is not None:
                 ent_nats, ent_norm = compute_visitation_entropy(tree)
@@ -454,12 +494,49 @@ def train_scenario1(
                 })
             history.append(metrics)
 
-    final_val_eval = history[-1] if history else evaluate_scenario1_metrics(model, val_features, val_binary_labels, device=dev)
-    final_test_eval = None
-    if test_features is not None and test_binary_labels is not None:
-        final_test_eval = evaluate_scenario1_metrics(model, test_features, test_binary_labels, device=dev)
+    elapsed_seconds = float(time.time() - start_time)
+    computational_costs = {
+        "total_updates": int(num_steps),
+        "gradient_samples": int(total_gradient_samples),
+        "mining_forwards": int(total_mining_forwards),
+        "elapsed_seconds": elapsed_seconds,
+    }
 
-    final_eval = final_test_eval if final_test_eval is not None else final_val_eval
+    if test_features is not None and test_binary_labels is not None:
+        last_metrics = evaluate_scenario1_metrics(
+            model=model,
+            features=test_features,
+            binary_labels=test_binary_labels,
+            device=dev,
+            threshold=tau_val,
+        )
+    else:
+        last_metrics = dict(history[-1]) if history else evaluate_scenario1_metrics(
+            model=model,
+            features=val_features,
+            binary_labels=val_binary_labels,
+            device=dev,
+            threshold=tau_val,
+        )
+
+    best_model = Tier1MLPHead(input_dim=input_dim, hidden_dim=128, num_outputs=1).to(dev)
+    if best_model_state is not None:
+        best_model.load_state_dict(best_model_state)
+    else:
+        best_model.load_state_dict(model.state_dict())
+
+    if test_features is not None and test_binary_labels is not None:
+        best_validation_metrics = evaluate_scenario1_metrics(
+            model=best_model,
+            features=test_features,
+            binary_labels=test_binary_labels,
+            device=dev,
+            threshold=best_tau_val,
+        )
+    else:
+        best_validation_metrics = dict(best_val_eval) if best_val_eval is not None else dict(last_metrics)
+
+    final_eval = last_metrics
     exposure_diag = exposure_tracker.compute_diagnostics()
     return {
         "strategy": strategy,
@@ -467,9 +544,13 @@ def train_scenario1(
         "step_history": history,
         "exposure_diagnostics": exposure_diag,
         "final_metrics": final_eval,
-        "val_metrics": final_val_eval,
-        "test_metrics": final_test_eval,
+        "last_metrics": last_metrics,
+        "best_validation_metrics": best_validation_metrics,
+        "val_metrics": history[-1] if history else last_metrics,
+        "test_metrics": last_metrics if test_features is not None else None,
+        "computational_costs": computational_costs,
         "model": model,
+        "best_model_state": best_model_state,
         "diagnostics": diagnostics_tracker.summary() if diagnostics_tracker is not None else None,
         "final_num_leaves": tree.num_leaves if tree is not None else None,
         "visitation_checkpoints": visitation_snapshots,
@@ -624,6 +705,12 @@ def train_scenario2(
     accumulated_train_loss = 0.0
     loss_count = 0
 
+    total_gradient_samples = 0
+    total_mining_forwards = 0
+    best_val_score = -1.0
+    best_val_eval: dict[str, Any] | None = None
+    best_model_state: dict[str, torch.Tensor] | None = None
+
     for step in range(1, num_steps + 1):
         model.train()
         optimizer.zero_grad()
@@ -651,6 +738,7 @@ def train_scenario2(
                 is_binary=False,
                 target_labels=train_lbl_arr,
             )
+            total_mining_forwards += 4 * int(batch_size)
         elif strategy == "uniform_grouped":
             assert uniform_grouped_sampler is not None
             batch = uniform_grouped_sampler.sample_batch()
@@ -667,6 +755,7 @@ def train_scenario2(
             step_indices = batch.all_indices
             leaf_cls_id = batch.leaf_class_id
 
+        total_gradient_samples += int(step_indices.size)
         batch_x = train_features[step_indices].to(dev)
         batch_y = torch.as_tensor(train_lbl_arr[step_indices], dtype=torch.long, device=dev)
 
@@ -734,6 +823,12 @@ def train_scenario2(
             metrics["learning_rate"] = current_lr
             metrics["elapsed_time"] = elapsed_time
 
+            # Update best validation checkpoint (using macro_f1 as primary metric)
+            if metrics["macro_f1"] > best_val_score:
+                best_val_score = float(metrics["macro_f1"])
+                best_val_eval = dict(metrics)
+                best_model_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+
             if tree is not None:
                 ent_nats, ent_norm = compute_visitation_entropy(tree)
                 metrics["entropy_nats"] = ent_nats
@@ -753,12 +848,49 @@ def train_scenario2(
                 })
             history.append(metrics)
 
-    final_val_eval = history[-1] if history else evaluate_scenario2_metrics(model, val_features, val_labels, num_classes=num_classes, device=dev)
-    final_test_eval = None
-    if test_features is not None and test_labels is not None:
-        final_test_eval = evaluate_scenario2_metrics(model, test_features, test_labels, num_classes=num_classes, device=dev)
+    elapsed_seconds = float(time.time() - start_time)
+    computational_costs = {
+        "total_updates": int(num_steps),
+        "gradient_samples": int(total_gradient_samples),
+        "mining_forwards": int(total_mining_forwards),
+        "elapsed_seconds": elapsed_seconds,
+    }
 
-    final_eval = final_test_eval if final_test_eval is not None else final_val_eval
+    if test_features is not None and test_labels is not None:
+        last_metrics = evaluate_scenario2_metrics(
+            model=model,
+            features=test_features,
+            labels=test_labels,
+            num_classes=num_classes,
+            device=dev,
+        )
+    else:
+        last_metrics = dict(history[-1]) if history else evaluate_scenario2_metrics(
+            model=model,
+            features=val_features,
+            labels=val_labels,
+            num_classes=num_classes,
+            device=dev,
+        )
+
+    best_model = Tier1MLPHead(input_dim=input_dim, hidden_dim=128, num_outputs=num_classes).to(dev)
+    if best_model_state is not None:
+        best_model.load_state_dict(best_model_state)
+    else:
+        best_model.load_state_dict(model.state_dict())
+
+    if test_features is not None and test_labels is not None:
+        best_validation_metrics = evaluate_scenario2_metrics(
+            model=best_model,
+            features=test_features,
+            labels=test_labels,
+            num_classes=num_classes,
+            device=dev,
+        )
+    else:
+        best_validation_metrics = dict(best_val_eval) if best_val_eval is not None else dict(last_metrics)
+
+    final_eval = last_metrics
     exposure_diag = exposure_tracker.compute_diagnostics()
     return {
         "strategy": strategy,
@@ -766,9 +898,13 @@ def train_scenario2(
         "step_history": history,
         "exposure_diagnostics": exposure_diag,
         "final_metrics": final_eval,
-        "val_metrics": final_val_eval,
-        "test_metrics": final_test_eval,
+        "last_metrics": last_metrics,
+        "best_validation_metrics": best_validation_metrics,
+        "val_metrics": history[-1] if history else last_metrics,
+        "test_metrics": last_metrics if test_features is not None else None,
+        "computational_costs": computational_costs,
         "model": model,
+        "best_model_state": best_model_state,
         "diagnostics": diagnostics_tracker.summary() if diagnostics_tracker is not None else None,
         "final_num_leaves": tree.num_leaves if tree is not None else None,
         "visitation_checkpoints": visitation_snapshots,

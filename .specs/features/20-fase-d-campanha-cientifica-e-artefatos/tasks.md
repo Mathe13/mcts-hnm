@@ -9,7 +9,8 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/20-fase-d-campanha-cientifica-e-artefatos/design.md`  
-**Status**: Pending Approval  
+**Status**: In Progress  
+**Approved**: 2026-11-11 - user: "prosseguir"  
 **Build**: `.venv/bin/python -m compileall -q src tests`  
 **Run unit**: `.venv/bin/pytest -v tests/test_phase_d_metrics.py tests/test_phase_d_statistics.py tests/test_phase_d_campaign.py tests/test_phase_d_artifacts.py tests/test_phase_d_gate.py`  
 
@@ -99,15 +100,15 @@ T5
 
 **Done when**:
 
-- [ ] `train_scenario1()` records computational costs (`total_updates`, `gradient_samples`, `mining_forwards`, `elapsed_seconds`)
-- [ ] `train_scenario2()` records computational costs and maintains `best_validation` and `last` evaluations
-- [ ] AUPRC and calibrated F1 are reported for both checkpoint evaluations in Scenario 1
-- [ ] Unit tests in `tests/test_phase_d_metrics.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_d_metrics.py`  
+- [x] `train_scenario1()` records computational costs (`total_updates`, `gradient_samples`, `mining_forwards`, `elapsed_seconds`)
+- [x] `train_scenario2()` records computational costs and maintains `best_validation` and `last` evaluations
+- [x] AUPRC and calibrated F1 are reported for both checkpoint evaluations in Scenario 1
+- [x] Unit tests in `tests/test_phase_d_metrics.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_d_metrics.py`  
 
 **Tests**: unit  
 **Gate**: quick  
-**Commit**: `feat(metrics): implement computational cost telemetry and dual checkpoints`  
+**Commit**: `feat(metrics): computational cost telemetry and dual checkpoints`  
 
 ---
 
