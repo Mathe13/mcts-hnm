@@ -268,11 +268,11 @@ T9
 
 **Done when**:
 
-- [ ] Ward clustering operates directly on row-normalized confusion vectors $p_i \in \mathbb{R}^K$
-- [ ] Average Linkage (UPGMA) operates directly on condensed confusion distance matrices
-- [ ] Tree structural invariants (depth, leaf counts, monotonicity) are verified with zero Lance-Williams inversions
-- [ ] Unit tests in `tests/test_phase_a_tree_validation.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_a_tree_validation.py`
+- [x] Ward clustering operates directly on row-normalized confusion vectors $p_i \in \mathbb{R}^K$
+- [x] Average Linkage (UPGMA) operates directly on condensed confusion distance matrices
+- [x] Tree structural invariants (depth, leaf counts, monotonicity) are verified with zero Lance-Williams inversions
+- [x] Unit tests in `tests/test_phase_a_tree_validation.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_a_tree_validation.py`
 
 **Tests**: unit
 **Gate**: quick

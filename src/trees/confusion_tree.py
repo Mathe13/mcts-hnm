@@ -54,6 +54,27 @@ def validate_confusion_matrix(confusion_matrix: np.ndarray) -> np.ndarray:
     return mat
 
 
+def is_euclidean_dissimilarity(dist_matrix: np.ndarray, tol: float = 1e-10) -> bool:
+    r"""Check if a symmetric dissimilarity matrix can be embedded in Euclidean space via Schoenberg's theorem.
+
+    A dissimilarity matrix $D \in \mathbb{R}^{n \times n}$ is embeddable in Euclidean space iff the
+    centering Gram matrix $B = -\frac{1}{2} H (D \odot D) H$ is positive semi-definite (PSD),
+    where $H = I - \frac{1}{n} \mathbf{1}\mathbf{1}^T$.
+    """
+    arr = np.asarray(dist_matrix, dtype=np.float64)
+    if arr.ndim != 2 or arr.shape[0] != arr.shape[1]:
+        return False
+    n = arr.shape[0]
+    if n < 2:
+        return True
+    d_sq = arr ** 2
+    h = np.eye(n, dtype=np.float64) - (1.0 / n) * np.ones((n, n), dtype=np.float64)
+    b = -0.5 * (h @ d_sq @ h)
+    b = 0.5 * (b + b.T)  # enforce exact numerical symmetry
+    eigvals = np.linalg.eigvalsh(b)
+    return bool(np.all(eigvals >= -tol))
+
+
 def compute_confusion_distance_matrix(confusion_matrix: np.ndarray) -> np.ndarray:
     r"""Compute the symmetric normalized confusion distance matrix $D \in [0, 1]^{K \times K}$.
 
@@ -121,9 +142,9 @@ def build_confusion_tree(
         Binary `FastHierarchyTree` with `2K - 1` nodes and `root_id=0` (or tuple if `return_linkage=True`).
     """
     method_lower = str(linkage_method).lower()
-    if method_lower not in ("ward", "average"):
+    if method_lower not in ("ward", "average", "ward_legacy"):
         raise ValueError(
-            f"Unsupported linkage_method: '{linkage_method}'. Must be 'ward' or 'average'."
+            f"Unsupported linkage_method: '{linkage_method}'. Must be 'ward', 'average', or 'ward_legacy'."
         )
     cleaned_pools = _validate_class_to_indices(class_to_indices)
     sorted_class_ids = sorted(cleaned_pools.keys())
@@ -146,15 +167,27 @@ def build_confusion_tree(
     condensed_dist = squareform(dist_matrix, checks=False)
 
     if method_lower == "ward":
-        # SciPy's Ward variance minimization requires Euclidean distances.
-        # For normalized confusion dissimilarities D_ij in [0, 1] (1 - S_ij),
-        # the standard metric embedding d_E = sqrt(2 * D_ij) guarantees Euclidean metric
-        # properties, resolving potential non-Euclidean Lance-Williams inversions.
+        # SciPy's Ward variance minimization requires Euclidean metric vectors or distances.
+        # Operating directly on row-normalized confusion vectors p_i in R^K (p_i = C_i / sum(C_i))
+        # guarantees a mathematically sound Euclidean space embedding, preventing non-Euclidean inversions.
+        row_sums = active_mat.sum(axis=1, keepdims=True)
+        p_vectors = active_mat / np.clip(row_sums, 1e-12, None)
+        linkage_matrix = np.ascontiguousarray(
+            linkage(p_vectors, method="ward", metric="euclidean"), dtype=np.float64
+        )
+    elif method_lower == "ward_legacy":
+        # Legacy heuristic: sqrt(2 * D_ij)
         euclidean_condensed = np.sqrt(2.0 * np.clip(condensed_dist, 0.0, None))
-        linkage_matrix = np.ascontiguousarray(linkage(euclidean_condensed, method="ward"), dtype=np.float64)
-    else:
+        linkage_matrix = np.ascontiguousarray(
+            linkage(euclidean_condensed, method="ward"), dtype=np.float64
+        )
+    elif method_lower == "average":
         # Average linkage (UPGMA) operates directly and consistently on general dissimilarities
-        linkage_matrix = np.ascontiguousarray(linkage(condensed_dist, method=method_lower), dtype=np.float64)
+        linkage_matrix = np.ascontiguousarray(
+            linkage(condensed_dist, method="average"), dtype=np.float64
+        )
+    else:
+        raise ValueError(f"Unsupported linkage_method: '{linkage_method}'.")
 
     tax = taxonomy if taxonomy is not None else get_cifar100_taxonomy()
     total_nodes = 2 * k - 1
@@ -206,7 +239,7 @@ def build_confusion_tree(
         parents[left_nid] = parent_nid
         parents[right_nid] = parent_nid
         instance_counts[parent_nid] = instance_counts[left_nid] + instance_counts[right_nid]
-        node_names[parent_nid] = "root" if parent_nid == 0 else f"ward_cluster:{merge_idx}"
+        node_names[parent_nid] = "root" if parent_nid == 0 else f"{method_lower}_cluster:{merge_idx}"
 
     # Assign depths top-down from root_id = 0
     for nid in range(num_internal):
@@ -216,7 +249,7 @@ def build_confusion_tree(
         depths[right_nid] = depths[nid] + 1
 
     tree = FastHierarchyTree(
-        tree_type="confusion_ward",
+        tree_type="confusion_ward" if "ward" in method_lower else f"confusion_{method_lower}",
         root_id=0,
         parents=parents,
         children=children,
