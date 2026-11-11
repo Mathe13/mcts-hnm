@@ -144,16 +144,16 @@ T5
 
 **Done when**:
 
-- [ ] Executes Scenario 1 across 4 methods and ratios 1:50, 1:100, 1:500 with 5 paired seeds
-- [ ] Executes Scenario 2 across 6 ablation methods with 5 paired seeds
-- [ ] Serializes atomic `.json` and `.meta.json` per run with mode and git commit provenance
-- [ ] Generates consolidated `campaign_manifest.json` indexing all runs
-- [ ] Integration tests in `tests/test_phase_d_campaign.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_d_campaign.py`  
+- [x] Executes Scenario 1 across 4 methods and ratios 1:50, 1:100, 1:500 with 5 paired seeds
+- [x] Executes Scenario 2 across 6 ablation methods with 5 paired seeds
+- [x] Serializes atomic `.json` and `.meta.json` per run with mode and git commit provenance
+- [x] Generates consolidated `campaign_manifest.json` indexing all runs
+- [x] Integration tests in `tests/test_phase_d_campaign.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_d_campaign.py`  
 
 **Tests**: integration  
 **Gate**: quick  
-**Commit**: `feat(campaign): implement scientific campaign runner and manifest generator`  
+**Commit**: `feat(campaign): scientific campaign runner and manifest generator`  
 
 ---
 
