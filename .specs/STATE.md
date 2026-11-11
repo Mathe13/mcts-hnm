@@ -138,22 +138,28 @@
 - **Date**: 2026-11-10
 - **Status**: active (AD-017)
 
+### AD-018
+- **Decision**: Strictly eliminate zero-defaults in the benchmark results loader (`src/utils/paper_artifacts.py`), mandate suite completeness in REAL mode (requiring complete Scenario 1, Scenario 2, and ablation results without partial fallbacks), re-raise raw parsing exceptions immediately without swallowing as warnings, modernize test contracts from legacy `FAST_MODE` to `ExecutionMode`, switch legacy migration default in `get_isolated_paths` to `migrate_legacy=False` (explicit-only), and enforce mode path isolation on custom output directories in `benchmark_runner.py`.
+- **Reason**: Closes audit vulnerabilities: prevents unrecorded missing metrics from silently masquerading as 0.0 in scientific publications, guarantees that incomplete benchmark suites cannot generate final paper artifacts, avoids unexpected disk file moves during path queries, and ensures mode boundary confinement for custom directories.
+- **Trade-off**: Requires all benchmark suites to be run prior to REAL paper artifact generation; attempting to generate deliverables from partial runs raises `FileNotFoundError` or `ValueError`.
+- **Scope**: `src/utils/paper_artifacts.py`, `src/utils/experiment_config.py`, `src/training/benchmark_runner.py`, `tests/`
+- **Date**: 2026-11-10
+- **Status**: active (AD-018)
+
 ## Handoff
 
-- **Feature**: `14-strict-provenance-and-artifact-integrity` (`.specs/features/14-strict-provenance-and-artifact-integrity/`)
-- **Phase / Task**: Done & Verified (`validate_verification.py` exited 0 with 0 errors and 0 warnings).
+- **Feature**: `15-artifact-completeness-and-isolation-hardening` (`.specs/features/15-artifact-completeness-and-isolation-hardening/`)
+- **Phase / Task**: Done & Verified.
 - **Completed**:
-  - `298d92f`: [P0] Mandatory provenance metadata validation (`PROV-01`).
-  - `0b61739`: [P0] Elimination of silent numeric defaults in tables/figures (`NUM-01`).
-  - `5275fc6`: [P0] Artifact completeness validation (`ART-01`).
-  - `fbcaf52`: [P1] Multi-sample synthetic fixtures for Tier-2 dynamic leaf expansion (`FIX-01`).
-  - `df73a65`: [P1] I/O path confinement to mode-isolated directories (`IO-01`).
-  - `e521a5b`: [P1] End-to-end regression validation and clean-slate testing (`E2E-01`).
-  - `3a7db46` & `c5c081e`: Isolated paper PDF compilation in regression tests to ensure pristine git tree.
-  - Automated check proofs verified (9/9 pass, clean tree at HEAD `c5c081e`).
-  - Independent verification complete (`verification.md` PASS).
+  - [P0] Eliminated all `.get(..., 0.0)` metric fallbacks in `src/utils/paper_artifacts.py` (`METRIC-01`).
+  - [P0] Enforced benchmark suite completeness and eliminated warning-swallowing on parsing exceptions (`COMP-01`).
+  - [P1] Modernized notebook 00 test in `tests/test_paper_artifacts.py` to assert `ExecutionMode` and remove `FAST_MODE` (`TEST-01`).
+  - [P1] Changed default `migrate_legacy` parameter to `False` in `get_isolated_paths()` (`MIG-01`).
+  - [P1] Mandated `validate_mode_isolated_path` for custom output directories in `benchmark_runner.py` (`ISO-01`).
+  - Full automated regression verified (160 passed in 38.26s).
+  - Grep audit verified 0 occurrences of `metrics.get(` in `paper_artifacts.py` and 0 active references to `FAST_MODE`.
+  - Zero files written to `results/real/` during SMOKE regression.
 - **In-progress**: None
-- **Next step**: User instructions or submission ready. All 155 tests passing in ~40s.
+- **Next step**: Ready for user review or full cluster scientific execution.
 - **Blockers**: None
-- **Uncommitted files**: None
 - **Branch**: `main`

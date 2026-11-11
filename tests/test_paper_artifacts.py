@@ -97,14 +97,32 @@ def test_benchmark_results_loader_and_synthesizer(tmp_path: Path):
         assert "macro_f1" in scen2_entry
         assert "worst_10_recall" in scen2_entry
 
-    # 2. Test real JSON loading from disk (F3)
+    # 2. Test real JSON loading from disk (F3) with complete benchmark suite
     reset_active_session_mode()
     real_results = tmp_path / "results_real"
     real_results.mkdir(parents=True)
     real_data = {
         "scenario1": {
-            "mcts_enhanced": {"10": {"f1": {"mean": 0.585, "std": 0.008, "values": [0.585] * 5}}}
-        }
+            "mcts_enhanced": {
+                "10": {
+                    "f1": {"mean": 0.585, "std": 0.008, "values": [0.585] * 5},
+                    "auprc": {"mean": 0.560, "std": 0.007, "values": [0.560] * 5},
+                    "fpr95": {"mean": 0.220, "std": 0.005, "values": [0.220] * 5},
+                }
+            }
+        },
+        "scenario2": {
+            "mcts_enhanced": {
+                "top1_accuracy": {"mean": 0.725, "std": 0.005, "values": [0.725] * 5},
+                "macro_f1": {"mean": 0.710, "std": 0.006, "values": [0.710] * 5},
+                "worst_10_recall": {"mean": 0.450, "std": 0.010, "values": [0.450] * 5},
+            }
+        },
+        "ablation": {
+            "semantic_tree": {"f1": 0.548, "auprc": 0.520},
+            "confusion_tree": {"f1": 0.536, "auprc": 0.510},
+            "no_tree": {"f1": 0.512, "auprc": 0.480},
+        },
     }
     with open(real_results / "tier1_benchmark_summary.json", "w", encoding="utf-8") as f:
         json.dump(real_data, f)
@@ -372,7 +390,8 @@ def test_notebook_00_execution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
         ast.parse(cell.source)
 
     for required_ref in (
-        "FAST_MODE",
+        "ExecutionMode",
+        "EXECUTION_MODE",
         "get_cifar100_taxonomy",
         "build_semantic_tree",
         "build_confusion_tree",
@@ -407,7 +426,7 @@ def test_notebook_00_execution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr("src.utils.paper_artifacts.compile_paper", safe_compile_paper)
     monkeypatch.setattr("src.utils.paper_artifacts.generate_all_paper_artifacts", safe_generate_all)
 
-    # F1: Execute notebook cells at runtime with FAST_MODE = True
+    # Execute notebook cells at runtime under ExecutionMode.SMOKE
     exec_env: dict[str, object] = {"__name__": "__main__"}
     for cell in code_cells:
         exec(cell.source, exec_env)

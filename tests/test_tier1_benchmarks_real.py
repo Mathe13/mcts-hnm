@@ -320,3 +320,42 @@ def test_individual_seeds_and_aggregated_export(tmp_path):
     assert "aggregated_summary" in res
     assert "macro_f1_mean" in res["aggregated_summary"]["semantic"]["uniform"]
     assert "macro_f1_std" in res["aggregated_summary"]["semantic"]["uniform"]
+
+
+def test_benchmark_runner_custom_output_dir_validation(tmp_path):
+    """ISO-01: benchmark_runner validates custom output_dir and rejects unsegregated or cross-mode paths."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / "results").mkdir()
+    (repo / "results" / "real").mkdir(parents=True)
+    (repo / "results" / "smoke").mkdir(parents=True)
+
+    config = ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
+    feats = torch.randn(20, 32)
+    labels = torch.randint(0, 5, (20,))
+
+    # In SMOKE mode, targeting results/real must raise ValueError
+    with pytest.raises(ValueError, match="SMOKE mode prohibited from accessing REAL results"):
+        run_benchmark(
+            "scenario1",
+            train_features=feats,
+            train_labels=labels,
+            test_features=feats,
+            test_labels=labels,
+            output_dir=repo / "results" / "real",
+            config=config,
+            seeds=(42,),
+            strategies=("uniform",),
+            tree_types=("semantic",),
+        )
+
+    # In SMOKE mode, targeting unsegregated results/custom must raise ValueError
+    with pytest.raises(ValueError, match="inside results/ is not properly segregated"):
+        run_sensitivity_ablation(
+            train_features=feats,
+            train_labels=labels,
+            test_features=feats,
+            test_labels=labels,
+            output_dir=repo / "results" / "unsegregated_custom",
+            config=config,
+        )

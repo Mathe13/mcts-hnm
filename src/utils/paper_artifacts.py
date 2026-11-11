@@ -188,16 +188,42 @@ def load_real_benchmark_results(
     tier1_file = res_path / "tier1_benchmark_summary.json"
     if tier1_file.exists():
         _validate_meta(tier1_file)
-        try:
-            with open(tier1_file, "r", encoding="utf-8") as f:
-                data = json.load(f)
-            if isinstance(data, dict) and ("scenario1" in data or "scenario2" in data):
-                logger.info("Loaded real benchmark results from %s", tier1_file)
-                if expected_mode == ExecutionMode.SMOKE:
-                    data["is_smoke"] = True
-                return data
-        except Exception as e:
-            logger.warning("Failed to load %s: %s", tier1_file, e)
+        with open(tier1_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            raise ValueError(f"Expected dictionary in {tier1_file}, got {type(data).__name__}")
+
+        if expected_mode == ExecutionMode.REAL:
+            missing_sections = [s for s in ("scenario1", "scenario2", "ablation") if s not in data or not data[s]]
+            if missing_sections:
+                raise ValueError(
+                    f"Benchmark summary at '{tier1_file}' is incomplete: missing required sections {missing_sections}. "
+                    "All canonical benchmark suites are mandatory for scientific publication."
+                )
+
+        # Validate schema and metrics integrity in loaded summary
+        if "scenario1" in data and isinstance(data["scenario1"], dict):
+            for s, r_d in data["scenario1"].items():
+                for rho, m_d in r_d.items():
+                    for mk in ("f1", "auprc", "fpr95"):
+                        if mk not in m_d or m_d[mk] is None or "mean" not in m_d[mk] or "std" not in m_d[mk]:
+                            raise ValueError(f"Scenario 1 strategy '{s}' missing valid metric '{mk}' at rho={rho} in {tier1_file}")
+
+        if "scenario2" in data and isinstance(data["scenario2"], dict):
+            for s, m_d in data["scenario2"].items():
+                for mk in ("top1_accuracy", "macro_f1", "worst_10_recall"):
+                    if mk not in m_d or m_d[mk] is None or "mean" not in m_d[mk] or "std" not in m_d[mk]:
+                        raise ValueError(f"Scenario 2 strategy '{s}' missing valid metric '{mk}' in {tier1_file}")
+
+        if "ablation" in data and isinstance(data["ablation"], dict):
+            for k, v in data["ablation"].items():
+                if not isinstance(v, dict) or "f1" not in v or v["f1"] is None or "auprc" not in v or v["auprc"] is None:
+                    raise ValueError(f"Ablation configuration '{k}' missing valid 'f1' or 'auprc' in {tier1_file}")
+
+        logger.info("Loaded real benchmark results from %s", tier1_file)
+        if expected_mode == ExecutionMode.SMOKE:
+            data["is_smoke"] = True
+        return data
 
     # Check for individual benchmark suite outputs
     axis1_file = res_path / "tier1_axis1_samplers.json"
@@ -218,150 +244,303 @@ def load_real_benchmark_results(
     if axis1_file.exists():
         found_any = True
         _validate_meta(axis1_file)
-        try:
-            with open(axis1_file, "r", encoding="utf-8") as f:
-                d1 = json.load(f)
-            if "scenario1" in d1 and isinstance(d1["scenario1"], dict) and any("f1" in str(v) for v in d1["scenario1"].values()):
-                merged["scenario1"] = d1["scenario1"]
-            elif "runs" in d1:
-                scen1_norm: dict[str, Any] = {}
-                for r in d1.get("runs", []):
-                    strat = r.get("strategy")
-                    metrics = r.get("final_metrics", {})
-                    if not strat or not metrics:
-                        continue
-                    scen1_norm.setdefault(strat, {}).setdefault("10", {"f1": [], "auprc": [], "fpr95": []})
-                    scen1_norm[strat]["10"]["f1"].append(float(metrics.get("f1", 0.0)))
-                    scen1_norm[strat]["10"]["auprc"].append(float(metrics.get("auprc", 0.0)))
-                    scen1_norm[strat]["10"]["fpr95"].append(float(metrics.get("fpr_at_95_recall", metrics.get("fpr95", 0.0))))
+        with open(axis1_file, "r", encoding="utf-8") as f:
+            d1 = json.load(f)
+        if "scenario1" in d1 and isinstance(d1["scenario1"], dict) and any("f1" in str(v) for v in d1["scenario1"].values()):
+            for strat, r_dict in d1["scenario1"].items():
+                for rho, m_dict in r_dict.items():
+                    for mk in ("f1", "auprc", "fpr95"):
+                        if mk not in m_dict or m_dict[mk] is None:
+                            raise ValueError(f"Scenario 1 strategy '{strat}' missing required metric '{mk}' at rho={rho} in {axis1_file}")
+                        if "mean" not in m_dict[mk] or "std" not in m_dict[mk]:
+                            raise ValueError(f"Scenario 1 strategy '{strat}' missing summary stats for '{mk}' at rho={rho} in {axis1_file}")
+            merged["scenario1"] = d1["scenario1"]
+        elif "runs" in d1:
+            scen1_norm: dict[str, Any] = {}
+            for r in d1.get("runs", []):
+                strat = r.get("strategy")
+                metrics = r.get("final_metrics")
+                if not strat:
+                    raise ValueError(f"Run entry missing required 'strategy' field in {axis1_file}")
+                if metrics is None or not isinstance(metrics, dict):
+                    raise ValueError(f"Run for strategy '{strat}' missing 'final_metrics' dictionary in {axis1_file}")
 
-                for s, r_dict in scen1_norm.items():
-                    for rho, m_dict in r_dict.items():
-                        for mk in ("f1", "auprc", "fpr95"):
-                            vals = m_dict[mk]
-                            m_dict[mk] = {
-                                "mean": float(np.mean(vals)) if vals else 0.0,
-                                "std": float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0,
-                                "values": vals,
-                            }
-                merged["scenario1"] = scen1_norm
-            elif "aggregated_summary" in d1:
-                scen1_norm = {}
-                for tt, strat_dict in d1["aggregated_summary"].items():
-                    for strat, s_metrics in strat_dict.items():
-                        scen1_norm.setdefault(strat, {})["10"] = {
-                            "f1": {"mean": s_metrics.get("f1_mean", 0.0), "std": s_metrics.get("f1_std", 0.0), "values": [s_metrics.get("f1_mean", 0.0)]},
-                            "auprc": {"mean": s_metrics.get("auprc_mean", 0.0), "std": s_metrics.get("auprc_std", 0.0), "values": [s_metrics.get("auprc_mean", 0.0)]},
-                            "fpr95": {"mean": s_metrics.get("fpr_at_95_recall_mean", s_metrics.get("fpr95_mean", 0.0)), "std": s_metrics.get("fpr_at_95_recall_std", 0.0), "values": [s_metrics.get("fpr_at_95_recall_mean", 0.0)]},
+                # Strict validation of original JSON before normalization: missing metrics must error
+                if "f1" not in metrics or metrics["f1"] is None:
+                    raise ValueError(f"Missing required metric 'f1' for strategy '{strat}' in {axis1_file}")
+                if "auprc" not in metrics or metrics["auprc"] is None:
+                    raise ValueError(f"Missing required metric 'auprc' for strategy '{strat}' in {axis1_file}")
+
+                if "fpr_at_95_recall" in metrics and metrics["fpr_at_95_recall"] is not None:
+                    fpr_val = metrics["fpr_at_95_recall"]
+                elif "fpr95" in metrics and metrics["fpr95"] is not None:
+                    fpr_val = metrics["fpr95"]
+                else:
+                    raise ValueError(f"Missing required metric 'fpr_at_95_recall' / 'fpr95' for strategy '{strat}' in {axis1_file}")
+
+                scen1_norm.setdefault(strat, {}).setdefault("10", {"f1": [], "auprc": [], "fpr95": []})
+                scen1_norm[strat]["10"]["f1"].append(float(metrics["f1"]))
+                scen1_norm[strat]["10"]["auprc"].append(float(metrics["auprc"]))
+                scen1_norm[strat]["10"]["fpr95"].append(float(fpr_val))
+
+            for s, r_dict in scen1_norm.items():
+                for rho, m_dict in r_dict.items():
+                    for mk in ("f1", "auprc", "fpr95"):
+                        vals = m_dict[mk]
+                        if not vals:
+                            raise ValueError(f"No metric values collected for strategy '{s}' at rho={rho}")
+                        m_dict[mk] = {
+                            "mean": float(np.mean(vals)),
+                            "std": float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0,
+                            "values": vals,
                         }
-                merged["scenario1"] = scen1_norm
+            merged["scenario1"] = scen1_norm
+        elif "aggregated_summary" in d1:
+            scen1_norm = {}
+            for tt, strat_dict in d1["aggregated_summary"].items():
+                for strat, s_metrics in strat_dict.items():
+                    for req_m in ("f1_mean", "f1_std", "auprc_mean", "auprc_std"):
+                        if req_m not in s_metrics or s_metrics[req_m] is None:
+                            raise ValueError(f"Scenario 1 strategy '{strat}' missing '{req_m}' in aggregated summary in {axis1_file}")
+                    if "fpr_at_95_recall_mean" in s_metrics and s_metrics["fpr_at_95_recall_mean"] is not None:
+                        fpr_m = s_metrics["fpr_at_95_recall_mean"]
+                        fpr_s = s_metrics["fpr_at_95_recall_std"] if "fpr_at_95_recall_std" in s_metrics and s_metrics["fpr_at_95_recall_std"] is not None else 0.0
+                    elif "fpr95_mean" in s_metrics and s_metrics["fpr95_mean"] is not None:
+                        fpr_m = s_metrics["fpr95_mean"]
+                        fpr_s = s_metrics["fpr95_std"] if "fpr95_std" in s_metrics and s_metrics["fpr95_std"] is not None else 0.0
+                    else:
+                        raise ValueError(f"Scenario 1 strategy '{strat}' missing 'fpr_at_95_recall_mean' / 'fpr95_mean' in aggregated summary in {axis1_file}")
+                    scen1_norm.setdefault(strat, {})["10"] = {
+                        "f1": {"mean": float(s_metrics["f1_mean"]), "std": float(s_metrics["f1_std"]), "values": [float(s_metrics["f1_mean"])]},
+                        "auprc": {"mean": float(s_metrics["auprc_mean"]), "std": float(s_metrics["auprc_std"]), "values": [float(s_metrics["auprc_mean"])]},
+                        "fpr95": {"mean": float(fpr_m), "std": float(fpr_s), "values": [float(fpr_m)]},
+                    }
+            merged["scenario1"] = scen1_norm
+        else:
+            raise ValueError(f"Invalid format in {axis1_file}: expected 'scenario1', 'runs', or 'aggregated_summary'")
 
-            if "convergence" in d1:
-                merged["convergence"] = d1["convergence"]
-            if "heatmap" in d1:
-                merged["heatmap"] = d1["heatmap"]
-        except Exception as e:
-            logger.warning("Error parsing %s: %s", axis1_file, e)
+        if "convergence" in d1:
+            merged["convergence"] = d1["convergence"]
+        if "heatmap" in d1:
+            merged["heatmap"] = d1["heatmap"]
 
     if scen2_file.exists():
         found_any = True
         _validate_meta(scen2_file)
-        try:
-            with open(scen2_file, "r", encoding="utf-8") as f:
-                d2 = json.load(f)
-            if "scenario2" in d2 and isinstance(d2["scenario2"], dict) and any("top1_accuracy" in str(v) for v in d2["scenario2"].values()):
-                merged["scenario2"] = d2["scenario2"]
-            elif "runs" in d2:
-                scen2_norm: dict[str, Any] = {}
-                for r in d2.get("runs", []):
-                    strat = r.get("strategy")
-                    metrics = r.get("final_metrics", {})
-                    if not strat or not metrics:
-                        continue
-                    scen2_norm.setdefault(strat, {"top1_accuracy": [], "macro_f1": [], "worst_10_recall": []})
-                    scen2_norm[strat]["top1_accuracy"].append(float(metrics.get("top1_accuracy", 0.0)))
-                    scen2_norm[strat]["macro_f1"].append(float(metrics.get("macro_f1", metrics.get("f1", 0.0))))
-                    scen2_norm[strat]["worst_10_recall"].append(float(metrics.get("worst_10_class_recall", metrics.get("worst_10_recall", 0.0))))
+        with open(scen2_file, "r", encoding="utf-8") as f:
+            d2 = json.load(f)
+        if "scenario2" in d2 and isinstance(d2["scenario2"], dict) and any("top1_accuracy" in str(v) for v in d2["scenario2"].values()):
+            for strat, m_dict in d2["scenario2"].items():
+                for mk in ("top1_accuracy", "macro_f1", "worst_10_recall"):
+                    if mk not in m_dict or m_dict[mk] is None:
+                        raise ValueError(f"Scenario 2 strategy '{strat}' missing required metric '{mk}' in {scen2_file}")
+                    if "mean" not in m_dict[mk] or "std" not in m_dict[mk]:
+                        raise ValueError(f"Scenario 2 strategy '{strat}' missing summary stats for '{mk}' in {scen2_file}")
+            merged["scenario2"] = d2["scenario2"]
+        elif "runs" in d2:
+            scen2_norm: dict[str, Any] = {}
+            for r in d2.get("runs", []):
+                strat = r.get("strategy")
+                metrics = r.get("final_metrics")
+                if not strat:
+                    raise ValueError(f"Run entry missing required 'strategy' field in {scen2_file}")
+                if metrics is None or not isinstance(metrics, dict):
+                    raise ValueError(f"Run for strategy '{strat}' missing 'final_metrics' dictionary in {scen2_file}")
 
-                for s, m_dict in scen2_norm.items():
-                    for mk in ("top1_accuracy", "macro_f1", "worst_10_recall"):
-                        vals = m_dict[mk]
-                        m_dict[mk] = {
-                            "mean": float(np.mean(vals)) if vals else 0.0,
-                            "std": float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0,
-                            "values": vals,
-                        }
-                merged["scenario2"] = scen2_norm
-            elif "aggregated_summary" in d2:
-                scen2_norm = {}
-                for tt, strat_dict in d2["aggregated_summary"].items():
-                    for strat, s_metrics in strat_dict.items():
-                        scen2_norm[strat] = {
-                            "top1_accuracy": {"mean": s_metrics.get("top1_accuracy_mean", 0.0), "std": s_metrics.get("top1_accuracy_std", 0.0), "values": [s_metrics.get("top1_accuracy_mean", 0.0)]},
-                            "macro_f1": {"mean": s_metrics.get("macro_f1_mean", s_metrics.get("f1_mean", 0.0)), "std": s_metrics.get("macro_f1_std", 0.0), "values": [s_metrics.get("macro_f1_mean", 0.0)]},
-                            "worst_10_recall": {"mean": s_metrics.get("worst_10_class_recall_mean", 0.0), "std": s_metrics.get("worst_10_class_recall_std", 0.0), "values": [s_metrics.get("worst_10_class_recall_mean", 0.0)]},
-                        }
-                merged["scenario2"] = scen2_norm
-        except Exception as e:
-            logger.warning("Error parsing %s: %s", scen2_file, e)
+                # Strict validation of original JSON before normalization: missing metrics must error
+                if "top1_accuracy" not in metrics or metrics["top1_accuracy"] is None:
+                    raise ValueError(f"Missing required metric 'top1_accuracy' for strategy '{strat}' in {scen2_file}")
+
+                if "macro_f1" in metrics and metrics["macro_f1"] is not None:
+                    f1_val = metrics["macro_f1"]
+                elif "f1" in metrics and metrics["f1"] is not None:
+                    f1_val = metrics["f1"]
+                else:
+                    raise ValueError(f"Missing required metric 'macro_f1' / 'f1' for strategy '{strat}' in {scen2_file}")
+
+                if "worst_10_class_recall" in metrics and metrics["worst_10_class_recall"] is not None:
+                    w10_val = metrics["worst_10_class_recall"]
+                elif "worst_10_recall" in metrics and metrics["worst_10_recall"] is not None:
+                    w10_val = metrics["worst_10_recall"]
+                else:
+                    raise ValueError(f"Missing required metric 'worst_10_class_recall' / 'worst_10_recall' for strategy '{strat}' in {scen2_file}")
+
+                scen2_norm.setdefault(strat, {"top1_accuracy": [], "macro_f1": [], "worst_10_recall": []})
+                scen2_norm[strat]["top1_accuracy"].append(float(metrics["top1_accuracy"]))
+                scen2_norm[strat]["macro_f1"].append(float(f1_val))
+                scen2_norm[strat]["worst_10_recall"].append(float(w10_val))
+
+            for s, m_dict in scen2_norm.items():
+                for mk in ("top1_accuracy", "macro_f1", "worst_10_recall"):
+                    vals = m_dict[mk]
+                    if not vals:
+                        raise ValueError(f"No metric values collected for strategy '{s}' in Scenario 2")
+                    m_dict[mk] = {
+                        "mean": float(np.mean(vals)),
+                        "std": float(np.std(vals, ddof=1)) if len(vals) > 1 else 0.0,
+                        "values": vals,
+                    }
+            merged["scenario2"] = scen2_norm
+        elif "aggregated_summary" in d2:
+            scen2_norm = {}
+            for tt, strat_dict in d2["aggregated_summary"].items():
+                for strat, s_metrics in strat_dict.items():
+                    if "top1_accuracy_mean" not in s_metrics or s_metrics["top1_accuracy_mean"] is None:
+                        raise ValueError(f"Scenario 2 strategy '{strat}' missing 'top1_accuracy_mean' in {scen2_file}")
+
+                    if "macro_f1_mean" in s_metrics and s_metrics["macro_f1_mean"] is not None:
+                        f1_m = s_metrics["macro_f1_mean"]
+                        f1_s = s_metrics["macro_f1_std"] if "macro_f1_std" in s_metrics and s_metrics["macro_f1_std"] is not None else 0.0
+                    elif "f1_mean" in s_metrics and s_metrics["f1_mean"] is not None:
+                        f1_m = s_metrics["f1_mean"]
+                        f1_s = s_metrics["f1_std"] if "f1_std" in s_metrics and s_metrics["f1_std"] is not None else 0.0
+                    else:
+                        raise ValueError(f"Scenario 2 strategy '{strat}' missing 'macro_f1_mean' / 'f1_mean' in {scen2_file}")
+
+                    if "worst_10_class_recall_mean" in s_metrics and s_metrics["worst_10_class_recall_mean"] is not None:
+                        w10_m = s_metrics["worst_10_class_recall_mean"]
+                        w10_s = s_metrics["worst_10_class_recall_std"] if "worst_10_class_recall_std" in s_metrics and s_metrics["worst_10_class_recall_std"] is not None else 0.0
+                    elif "worst_10_recall_mean" in s_metrics and s_metrics["worst_10_recall_mean"] is not None:
+                        w10_m = s_metrics["worst_10_recall_mean"]
+                        w10_s = s_metrics["worst_10_recall_std"] if "worst_10_recall_std" in s_metrics and s_metrics["worst_10_recall_std"] is not None else 0.0
+                    else:
+                        raise ValueError(f"Scenario 2 strategy '{strat}' missing 'worst_10_class_recall_mean' in {scen2_file}")
+
+                    acc_s = float(s_metrics["top1_accuracy_std"]) if "top1_accuracy_std" in s_metrics and s_metrics["top1_accuracy_std"] is not None else 0.0
+                    scen2_norm[strat] = {
+                        "top1_accuracy": {"mean": float(s_metrics["top1_accuracy_mean"]), "std": acc_s, "values": [float(s_metrics["top1_accuracy_mean"])]},
+                        "macro_f1": {"mean": float(f1_m), "std": float(f1_s), "values": [float(f1_m)]},
+                        "worst_10_recall": {"mean": float(w10_m), "std": float(w10_s), "values": [float(w10_m)]},
+                    }
+            merged["scenario2"] = scen2_norm
+        else:
+            raise ValueError(f"Invalid format in {scen2_file}: expected 'scenario2', 'runs', or 'aggregated_summary'")
 
     if ablation_file.exists():
         found_any = True
         _validate_meta(ablation_file)
-        try:
-            with open(ablation_file, "r", encoding="utf-8") as f:
-                da = json.load(f)
-            if "ablation" in da:
-                merged["ablation"] = da["ablation"]
-            elif "runs" in da:
-                ab_norm: dict[str, Any] = {}
-                for r in da.get("runs", []):
-                    tt = r.get("tree_type")
-                    metrics = r.get("final_metrics", {})
+        with open(ablation_file, "r", encoding="utf-8") as f:
+            da = json.load(f)
+        if "ablation" in da and isinstance(da["ablation"], dict):
+            for k, v in da["ablation"].items():
+                if not isinstance(v, dict) or "f1" not in v or v["f1"] is None or "auprc" not in v or v["auprc"] is None:
+                    raise ValueError(f"Ablation configuration '{k}' missing required 'f1' or 'auprc' in {ablation_file}")
+            merged["ablation"] = da["ablation"]
+        elif "runs" in da:
+            ab_norm: dict[str, Any] = {}
+            for r in da.get("runs", []):
+                tt = r.get("tree_type")
+                metrics = r.get("final_metrics")
+                if not tt:
+                    raise ValueError(f"Ablation run entry missing 'tree_type' in {ablation_file}")
+                if metrics is None or not isinstance(metrics, dict):
+                    raise ValueError(f"Ablation run for tree '{tt}' missing 'final_metrics' in {ablation_file}")
+
+                # Strict validation of original JSON before normalization: missing metrics must error
+                if "f1" not in metrics or metrics["f1"] is None:
+                    raise ValueError(f"Missing required metric 'f1' for tree '{tt}' in {ablation_file}")
+                if "auprc" not in metrics or metrics["auprc"] is None:
+                    raise ValueError(f"Missing required metric 'auprc' for tree '{tt}' in {ablation_file}")
+
+                key = f"{tt}_tree" if not str(tt).endswith("_tree") else str(tt)
+                ab_norm.setdefault(key, {"f1": [], "auprc": []})
+                ab_norm[key]["f1"].append(float(metrics["f1"]))
+                ab_norm[key]["auprc"].append(float(metrics["auprc"]))
+
+            merged["ablation"] = {
+                k: {"f1": float(np.mean(v["f1"])), "auprc": float(np.mean(v["auprc"]))}
+                for k, v in ab_norm.items()
+            }
+        elif "aggregated_summary" in da:
+            ab_norm = {}
+            for tt, s_dict in da["aggregated_summary"].items():
+                for s, m in s_dict.items():
                     key = f"{tt}_tree" if not str(tt).endswith("_tree") else str(tt)
-                    ab_norm.setdefault(key, {"f1": [], "auprc": []})
-                    ab_norm[key]["f1"].append(float(metrics.get("f1", 0.0)))
-                    ab_norm[key]["auprc"].append(float(metrics.get("auprc", 0.0)))
-                merged["ablation"] = {
-                    k: {"f1": float(np.mean(v["f1"])), "auprc": float(np.mean(v["auprc"]))}
-                    for k, v in ab_norm.items()
-                }
-            elif "aggregated_summary" in da:
-                ab_norm = {}
-                for tt, s_dict in da["aggregated_summary"].items():
-                    for s, m in s_dict.items():
-                        key = f"{tt}_tree" if not str(tt).endswith("_tree") else str(tt)
-                        ab_norm[key] = {"f1": m.get("f1_mean", 0.0), "auprc": m.get("auprc_mean", 0.0)}
-                merged["ablation"] = ab_norm
-        except Exception as e:
-            logger.warning("Error parsing %s: %s", ablation_file, e)
+                    if "f1_mean" not in m or m["f1_mean"] is None:
+                        raise ValueError(f"Ablation configuration '{key}' missing 'f1_mean' in {ablation_file}")
+                    if "auprc_mean" not in m or m["auprc_mean"] is None:
+                        raise ValueError(f"Ablation configuration '{key}' missing 'auprc_mean' in {ablation_file}")
+                    ab_norm[key] = {"f1": float(m["f1_mean"]), "auprc": float(m["auprc_mean"])}
+            merged["ablation"] = ab_norm
+        else:
+            raise ValueError(f"Invalid format in {ablation_file}: expected 'ablation', 'runs', or 'aggregated_summary'")
 
     if sensitivity_file.exists():
         found_any = True
         _validate_meta(sensitivity_file)
-        try:
-            with open(sensitivity_file, "r", encoding="utf-8") as f:
-                ds = json.load(f)
-            if "sensitivity" in ds:
-                merged["sensitivity"] = ds["sensitivity"]
-            elif "grid" in ds:
-                grid = ds["grid"]
-                c_vals = sorted(list({float(g["c"]) for g in grid}))
-                alpha_vals = sorted(list({float(g["alpha"]) for g in grid}))
-                def_alpha = 0.3 if 0.3 in alpha_vals else (alpha_vals[len(alpha_vals) // 2] if alpha_vals else 0.3)
-                c_f1 = [float(next((g["f1_mean"] for g in grid if float(g["c"]) == c and float(g["alpha"]) == def_alpha), 0.0)) for c in c_vals]
-                def_c = 1.0 if 1.0 in c_vals else (c_vals[len(c_vals) // 2] if c_vals else 1.0)
-                alpha_f1 = [float(next((g["f1_mean"] for g in grid if float(g["c"]) == def_c and float(g["alpha"]) == a), 0.0)) for a in alpha_vals]
-                merged["sensitivity"] = {
-                    "c_values": c_vals,
-                    "c_f1": c_f1,
-                    "alpha_values": alpha_vals,
-                    "alpha_f1": alpha_f1,
-                }
-        except Exception as e:
-            logger.warning("Error parsing %s: %s", sensitivity_file, e)
+        with open(sensitivity_file, "r", encoding="utf-8") as f:
+            ds = json.load(f)
+        if "sensitivity" in ds:
+            merged["sensitivity"] = ds["sensitivity"]
+        elif "grid" in ds:
+            grid = ds["grid"]
+            c_vals = sorted(list({float(g["c"]) for g in grid}))
+            alpha_vals = sorted(list({float(g["alpha"]) for g in grid}))
+            def_alpha = 0.3 if 0.3 in alpha_vals else (alpha_vals[len(alpha_vals) // 2] if alpha_vals else 0.3)
+            def_c = 1.0 if 1.0 in c_vals else (c_vals[len(c_vals) // 2] if c_vals else 1.0)
 
-    if found_any and (merged["scenario1"] or merged["scenario2"]):
+            c_f1 = []
+            for c in c_vals:
+                match = next((g for g in grid if float(g["c"]) == c and float(g["alpha"]) == def_alpha), None)
+                if match is None or "f1_mean" not in match or match["f1_mean"] is None:
+                    raise ValueError(f"Sensitivity grid missing 'f1_mean' for coordinate (c={c}, alpha={def_alpha}) in {sensitivity_file}")
+                c_f1.append(float(match["f1_mean"]))
+
+            alpha_f1 = []
+            for a in alpha_vals:
+                match = next((g for g in grid if float(g["c"]) == def_c and float(g["alpha"]) == a), None)
+                if match is None or "f1_mean" not in match or match["f1_mean"] is None:
+                    raise ValueError(f"Sensitivity grid missing 'f1_mean' for coordinate (c={def_c}, alpha={a}) in {sensitivity_file}")
+                alpha_f1.append(float(match["f1_mean"]))
+
+            merged["sensitivity"] = {
+                "c_values": c_vals,
+                "c_f1": c_f1,
+                "alpha_values": alpha_vals,
+                "alpha_f1": alpha_f1,
+            }
+        else:
+            raise ValueError(f"Invalid format in {sensitivity_file}: expected 'sensitivity' or 'grid'")
+
+    if not found_any:
+        raise FileNotFoundError(
+            f"Real benchmark results not found in {res_path}. "
+            "Automatic synthetic fallback is prohibited in REAL mode. "
+            "Ensure tier1_benchmark_summary.json or component benchmark results are produced first."
+        )
+
+    # Validate completeness of result sets
+    if expected_mode == ExecutionMode.REAL:
+        missing_dependencies = []
+        if not axis1_file.exists():
+            missing_dependencies.append("tier1_axis1_samplers.json (Scenario 1)")
+        if not scen2_file.exists():
+            missing_dependencies.append("tier1_scenario2_curriculum.json (Scenario 2)")
+        if not ablation_file.exists():
+            missing_dependencies.append("tier1_axis2_tree_ablation.json (Tree Ablation)")
+
+        if missing_dependencies:
+            raise FileNotFoundError(
+                f"Incomplete benchmark results in {res_path}: missing required benchmark dependency files: {missing_dependencies}. "
+                "All canonical benchmark suites are mandatory for scientific publication in REAL mode."
+            )
+
+        missing_sections = []
+        if not merged.get("scenario1"):
+            missing_sections.append("scenario1")
+        if not merged.get("scenario2"):
+            missing_sections.append("scenario2")
+        if not merged.get("ablation"):
+            missing_sections.append("ablation")
+
+        if missing_sections:
+            raise ValueError(
+                f"Benchmark results in {res_path} are incomplete: missing required sections {missing_sections}. "
+                "All canonical benchmark suites are mandatory for scientific publication."
+            )
+        return merged
+
+    if found_any and (merged.get("scenario1") or merged.get("scenario2")):
         if expected_mode == ExecutionMode.SMOKE:
             merged["is_smoke"] = True
         return merged

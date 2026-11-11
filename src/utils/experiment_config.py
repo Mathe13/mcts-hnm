@@ -166,7 +166,7 @@ def migrate_legacy_results(repo_root: Optional[Union[str, Path]] = None) -> int:
 def get_isolated_paths(
     config: ExperimentConfig,
     repo_root: Optional[Union[str, Path]] = None,
-    migrate_legacy: bool = True,
+    migrate_legacy: bool = False,
 ) -> IsolatedPaths:
     """Resolve and create isolated directory paths anchored to repository root."""
     root = Path(repo_root).resolve() if repo_root is not None else find_repo_root()
@@ -225,28 +225,53 @@ def validate_mode_isolated_path(
     resolved = Path(path).resolve()
 
     # Reject unsegregated root results/ (must be results/smoke or results/real or results/legacy)
-    if resolved == (repo / "results").resolve():
+    if resolved == (repo / "results").resolve() or resolved.name == "results":
         raise ValueError(
             f"Direct unsegregated I/O at '{path}' is prohibited. Use mode-segregated paths ('results/{mode.value}')."
         )
 
-    # In SMOKE mode, reject root paper/ directory
+    # In SMOKE mode, reject root paper/ directory and REAL results
     if mode == ExecutionMode.SMOKE:
-        if resolved == (repo / "paper").resolve() or (repo / "paper").resolve() in resolved.parents:
+        is_smoke_paper = any(
+            resolved.parts[i] == "results" and resolved.parts[i + 1] == "smoke" and resolved.parts[i + 2] == "paper"
+            for i in range(len(resolved.parts) - 2)
+        )
+        if not is_smoke_paper and (
+            resolved == (repo / "paper").resolve()
+            or (repo / "paper").resolve() in resolved.parents
+            or "paper" in resolved.parts
+        ):
             raise ValueError(
                 f"SMOKE mode prohibited from reading or writing root paper/ directory: '{path}'. Use 'results/smoke/paper/'."
             )
-        if resolved == (repo / "results" / "real").resolve() or (repo / "results" / "real").resolve() in resolved.parents:
+        if (
+            resolved == (repo / "results" / "real").resolve()
+            or (repo / "results" / "real").resolve() in resolved.parents
+            or any(resolved.parts[i] == "results" and resolved.parts[i + 1] == "real" for i in range(len(resolved.parts) - 1))
+        ):
             raise ValueError(
                 f"SMOKE mode prohibited from accessing REAL results directory: '{path}'."
             )
 
     # In REAL mode, reject smoke results directory
     if mode == ExecutionMode.REAL:
-        if resolved == (repo / "results" / "smoke").resolve() or (repo / "results" / "smoke").resolve() in resolved.parents:
+        if (
+            resolved == (repo / "results" / "smoke").resolve()
+            or (repo / "results" / "smoke").resolve() in resolved.parents
+            or any(resolved.parts[i] == "results" and resolved.parts[i + 1] == "smoke" for i in range(len(resolved.parts) - 1))
+        ):
             raise ValueError(
                 f"REAL mode prohibited from accessing SMOKE results directory: '{path}'."
             )
+
+    # Any path located under results/ must be segregated into the active mode or legacy
+    for i in range(len(resolved.parts) - 1):
+        if resolved.parts[i] == "results":
+            child = resolved.parts[i + 1]
+            if child not in (mode.value, "legacy"):
+                raise ValueError(
+                    f"Path '{path}' inside results/ is not properly segregated. Must be under 'results/{mode.value}' or 'results/legacy'."
+                )
 
     return resolved
 

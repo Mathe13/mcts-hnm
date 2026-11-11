@@ -300,3 +300,104 @@ def test_validate_artifact_completeness():
 
     with pytest.raises(ValueError, match="Unknown artifact type"):
         validate_artifact_completeness(valid_data, "unknown_artifact")
+
+
+def test_load_real_benchmark_results_rejects_missing_metrics(tmp_path):
+    """METRIC-01: Missing metrics in raw JSON raise ValueError and are never substituted with 0.0."""
+    res_dir = tmp_path / "results" / "real"
+    res_dir.mkdir(parents=True)
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.REAL)
+
+    # 1. Scenario 1 missing 'f1' in runs
+    axis1_file = res_dir / "tier1_axis1_samplers.json"
+    bad_data = {
+        "runs": [
+            {
+                "strategy": "uniform",
+                "final_metrics": {
+                    # Missing "f1"!
+                    "auprc": 0.45,
+                    "fpr_at_95_recall": 0.30,
+                },
+            }
+        ]
+    }
+    axis1_file.write_text(json.dumps(bad_data), encoding="utf-8")
+    save_provenance_metadata(axis1_file, config=cfg)
+
+    with pytest.raises(ValueError, match="Missing required metric 'f1' for strategy 'uniform'"):
+        load_real_benchmark_results(res_dir, expected_mode=ExecutionMode.REAL)
+
+    # 2. Scenario 2 missing 'top1_accuracy' in runs
+    good_axis1 = {
+        "scenario1": {
+            "uniform": {
+                "10": {
+                    "f1": {"mean": 0.42, "std": 0.01, "values": [0.42]},
+                    "auprc": {"mean": 0.40, "std": 0.01, "values": [0.40]},
+                    "fpr95": {"mean": 0.35, "std": 0.01, "values": [0.35]},
+                }
+            }
+        }
+    }
+    axis1_file.write_text(json.dumps(good_axis1), encoding="utf-8")
+    save_provenance_metadata(axis1_file, config=cfg)
+
+    scen2_file = res_dir / "tier1_scenario2_curriculum.json"
+    bad_scen2 = {
+        "runs": [
+            {
+                "strategy": "uniform",
+                "final_metrics": {
+                    # Missing 'top1_accuracy'!
+                    "macro_f1": 0.50,
+                    "worst_10_class_recall": 0.20,
+                },
+            }
+        ]
+    }
+    scen2_file.write_text(json.dumps(bad_scen2), encoding="utf-8")
+    save_provenance_metadata(scen2_file, config=cfg)
+
+    with pytest.raises(ValueError, match="Missing required metric 'top1_accuracy' for strategy 'uniform'"):
+        load_real_benchmark_results(res_dir, expected_mode=ExecutionMode.REAL)
+
+
+def test_load_real_benchmark_results_rejects_incomplete_suite(tmp_path):
+    """COMP-01: Incomplete benchmark results in REAL mode raise FileNotFoundError detailing missing files."""
+    res_dir = tmp_path / "results" / "real"
+    res_dir.mkdir(parents=True)
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.REAL)
+
+    # Provide only Scenario 1, omit Scenario 2 and ablation
+    axis1_file = res_dir / "tier1_axis1_samplers.json"
+    good_axis1 = {
+        "scenario1": {
+            "uniform": {
+                "10": {
+                    "f1": {"mean": 0.42, "std": 0.01, "values": [0.42]},
+                    "auprc": {"mean": 0.40, "std": 0.01, "values": [0.40]},
+                    "fpr95": {"mean": 0.35, "std": 0.01, "values": [0.35]},
+                }
+            }
+        }
+    }
+    axis1_file.write_text(json.dumps(good_axis1), encoding="utf-8")
+    save_provenance_metadata(axis1_file, config=cfg)
+
+    with pytest.raises(FileNotFoundError, match="missing required benchmark dependency files"):
+        load_real_benchmark_results(res_dir, expected_mode=ExecutionMode.REAL)
+
+
+def test_load_real_benchmark_results_re_raises_parsing_errors(tmp_path):
+    """COMP-01: Corrupted or invalid JSON benchmark files fail fast and are not swallowed as warnings."""
+    res_dir = tmp_path / "results" / "real"
+    res_dir.mkdir(parents=True)
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.REAL)
+
+    axis1_file = res_dir / "tier1_axis1_samplers.json"
+    axis1_file.write_text("{ corrupted invalid json ...", encoding="utf-8")
+    save_provenance_metadata(axis1_file, config=cfg)
+
+    with pytest.raises(json.JSONDecodeError):
+        load_real_benchmark_results(res_dir, expected_mode=ExecutionMode.REAL)

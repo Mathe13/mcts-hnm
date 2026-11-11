@@ -15,6 +15,7 @@ from src.utils.experiment_config import (
     find_repo_root,
     get_active_session_mode,
     get_isolated_paths,
+    migrate_legacy_results,
     print_execution_banner,
     reset_active_session_mode,
     save_provenance_metadata,
@@ -148,14 +149,14 @@ def test_find_repo_root_and_path_anchoring():
 
 
 def test_legacy_directory_preservation(tmp_path):
-    """C10: Directory initialization establishes results/legacy/ and preserves existing legacy files."""
+    """C10: Directory initialization establishes results/legacy/ and preserves existing legacy files via migrate_legacy=True or explicit migration."""
     results_dir = tmp_path / "results"
     results_dir.mkdir(parents=True)
     legacy_file = results_dir / "old_benchmark.json"
     legacy_file.write_text('{"legacy": true}')
 
     config = ExperimentConfig(execution_mode=ExecutionMode.REAL)
-    paths = get_isolated_paths(config, repo_root=tmp_path)
+    paths = get_isolated_paths(config, repo_root=tmp_path, migrate_legacy=True)
 
     # Legacy file was moved or preserved into results/legacy
     assert paths.legacy_dir.is_dir()
@@ -239,9 +240,39 @@ def test_validate_mode_isolated_path(tmp_path):
     with pytest.raises(ValueError, match="REAL mode prohibited from accessing SMOKE results"):
         validate_mode_isolated_path(repo / "results" / "smoke", mode=ExecutionMode.REAL, root=repo)
 
-    # 4. Valid mode paths pass
+    # 4. Unsegregated custom subdirectories under results/ are rejected
+    with pytest.raises(ValueError, match="inside results/ is not properly segregated"):
+        validate_mode_isolated_path(repo / "results" / "custom_unsegregated", mode=ExecutionMode.SMOKE, root=repo)
+
+    with pytest.raises(ValueError, match="inside results/ is not properly segregated"):
+        validate_mode_isolated_path(repo / "results" / "custom_unsegregated", mode=ExecutionMode.REAL, root=repo)
+
+    # 5. Valid mode paths pass
     p_smoke = validate_mode_isolated_path(repo / "results" / "smoke", mode=ExecutionMode.SMOKE, root=repo)
     assert p_smoke == (repo / "results" / "smoke").resolve()
 
     p_real = validate_mode_isolated_path(repo / "results" / "real", mode=ExecutionMode.REAL, root=repo)
     assert p_real == (repo / "results" / "real").resolve()
+
+
+def test_get_isolated_paths_legacy_migration_default(tmp_path):
+    """MIG-01: get_isolated_paths defaults to migrate_legacy=False and does not move files."""
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    results_dir = repo / "results"
+    results_dir.mkdir()
+    legacy_file = results_dir / "historical_run.json"
+    legacy_file.write_text("{}", encoding="utf-8")
+
+    cfg = ExperimentConfig(execution_mode=ExecutionMode.SMOKE)
+
+    # Calling get_isolated_paths with default migrate_legacy=False must NOT move legacy_file
+    paths = get_isolated_paths(cfg, repo_root=repo)
+    assert legacy_file.exists(), "Legacy file must not be moved when migrate_legacy=False (default)"
+    assert not (results_dir / "legacy" / "historical_run.json").exists()
+
+    # Explicit call to migrate_legacy_results must move the file
+    moved = migrate_legacy_results(repo_root=repo)
+    assert moved == 1
+    assert not legacy_file.exists(), "Legacy file must be moved after explicit migrate_legacy_results()"
+    assert (results_dir / "legacy" / "historical_run.json").exists()

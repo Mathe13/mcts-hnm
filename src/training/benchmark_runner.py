@@ -24,6 +24,7 @@ from src.utils.experiment_config import (
     get_active_session_mode,
     get_isolated_paths,
     save_provenance_metadata,
+    validate_mode_isolated_path,
 )
 from src.utils.seed import set_global_seed
 from src.utils.statistics import compute_paired_statistical_tests
@@ -140,7 +141,7 @@ def run_benchmark(
     if str(output_dir) == "results" or Path(output_dir) == Path("results"):
         out_path = paths.results_dir
     else:
-        out_path = Path(output_dir)
+        out_path = validate_mode_isolated_path(output_dir, mode=active_config.execution_mode)
 
     runs: list[BenchmarkRunResult] = []
     convergence_history: dict[str, Any] = {}
@@ -460,7 +461,7 @@ def run_sensitivity_ablation(
     if str(output_dir) == "results" or Path(output_dir) == Path("results"):
         out_path = paths.results_dir
     else:
-        out_path = Path(output_dir)
+        out_path = validate_mode_isolated_path(output_dir, mode=active_config.execution_mode)
 
     train_lbl_np = (
         train_labels.detach().cpu().numpy()
