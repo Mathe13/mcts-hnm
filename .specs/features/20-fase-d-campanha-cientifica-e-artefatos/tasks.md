@@ -122,15 +122,15 @@ T5
 
 **Done when**:
 
-- [ ] Computes paired differences across identical seeds with mean, std, and 95% CI
-- [ ] Computes Cohen's d effect size for paired samples
-- [ ] Computes interaction statistics (difference of differences) between imbalance ratios
-- [ ] Unit tests in `tests/test_phase_d_statistics.py` pass
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_phase_d_statistics.py`  
+- [x] Computes paired differences across identical seeds with mean, std, and 95% CI
+- [x] Computes Cohen's d effect size for paired samples
+- [x] Computes interaction statistics (difference of differences) between imbalance ratios
+- [x] Unit tests in `tests/test_phase_d_statistics.py` pass
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_phase_d_statistics.py`  
 
 **Tests**: unit  
 **Gate**: quick  
-**Commit**: `feat(statistics): implement paired comparisons and ratio interaction tests`  
+**Commit**: `feat(statistics): paired comparisons and ratio interaction tests`  
 
 ---
 
