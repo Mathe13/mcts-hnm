@@ -239,6 +239,9 @@ def load_real_benchmark_results(
         "convergence": {},
         "heatmap": {},
         "sensitivity": {},
+        "ratio_interactions": {},
+        "target_classes": [],
+        "aggregated_by_class": {},
     }
 
     if axis1_file.exists():
@@ -246,6 +249,12 @@ def load_real_benchmark_results(
         _validate_meta(axis1_file)
         with open(axis1_file, "r", encoding="utf-8") as f:
             d1 = json.load(f)
+        if "ratio_interactions" in d1:
+            merged["ratio_interactions"] = d1["ratio_interactions"]
+        if "target_classes" in d1:
+            merged["target_classes"] = d1["target_classes"]
+        if "aggregated_by_class" in d1:
+            merged["aggregated_by_class"] = d1["aggregated_by_class"]
         if "scenario1" in d1 and isinstance(d1["scenario1"], dict) and any("f1" in str(v) for v in d1["scenario1"].values()):
             for strat, r_dict in d1["scenario1"].items():
                 for rho, m_dict in r_dict.items():

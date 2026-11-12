@@ -109,9 +109,9 @@ T4
 
 **Done when**:
 
-- [ ] `load_real_benchmark_results()` processa corretamente saídas multi-razão e multi-classe
-- [ ] Validações de esquema mantêm integridade e compatibilidade regressiva com execuções de razão única
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests`  
+- [x] `load_real_benchmark_results()` processa corretamente saídas multi-razão e multi-classe
+- [x] Validações de esquema mantêm integridade e compatibilidade regressiva com execuções de razão única
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests`  
 
 **Tests**: unit  
 **Gate**: quick  
