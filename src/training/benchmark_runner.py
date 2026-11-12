@@ -553,8 +553,26 @@ def run_benchmark(
                     h_entry["primary_stats"] = compute_paired_statistical_tests(sem_scores, conf_scores)
                     h_entry["f1_stats"] = compute_paired_statistical_tests(sem_f1, conf_f1)
                     statistical_comparisons[f"semantic_vs_confusion_ward_{strat}"] = h_entry["primary_stats"]
+                    p_val = h_entry["primary_stats"].get("t_pvalue", 1.0)
+                    if p_val < 0.05:
+                        h_entry["verdict"] = (
+                            f"Diferença estatisticamente significante (p = {p_val:.4e} < 0.05); "
+                            "rejeita-se a hipótese nula de equivalência entre Semantic e Ward."
+                        )
+                    else:
+                        h_entry["verdict"] = (
+                            f"Não há evidência estatisticamente significante (p = {p_val:.4f} >= 0.05) "
+                            "para declarar superioridade de qualquer uma das hierarquias; a hipótese nula de equivalência não pode ser rejeitada."
+                        )
+                else:
+                    h_entry["verdict"] = (
+                        f"Amostra insuficiente ({len(common_s)} seed(s)) para inferência pareada formal; "
+                        f"delta médio primário: {h_entry['delta_primary_mean']:+.4f}."
+                    )
 
                 paired_hierarchy_tests[strat] = h_entry
+        if paired_hierarchy_tests and "mcts_enhanced" in paired_hierarchy_tests:
+            paired_hierarchy_tests["verdict"] = paired_hierarchy_tests["mcts_enhanced"]["verdict"]
 
     # 2x2 Factorial Mechanism Analysis (Strict vs QNorm vs DualStream vs Enhanced)
     factorial_set = {"mcts_strict", "mcts_qnorm_only", "mcts_dualstream_only", "mcts_enhanced"}
