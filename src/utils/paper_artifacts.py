@@ -1666,6 +1666,30 @@ def generate_all_paper_artifacts(
     except Exception as e:
         logger.info("Interaction ratio plot omitted: %s", e)
 
+    # 3h. Figures: Precision-Recall Curves (FIG-06)
+    try:
+        pr_paths = generate_precision_recall_curves_plot(
+            campaign_dir_or_manifest=manifest_sim if manifest_sim is not None else {"runs": {}, "mode": "smoke" if (mode == ExecutionMode.SMOKE or data.get("is_smoke")) else "real", "is_smoke": (mode == ExecutionMode.SMOKE or data.get("is_smoke"))},
+            output_dir=fig_dir,
+            expected_mode=mode,
+            watermark=watermark,
+        )
+        figures.extend([pr_paths["pdf"], pr_paths["png"]])
+    except Exception as e:
+        logger.info("Precision-Recall curves plot omitted: %s", e)
+
+    # 3i. Figures: 4-Quadrant Evaluation Comparison (FIG-07)
+    try:
+        quad_paths = generate_quadrant_evaluation_plot(
+            data_or_manifest=data,
+            output_dir=fig_dir,
+            expected_mode=mode,
+            watermark=watermark,
+        )
+        figures.extend([quad_paths["pdf"], quad_paths["png"]])
+    except Exception as e:
+        logger.info("4-Quadrant evaluation plot omitted: %s", e)
+
     # 4. Tables: Scenario 1, Scenario 2, Ablation (Mandatory)
     t_scen1 = generate_scenario1_table(data, output_dir=tab_dir)
     t_scen2 = generate_scenario2_table(data, output_dir=tab_dir)
