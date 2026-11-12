@@ -150,10 +150,10 @@ T4
 
 **Done when**:
 
-- [ ] Notebook 03 executa as 4 estratégias fundamentais no Scenario 2
-- [ ] Exibe tabela comparativa consolidando Top-1, Macro-F1, Worst-10 recall, $H_{\text{norm}}$ e $N_{\text{unvisited}}$
-- [ ] Testes de execução do Notebook 03 em SMOKE passam com exit code 0
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_scenario2_coverage_and_variants.py tests/test_tier1_benchmarks_real.py -k "notebook_03"`  
+- [x] Notebook 03 executa as 4 estratégias fundamentais no Scenario 2
+- [x] Exibe tabela comparativa consolidando Top-1, Macro-F1, Worst-10 recall, $H_{\text{norm}}$ e $N_{\text{unvisited}}$
+- [x] Testes de execução do Notebook 03 em SMOKE passam com exit code 0
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_scenario2_coverage_and_variants.py tests/test_tier1_benchmarks_real.py -k "notebook_03"`  
 
 **Tests**: integration  
 **Gate**: build  

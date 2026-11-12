@@ -62,6 +62,16 @@ def test_notebook_03_execution(tmp_path) -> None:
         if "num_steps=60" in src:
             src = src.replace("num_steps=60", "num_steps=10")
             src = src.replace("eval_every=20", "eval_every=5")
+        if "s2_steps = 2000" in src:
+            src = src.replace("s2_steps = 2000", "s2_steps = 10")
+            src = src.replace("s2_eval = 20", "s2_eval = 5")
+            src = src.replace("s2_seeds = (42, 43, 44, 45, 46)", "s2_seeds = (42,)")
+        if "sens_steps = 1000" in src:
+            src = src.replace("sens_steps = 1000", "sens_steps = 10")
+            src = src.replace("sens_eval = 50", "sens_eval = 5")
+            src = src.replace("sens_seeds = (42, 43, 44, 45, 46)", "sens_seeds = (42,)")
+            src = src.replace("c_vals = (0.5, 1.0, 2.0, 4.0)", "c_vals = (0.5,)")
+            src = src.replace("alpha_vals = (0.1, 0.3, 0.5, 0.7)", "alpha_vals = (0.1,)")
 
         exec(compile(src, f"<notebook_03_cell_{idx}>", "exec"), ns)
     plt.close("all")
