@@ -202,22 +202,35 @@
 - **Date**: 2026-11-11
 - **Status**: active (AD-025)
 
+### AD-026
+- **Decision**: Formalize and implement the $2 \times 2$ factorial mechanism ablation grid (`mcts_strict`, `mcts_qnorm_only`, `mcts_dualstream_only`, `mcts_enhanced`) to mathematically isolate the main effects of Q-normalization ($\text{ME}_Q$), Dual-Stream focal mitigation ($\text{ME}_{\text{DS}}$), and their interaction term ($\text{IE}$), tracked alongside explicit computational cost telemetry (`total_updates`, `gradient_samples`, `mining_forwards`, `elapsed_seconds`) in `run_benchmark` JSON and CSV outputs; enforce rigorous seed-by-seed paired inferential statistical comparison in Axis 2 between Semantic and Ward Confusion hierarchies ($\Delta_{\text{AUPRC}}$, $\Delta_{\text{F1}}$, Cohen's d, paired t-test, Wilcoxon signed-rank test, 95% CI) and structural tree topology diagnostics (`max_depth`, `mean_leaf_depth`, `total_nodes`, `num_leaves`, `branching_factor_mean`) in `tier1_axis2_tree_ablation.json`; update Notebook 03 Sections 2 and 3 with comparative tables and formal verdict on $H_0$ equivalence; and verify all properties via automated test suite `tests/test_p1_ablations_and_hierarchies.py`.
+- **Reason**: Resolves P1 roadmap requirements by eliminating confounded comparisons between Strict and Enhanced MCTS (which differed in both Q-norm and Dual-Stream simultaneously without cost controls) and ending ungrounded claims of hierarchy superiority without paired dispersion control.
+- **Trade-off**: Evaluates 6 sampling strategies in Axis 1 rather than 4, slightly expanding runtime in return for exact factorial decomposition.
+- **Scope**: `src/utils/statistics.py`, `src/trees/base_tree.py`, `src/trees/confusion_tree.py`, `src/training/benchmark_runner.py`, `notebooks/03_tier1_mcts_benchmarks.ipynb`, `tests/`
+- **Date**: 2026-11-11
+- **Status**: active (AD-026)
+
 ## Handoff
 
-- **Feature**: `22-p0-scenario2-cobertura-e-politicas-amostragem` (`.specs/features/22-p0-scenario2-cobertura-e-politicas-amostragem/`)
+- **Feature**: `23-p1-ablacoes-mecanismo-e-hierarquias-pareadas` (`.specs/features/23-p1-ablacoes-mecanismo-e-hierarquias-pareadas/`)
 - **Status**: Complete & Verified (Verification PASS, 0 errors, 0 warnings)
 - **Completed**:
   - Specified requirements in `spec.md` with explicit user approval (validated with 0 errors, 0 warnings).
   - Designed architecture and components in `design.md`.
   - Structured 4 atomic tasks in `tasks.md` with 6 verifiable checks.
-  - Executed T1–T4 with atomic commits (`c45ea20`, `9c6b9d9`, `48834ad`, `71f07ae`).
+  - Executed T1–T4 with atomic commits (`13b49b7`, `dd6c6e5`, `5768a36`, `8bf3917`, `2fdf64f`).
   - Ran `check_proofs.py` (7/7 passed at clean `HEAD`).
-  - Independent Scientific Verifier audit passed with Verdict: PASS.
+  - Independent Scientific Verifier audit passed with Verdict: PASS (all 3 findings resolved and closed).
   - Validated verification with `validate_verification.py` (0 errors, 0 warnings).
-  - Recorded Decision AD-025.
-- **In-progress**: Todos os itens P0 (P0-1 Sensibilidade, P0-2 Avaliação Inequívoca 4-Quadrantes, P0-3 Scenario 2 Cobertura & Variantes de Amostragem) concluídos e verificados.
-- **Next step**: P1 da lista de prioridades:
-  1. P1: Executar ablações controladas Strict vs Enhanced (isolar Q-norm e Dual-Stream no Scenario 1 e Scenario 2 com controles de custo).
-  2. P1: Comparação estatística pareada e metodológica de hierarquias (Ward vs Semantic).
+  - Recorded Decision AD-026.
+- **In-progress**: Todos os itens P0 e P1 concluídos e verificados:
+  - P0-1: Sensibilidade com mesmo split e razão do Axis 1 (`F21`, AD-024)
+  - P0-2: Avaliação inequívoca em 4 quadrantes (`F21`, AD-024)
+  - P0-3: Scenario 2 cobertura, entropia e política de amostragem balanceada (`F22`, AD-025)
+  - P1: Ablações Strict vs Enhanced em grid fatorial 2x2 com controle de custos (`F23`, AD-026)
+  - P1: Comparação inferencial pareada Semantic vs Ward com diagnósticos topológicos (`F23`, AD-026)
+- **Next step**: P2 da lista de prioridades:
+  - P2 — Expandir o estudo: Avaliar múltiplas classes-alvo e razões 1:10, 1:50 e 1:100, com os mesmos protocolos e seeds pareadas.
+  - Geração e exportação final de artefatos do artigo (Notebook 05).
 - **Blockers**: None
 - **Branch**: `main`
