@@ -118,10 +118,10 @@ T5
 
 **Done when**:
 
-- [ ] Teste valida que FIG-06 interpola curvas PR contínuas e assinala $\tau_{\text{val}}$
-- [ ] Teste valida que FIG-07 plota os 4 quadrantes por método com barras de erro
-- [ ] Teste valida isolamento entre modos SMOKE e REAL
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_p2_pr_and_quadrant_figures.py`  
+- [x] Teste valida que FIG-06 interpola curvas PR contínuas e assinala $\tau_{\text{val}}$
+- [x] Teste valida que FIG-07 plota os 4 quadrantes por método com barras de erro
+- [x] Teste valida isolamento entre modos SMOKE e REAL
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_p2_pr_and_quadrant_figures.py`  
 
 **Tests**: unit  
 **Gate**: quick  
