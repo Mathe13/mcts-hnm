@@ -1691,6 +1691,12 @@ def generate_all_paper_artifacts(
         s_pdf, s_png = generate_hyperparameter_sensitivity_plot(data, output_dir=fig_dir, watermark=watermark)
         figures.extend([s_pdf, s_png])
 
+    from src.utils.phase1_evidence import (
+        EvidenceUnavailable, load_verified_validation_confusion,
+        plot_measured_entropy, plot_measured_exposure_recall,
+        plot_measured_quadrants,
+    )
+
     # 3b. Measured 2x2 factorial ablation from the four REAL strategy summaries.
     try:
         f2 = _measured_factorial_plot(data, fig_dir, watermark=watermark)
@@ -1743,7 +1749,7 @@ def generate_all_paper_artifacts(
         try:
             pair = make()
             figures.extend((pair["pdf"], pair["png"]))
-        except (FileNotFoundError, OptionalEvidenceMissing) as exc:
+        except (FileNotFoundError, OptionalEvidenceMissing, EvidenceUnavailable) as exc:
             mark_optional_skip(name, str(exc), prefix)
 
     try_measured_optional(
@@ -1755,21 +1761,36 @@ def generate_all_paper_artifacts(
     # Per-step class coverage / entropy and paired per-class recall deltas are
     # not included in the atomic benchmark payloads used by these plotters.
     # Do not silently substitute class coverage snapshots or synthetic points.
+    # Existing atomic histories contain *visitation entropy* (but NOT per-step class
+    # coverage). Generate a properly named, independently measured entropy figure.
     mark_optional_skip(
         "coverage_entropy",
-        "Per-step normalized entropy and class coverage histories are not persisted",
+        "Per-step class coverage has not been retained; the two-panel figure remains unavailable",
         "fig_coverage_entropy_dynamics",
     )
-    mark_optional_skip(
-        "exposure_recall",
-        "Paired per-class recall arrays and sampling exposure are not jointly persisted",
-        "fig_class_exposure_vs_delta_recall",
+    try_measured_optional(
+        "measured_visitation_entropy", "fig_measured_visitation_entropy",
+        lambda: plot_measured_entropy(run_items, output_dir=fig_dir, watermark=watermark),
+    )
+    # Requires matched strategies AND seeds, with arrays from the same atomic run.
+    try_measured_optional(
+        "exposure_recall", "fig_class_exposure_vs_delta_recall",
+        lambda: plot_measured_exposure_recall(run_items, output_dir=fig_dir, watermark=watermark),
     )
 
+    # A confusion-tree NPZ does NOT contain its source confusion matrix. Accept
+    # only an independently measured validation matrix with matching provenance.
+    cm_file = None
     cm = data.get("confusion_matrix", data.get("matrix"))
     if cm is None:
-        mark_optional_skip("dendrogram", "REAL confusion matrix not persisted", "fig_ward_vs_semantic_dendrogram")
-    else:
+        try:
+            cm, cm_file = load_verified_validation_confusion(
+                config=config if config is not None else ExperimentConfig(execution_mode=mode),
+                repo_root=paths.repo_root if config is not None else find_repo_root(),
+            )
+        except EvidenceUnavailable as exc:
+            mark_optional_skip("dendrogram", str(exc), "fig_ward_vs_semantic_dendrogram")
+    if cm is not None:
         dend = generate_ward_vs_semantic_dendrogram_plot(
             confusion_matrix_or_data=cm, output_dir=fig_dir, expected_mode=mode, watermark=watermark
         )
@@ -1793,15 +1814,12 @@ def generate_all_paper_artifacts(
     except OptionalEvidenceMissing as exc:
         mark_optional_skip("precision_recall", str(exc), "fig_precision_recall_curves")
 
-    # The four evaluation quadrants require four measured metric records per
-    # seed. The current atomic run export lacks the best-checkpoint quadrants.
-    try:
-        quad = generate_quadrant_evaluation_plot(
-            data_or_manifest=data, output_dir=fig_dir, expected_mode=mode, watermark=watermark
-        )
-        figures.extend((quad["pdf"], quad["png"]))
-    except OptionalEvidenceMissing as exc:
-        mark_optional_skip("evaluation_quadrants", str(exc), "fig_evaluation_4quadrants_comparison")
+    # Figure 11 can now be generated only from four REAL test evaluations
+    # per strategy AND seed. Old runs without these measurements stay omitted.
+    try_measured_optional(
+        "evaluation_quadrants", "fig_evaluation_4quadrants_comparison",
+        lambda: plot_measured_quadrants(run_items, output_dir=fig_dir, watermark=watermark),
+    )
 
     # 4. Tables: Scenario 1, Scenario 2, Ablation (Mandatory)
     t_scen1 = generate_scenario1_table(data, output_dir=tab_dir)
@@ -1823,6 +1841,9 @@ def generate_all_paper_artifacts(
     ]
     source_files = [p for p in source_candidates if p.exists()]
     source_files.extend(Path(info["run_file"]) for info in run_items.values())
+    if cm_file is not None:
+        source_files.append(cm_file)
+        source_files.append(cm_file.with_name(cm_file.name + ".meta.json"))
 
     # 6. Manifest
     manifest_path = generate_artifact_manifest(

@@ -1,13 +1,13 @@
 {
-  "timestamp_utc": "2026-11-12T13:42:30.503741+00:00",
+  "timestamp_utc": "2026-11-12T14:29:33.633215+00:00",
   "execution_mode": "real",
-  "git_commit": "ba1cd4c26b51882af90a3664fdc6ab48e991608b",
+  "git_commit": "b9590e6fd88204527a64233f05c1458cfeee4ef3",
   "status": "partial",
   "artifacts": [
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_convergence_curves.pdf",
       "name": "fig_convergence_curves.pdf",
-      "sha256": "d8c885deec5c3e2ffc6a11153c2f68884cd56adcc403c9312106c0b76d3dd235",
+      "sha256": "8e8b85ad6ec0788bb61ffb5554601a3c4f35d3237d41ac21abe66d94d4717c39",
       "bytes": 31255
     },
     {
@@ -19,7 +19,7 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_tree_visitation_heatmap.pdf",
       "name": "fig_tree_visitation_heatmap.pdf",
-      "sha256": "27ee514dcce0a5080a0b9ec1a73126f3a846362271dfb45ff69140e573777259",
+      "sha256": "af994dc30e3cfffefb57943a7deacc21dd46d68cf5becf1872daa4a756089abd",
       "bytes": 44126
     },
     {
@@ -31,7 +31,7 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_hyperparameter_sensitivity.pdf",
       "name": "fig_hyperparameter_sensitivity.pdf",
-      "sha256": "408ec231ef10c762e6769e922525b87bf0dfd0e5af0da39fc51ffab736ab853f",
+      "sha256": "330e770d50847be3601473f549a266d19b4344c3747af9a41c87af6f8e282f28",
       "bytes": 28774
     },
     {
@@ -43,7 +43,7 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_ablation_2x2.pdf",
       "name": "fig_ablation_2x2.pdf",
-      "sha256": "d78eda3ed337b923f77275974e8d64b0246da520291aafc79f966eb7694b0e07",
+      "sha256": "d937ee4b872c3a7f84a9ff7bcc01476add7daa3f9eafd76ff1482c7f16b762d9",
       "bytes": 17876
     },
     {
@@ -55,7 +55,7 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy.pdf",
       "name": "fig_pareto_cost_vs_accuracy.pdf",
-      "sha256": "f6a9d261406e0fcd185dfd16a2b14ea2ed4d2fbe3402969a067adddf9b9fe43e",
+      "sha256": "42149859a1224a4090f58bfcebd7157378461670690abd23d7f4b0b8b4eda65f",
       "bytes": 30976
     },
     {
@@ -63,6 +63,30 @@
       "name": "fig_pareto_cost_vs_accuracy.png",
       "sha256": "76bf41dc4e6435f1ec06a9483b67c47caf5fb7c3ef75d8a094298dc089a8e3d5",
       "bytes": 231488
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_measured_visitation_entropy.pdf",
+      "name": "fig_measured_visitation_entropy.pdf",
+      "sha256": "a1410a119bc23f817095ef73718963199b2bbaeb740cb218fb36cd9488ad59e3",
+      "bytes": 20975
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_measured_visitation_entropy.png",
+      "name": "fig_measured_visitation_entropy.png",
+      "sha256": "adb70181eb0e8ee14adf7b0fc78ef9042ed009082d5bda58b9143d29a8d94da5",
+      "bytes": 96954
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_ward_vs_semantic_dendrogram.pdf",
+      "name": "fig_ward_vs_semantic_dendrogram.pdf",
+      "sha256": "458a7262ad0af4906fb1bf26eb83c66116ab215c83f67d01262760754f79bd93",
+      "bytes": 33933
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_ward_vs_semantic_dendrogram.png",
+      "name": "fig_ward_vs_semantic_dendrogram.png",
+      "sha256": "bd31581a9ce3921cc6f9c152ce4ae4ff5cf944bb92383abe6b0714e90a14027e",
+      "bytes": 281435
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/tables/tab_scenario1_imbalanced.tex",
@@ -419,14 +443,25 @@
       "name": "scenario2_cls100_r_none_semantic_mcts_enhanced_s46_c1d6fd0f.json",
       "sha256": "5637b412872642f651af04641ca18153e75563778e10bca5ce6a54e20f447656",
       "bytes": 55454
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/embeddings/real/trees/validation_confusion_matrix_100.npz",
+      "name": "validation_confusion_matrix_100.npz",
+      "sha256": "de1e722cb162d6111c261b4cafc2ed7d4c5d8cc2d96ffb68da8443e3bdcad820",
+      "bytes": 76079
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/embeddings/real/trees/validation_confusion_matrix_100.npz.meta.json",
+      "name": "validation_confusion_matrix_100.npz.meta.json",
+      "sha256": "91ab6bf4f9378597dc7d27c88ad15956566f75b28b49b33603f5f56dd1927b14",
+      "bytes": 667
     }
   ],
   "skipped_artifacts": {
-    "coverage_entropy": "Per-step normalized entropy and class coverage histories are not persisted",
-    "exposure_recall": "Paired per-class recall arrays and sampling exposure are not jointly persisted",
-    "dendrogram": "REAL confusion matrix not persisted",
+    "coverage_entropy": "Per-step class coverage has not been retained; the two-panel figure remains unavailable",
+    "exposure_recall": "Atomic run lacks per-class exposure/recall; older runs cannot be treated as paired measurements",
     "interaction_ratio": "FIG-05 requires >=2 measured imbalance ratios per strategy; currently only one is available. Run 1:10 and/or 1:100 before plotting.",
     "precision_recall": "Per-seed y_true/y_score or measured PR points are not exported; cannot infer a PR curve from AUPRC",
-    "evaluation_quadrants": "Four measured test-quadrant metrics per seed are not exported in atomic run JSON"
+    "evaluation_quadrants": "Four actual test quadrants per strategy/seed not available in historical atomic runs"
   }
 }

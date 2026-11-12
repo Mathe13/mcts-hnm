@@ -42,6 +42,7 @@ from src.utils.experiment_config import (
     validate_mode_isolated_path,
 )
 from src.utils.seed import set_global_seed
+from src.utils.phase1_evidence import extract_four_quadrants
 from src.utils.statistics import (
     compute_2x2_factorial_effects,
     compute_method_by_ratio_interaction,
@@ -371,6 +372,7 @@ def run_benchmark(
                                 ent_nats, ent_norm = compute_visitation_entropy(tree)
 
                             diagnostics_per_strat[strat] = {
+                                "seed": int(seed),  # only most recent strategy snapshot in summary
                                 "class_visit_distribution": class_visits if tree is not None else {c: int(exp_counts[c]) for c in range(num_cls)},
                                 "class_exposure_counts": exp_counts,
                                 "unvisited_classes_count": unvisited_cls,
@@ -452,6 +454,22 @@ def run_benchmark(
                             "val_metrics": res.get("val_metrics"),
                             "test_metrics": res.get("test_metrics"),
                             "history": res.get("history", []),
+                            # These values are already computed in the training loop.
+                            # Persist for the next scientific run; historical runs
+                            # lacking them are NOT silently backfilled.
+                            "last_metrics": res.get("last_metrics"),
+                            "best_validation_metrics": res.get("best_validation_metrics"),
+                            "computational_costs": res.get("computational_costs"),
+                            "exposure_diagnostics": res.get("exposure_diagnostics"),
+                            "per_class_recall": (
+                                diagnostics_per_strat[strat]["per_class_recall"]
+                                if scenario == "scenario2" else None
+                            ),
+                            "evaluation_quadrants": (
+                                extract_four_quadrants(
+                                    res.get("last_metrics"), res.get("best_validation_metrics")
+                                ) if scenario == "scenario1" else None
+                            ),
                             "timestamp_utc": datetime.now(timezone.utc).isoformat(),
                         }
                         run_json_path = runs_dir / f"{run_id}.json"
