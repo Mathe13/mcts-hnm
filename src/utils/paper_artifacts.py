@@ -1597,6 +1597,36 @@ def generate_all_paper_artifacts(
             figures.extend([abl_paths["pdf"], abl_paths["png"]])
         except Exception as e:
             logger.info("2x2 factorial ablation plot omitted: %s", e)
+    else:
+        manifest_sim = None
+
+    # 3c. Figures: Pareto Frontier Plot (FIG-01)
+    try:
+        m_pareto = manifest_sim if manifest_sim is not None else {
+            "runs": {},
+            "mode": "smoke" if (mode == ExecutionMode.SMOKE or data.get("is_smoke")) else "real",
+            "is_smoke": (mode == ExecutionMode.SMOKE or data.get("is_smoke")),
+        }
+        pareto_paths = generate_pareto_cost_performance_plot(
+            m_pareto, output_dir=fig_dir, expected_mode=mode, watermark=watermark
+        )
+        figures.extend([pareto_paths["pdf"], pareto_paths["png"]])
+    except Exception as e:
+        logger.info("Pareto frontier plot omitted: %s", e)
+
+    # 3d. Figures: Coverage and Entropy Dynamics Plot (FIG-02)
+    try:
+        m_entropy = manifest_sim if manifest_sim is not None else {
+            "runs": {},
+            "mode": "smoke" if (mode == ExecutionMode.SMOKE or data.get("is_smoke")) else "real",
+            "is_smoke": (mode == ExecutionMode.SMOKE or data.get("is_smoke")),
+        }
+        entropy_paths = generate_coverage_entropy_dynamics_plot(
+            m_entropy, output_dir=fig_dir, expected_mode=mode, watermark=watermark
+        )
+        figures.extend([entropy_paths["pdf"], entropy_paths["png"]])
+    except Exception as e:
+        logger.info("Coverage and entropy dynamics plot omitted: %s", e)
 
     # 4. Tables: Scenario 1, Scenario 2, Ablation (Mandatory)
     t_scen1 = generate_scenario1_table(data, output_dir=tab_dir)

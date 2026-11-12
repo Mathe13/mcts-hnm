@@ -139,8 +139,8 @@ T5
 
 **Done when**:
 
-- [ ] `generate_all_paper_artifacts()` executa ambos os geradores e inclui os caminhos em seu manifesto
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p0_pareto_entropy_figures.py`  
+- [x] `generate_all_paper_artifacts()` executa ambos os geradores e inclui os caminhos em seu manifesto
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p0_pareto_entropy_figures.py`  
 
 **Tests**: integration  
 **Gate**: full  
