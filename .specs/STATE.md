@@ -234,22 +234,30 @@
 - **Date**: 2026-11-12
 - **Status**: active (AD-029)
 
+### AD-030
+- **Decision**: Implement Phase 3 (P2) analytical figures from `roadmap_analises_e_figuras_expansao.md` completing the 7-figure analytical suite: (1) `generate_precision_recall_curves_plot()` producing `fig_precision_recall_curves` (.pdf + .png 300 DPI) interpolating precision over a 100-point uniform recall grid with $\pm 1\ \text{std}$ variance bands and validation-calibrated operating point $\tau_{\mathrm{val}}$; (2) `generate_quadrant_evaluation_plot()` producing `fig_evaluation_4quadrants_comparison` (.pdf + .png 300 DPI) across all 4 evaluation quadrants (Q1: Last $\tau=0.5$, Q2: Last $\tau_{\mathrm{val}}$, Q3: Best Val $\tau=0.5$, Q4: Best Val $\tau_{\mathrm{val}}$); (3) integrate both into `generate_all_paper_artifacts()` and `notebooks/05_paper_artifacts.ipynb`; (4) add corresponding LaTeX `\begin{figure}` environments and discussion in `paper/main.tex`; and (5) guarantee automated regression coverage in `tests/test_p2_pr_and_quadrant_figures.py`.
+- **Reason**: Completes the scientific evidence package with continuous precision-recall curves and comprehensive transparency across all four evaluation criteria.
+- **Trade-off**: None.
+- **Scope**: `src/utils/paper_artifacts.py`, `notebooks/05_paper_artifacts.ipynb`, `paper/main.tex`, `tests/`
+- **Date**: 2026-11-12
+- **Status**: active (AD-030)
+
 ## Handoff
 
-- **Feature**: `26-p1-expansao-figuras-arvore-e-interacao` (`.specs/features/26-p1-expansao-figuras-arvore-e-interacao/`)
+- **Feature**: `27-p2-expansao-figuras-pr-e-4quadrantes` (`.specs/features/27-p2-expansao-figuras-pr-e-4quadrantes/`)
 - **Status**: Complete & Verified (Verification PASS, 0 errors, 0 warnings)
 - **Completed**:
   - Specified requirements in `spec.md` with explicit user approval (validated with 0 errors, 0 warnings).
   - Designed architecture in `design.md`.
-  - Structured 5 atomic tasks in `tasks.md` with 6 verifiable checks.
-  - Executed T1–T5 with atomic commits (`59a98fc`, `67fcc37`, `152ce85`, `24ca77e`, `3be20c3`).
-  - Ran `check_proofs.py` (7/7 passed at clean `HEAD`).
+  - Structured 5 atomic tasks in `tasks.md` with 5 verifiable checks.
+  - Executed T1–T5 with atomic commits (`980f78c`, `f40bb98`, `cfecce7`, `394e0ac`, `4c03a8e`).
+  - Ran `check_proofs.py` (6/6 passed at clean `HEAD`).
   - Verification audit passed with Verdict: PASS (all checks and criteria verified).
   - Validated verification with `validate_verification.py` (0 errors, 0 warnings).
-  - Recorded Decision AD-029.
+  - Recorded Decision AD-030.
 - **In-progress**:
-  - Fase 1 (P0) e Fase 2 (P1) do roadmap de expansão analítica concluídas.
+  - Todas as 3 Fases (P0, P1 e P2) e as 7 figuras do roadmap `roadmap_analises_e_figuras_expansao.md` foram totalmente implementadas, testadas e integradas ao manuscrito LaTeX e notebooks.
 - **Next step**:
-  - Fase 3 (P2) do roadmap: FIG-06 (Curvas Precision-Recall Agregadas com Bandas de Variância) e FIG-07 (Superfície de Trade-off dos 4 Quadrantes de Avaliação).
+  - Execução de campanha experimental completa em modo REAL (quando o usuário desejar) ou compilação final do PDF do manuscrito via `pdflatex`.
 - **Blockers**: None
 - **Branch**: `main`
