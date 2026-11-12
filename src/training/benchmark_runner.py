@@ -28,7 +28,7 @@ from src.training.trainer import (
     train_scenario1,
     train_scenario2,
 )
-from src.trees.base_tree import FastHierarchyTree
+from src.trees.base_tree import FastHierarchyTree, compute_tree_topology_diagnostics
 from src.trees.confusion_tree import build_confusion_tree, estimate_validation_confusion_matrix
 from src.trees.semantic_tree import build_semantic_tree
 from src.utils.experiment_config import (
@@ -42,7 +42,10 @@ from src.utils.experiment_config import (
     validate_mode_isolated_path,
 )
 from src.utils.seed import set_global_seed
-from src.utils.statistics import compute_paired_statistical_tests
+from src.utils.statistics import (
+    compute_2x2_factorial_effects,
+    compute_paired_statistical_tests,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -230,6 +233,7 @@ def run_benchmark(
         )
 
     diagnostics_per_strat: dict[str, Any] = {}
+    tree_diagnostics: dict[str, Any] = {}
     visitation_payload: dict[str, Any] | None = None
 
     ratios_to_run: tuple[str | None, ...] = imbalance_ratios if scenario == "scenario1" else (None,)
@@ -261,6 +265,8 @@ def run_benchmark(
                             elif tree_type == "confusion_ward":
                                 assert conf_mat is not None
                                 tree = build_confusion_tree(conf_mat, class_to_indices)
+                            if tree is not None and tree_type not in tree_diagnostics:
+                                tree_diagnostics[tree_type] = compute_tree_topology_diagnostics(tree)
 
                         binary_val_lbl = (val_lbl_np == target_class_scenario1).astype(np.int64)
 
@@ -294,6 +300,8 @@ def run_benchmark(
                             elif tree_type == "confusion_ward":
                                 assert conf_mat is not None
                                 tree = build_confusion_tree(conf_mat, class_to_indices)
+                            if tree is not None and tree_type not in tree_diagnostics:
+                                tree_diagnostics[tree_type] = compute_tree_topology_diagnostics(tree)
 
                         res = train_scenario2(
                             train_features=train_features,
@@ -373,6 +381,13 @@ def run_benchmark(
                         res["final_metrics"]["class_coverage"] = class_cov
                         res["final_metrics"]["unvisited_classes"] = unvisited_cls
                         res["final_metrics"]["exposure_recall_correlation"] = spearman_rho
+
+                    # Inject computational costs into final_metrics across all scenarios
+                    costs = res.get("computational_costs", {})
+                    if isinstance(costs, dict):
+                        for ck in ("total_updates", "gradient_samples", "mining_forwards", "elapsed_seconds"):
+                            if ck in costs:
+                                res["final_metrics"][ck] = costs[ck]
 
                     final_metrics = res["final_metrics"]
                     if "history" in res and res["history"] and f"{strat}_f1" not in convergence_history:
@@ -508,6 +523,69 @@ def run_benchmark(
 
                 paired_differences_against_uniform[strat] = diff_entry
 
+    # Paired comparisons across hierarchies (Axis 2: Semantic vs Ward)
+    paired_hierarchy_tests: dict[str, Any] = {}
+    if "semantic" in tree_types and "confusion_ward" in tree_types:
+        for strat in strategies:
+            sem_runs = {r.seed: r for r in runs if r.strategy == strat and r.tree_type == "semantic"}
+            conf_runs = {r.seed: r for r in runs if r.strategy == strat and r.tree_type == "confusion_ward"}
+            common_s = sorted(set(sem_runs.keys()) & set(conf_runs.keys()))
+            if common_s:
+                metric_k = "auprc" if scenario == "scenario1" else "top1_accuracy"
+                f1_k = "f1" if scenario == "scenario1" else "macro_f1"
+                sem_scores = [sem_runs[s].final_metrics.get(metric_k, 0.0) for s in common_s]
+                conf_scores = [conf_runs[s].final_metrics.get(metric_k, 0.0) for s in common_s]
+                sem_f1 = [sem_runs[s].final_metrics.get(f1_k, 0.0) for s in common_s]
+                conf_f1 = [conf_runs[s].final_metrics.get(f1_k, 0.0) for s in common_s]
+
+                d_metric = [float(sm - cf) for sm, cf in zip(sem_scores, conf_scores)]
+                d_f1 = [float(sm - cf) for sm, cf in zip(sem_f1, conf_f1)]
+
+                h_entry: dict[str, Any] = {
+                    "strategy": strat,
+                    "common_seeds": common_s,
+                    "delta_primary_mean": float(np.mean(d_metric)),
+                    "delta_f1_mean": float(np.mean(d_f1)),
+                    "delta_primary_per_seed": d_metric,
+                    "delta_f1_per_seed": d_f1,
+                }
+                if len(common_s) >= 2:
+                    h_entry["primary_stats"] = compute_paired_statistical_tests(sem_scores, conf_scores)
+                    h_entry["f1_stats"] = compute_paired_statistical_tests(sem_f1, conf_f1)
+                    statistical_comparisons[f"semantic_vs_confusion_ward_{strat}"] = h_entry["primary_stats"]
+
+                paired_hierarchy_tests[strat] = h_entry
+
+    # 2x2 Factorial Mechanism Analysis (Strict vs QNorm vs DualStream vs Enhanced)
+    factorial_set = {"mcts_strict", "mcts_qnorm_only", "mcts_dualstream_only", "mcts_enhanced"}
+    factorial_2x2_effects: dict[str, Any] = {}
+    if factorial_set.issubset(set(strategies)):
+        for tt in tree_types:
+            runs_by_strat = {
+                s: {r.seed: r for r in runs if r.strategy == s and (r.tree_type == tt or r.tree_type == "none")}
+                for s in factorial_set
+            }
+            common_s = sorted(set.intersection(*(set(runs_by_strat[s].keys()) for s in factorial_set)))
+            if common_s:
+                primary_k = "auprc" if scenario == "scenario1" else "top1_accuracy"
+                f1_k = "f1" if scenario == "scenario1" else "macro_f1"
+
+                primary_dict = {
+                    s: [runs_by_strat[s][sd].final_metrics.get(primary_k, 0.0) for sd in common_s]
+                    for s in factorial_set
+                }
+                f1_dict = {
+                    s: [runs_by_strat[s][sd].final_metrics.get(f1_k, 0.0) for sd in common_s]
+                    for s in factorial_set
+                }
+
+                factorial_2x2_effects[tt] = {
+                    "common_seeds": common_s,
+                    "primary_metric": primary_k,
+                    "primary_effects": compute_2x2_factorial_effects(primary_dict),
+                    "f1_effects": compute_2x2_factorial_effects(f1_dict),
+                }
+
     # Compute aggregated summary across tree_types and strategies
     aggregated_summary: dict[str, dict[str, dict[str, float]]] = {}
     for tt in tree_types:
@@ -565,6 +643,9 @@ def run_benchmark(
         "computational_budget": computational_budget,
         "statistical_comparisons": statistical_comparisons,
         "paired_differences_against_uniform": paired_differences_against_uniform,
+        "paired_hierarchy_tests": paired_hierarchy_tests,
+        "tree_diagnostics": tree_diagnostics,
+        "factorial_2x2_effects": factorial_2x2_effects,
         "aggregated_summary": aggregated_summary,
         "runs": [asdict(r) for r in runs],
         "per_seed_results": [asdict(r) for r in runs],

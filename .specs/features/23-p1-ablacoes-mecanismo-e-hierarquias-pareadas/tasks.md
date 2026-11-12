@@ -107,11 +107,11 @@ T4
 
 **Done when**:
 
-- [ ] `computational_costs` (`total_updates`, `gradient_samples`, `mining_forwards`, `elapsed_seconds`) persistidos em JSON e CSV
-- [ ] Axis 2 calcula e exporta testes pareados seed a seed ($\Delta_{\text{AUPRC}}$, $\Delta_{\text{F1}}$, Cohen's d, t-test, Wilcoxon) em `tier1_axis2_tree_ablation.json`
-- [ ] Diagnósticos topológicos das árvores persistidos no payload de saída
-- [ ] Grid fatorial $2 \times 2$ calcula e exporta efeitos principais e interação
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests`  
+- [x] `computational_costs` (`total_updates`, `gradient_samples`, `mining_forwards`, `elapsed_seconds`) persistidos em JSON e CSV
+- [x] Axis 2 calcula e exporta testes pareados seed a seed ($\Delta_{\text{AUPRC}}$, $\Delta_{\text{F1}}$, Cohen's d, t-test, Wilcoxon) em `tier1_axis2_tree_ablation.json`
+- [x] Diagnósticos topológicos das árvores persistidos no payload de saída
+- [x] Grid fatorial $2 \times 2$ calcula e exporta efeitos principais e interação
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests`  
 
 **Tests**: unit  
 **Gate**: quick  
