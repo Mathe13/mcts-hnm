@@ -547,30 +547,6 @@ def train_scenario1(
 
     final_eval = last_metrics
     exposure_diag = exposure_tracker.compute_diagnostics()
-    quadrant_metrics = {
-        "last_thresh05": {
-            "f1": float(last_metrics.get("f1_thresh05", last_metrics["f1"])),
-            "precision": float(last_metrics.get("precision_thresh05", last_metrics["precision"])),
-            "recall": float(last_metrics.get("recall_thresh05", last_metrics["recall"])),
-        },
-        "last_calibrated": {
-            "f1": float(last_metrics.get("calibrated_f1", last_metrics["f1"])),
-            "precision": float(last_metrics.get("calibrated_precision", last_metrics["precision"])),
-            "recall": float(last_metrics.get("calibrated_recall", last_metrics["recall"])),
-            "threshold": float(last_metrics.get("calibrated_threshold", 0.5)),
-        },
-        "best_val_thresh05": {
-            "f1": float(best_validation_metrics.get("f1_thresh05", best_validation_metrics["f1"])),
-            "precision": float(best_validation_metrics.get("precision_thresh05", best_validation_metrics["precision"])),
-            "recall": float(best_validation_metrics.get("recall_thresh05", best_validation_metrics["recall"])),
-        },
-        "best_val_calibrated": {
-            "f1": float(best_validation_metrics.get("calibrated_f1", best_validation_metrics["f1"])),
-            "precision": float(best_validation_metrics.get("calibrated_precision", best_validation_metrics["precision"])),
-            "recall": float(best_validation_metrics.get("calibrated_recall", best_validation_metrics["recall"])),
-            "threshold": float(best_validation_metrics.get("calibrated_threshold", 0.5)),
-        },
-    }
     return {
         "strategy": strategy,
         "history": history,
@@ -579,7 +555,6 @@ def train_scenario1(
         "final_metrics": final_eval,
         "last_metrics": last_metrics,
         "best_validation_metrics": best_validation_metrics,
-        "quadrant_metrics": quadrant_metrics,
         "val_metrics": history[-1] if history else last_metrics,
         "test_metrics": last_metrics if test_features is not None else None,
         "computational_costs": computational_costs,
@@ -926,30 +901,6 @@ def train_scenario2(
 
     final_eval = last_metrics
     exposure_diag = exposure_tracker.compute_diagnostics()
-    quadrant_metrics = {
-        "last_thresh05": {
-            "f1": float(last_metrics.get("f1_thresh05", last_metrics["f1"])),
-            "precision": float(last_metrics.get("precision_thresh05", last_metrics["precision"])),
-            "recall": float(last_metrics.get("recall_thresh05", last_metrics["recall"])),
-        },
-        "last_calibrated": {
-            "f1": float(last_metrics.get("calibrated_f1", last_metrics["f1"])),
-            "precision": float(last_metrics.get("calibrated_precision", last_metrics["precision"])),
-            "recall": float(last_metrics.get("calibrated_recall", last_metrics["recall"])),
-            "threshold": float(last_metrics.get("calibrated_threshold", 0.5)),
-        },
-        "best_val_thresh05": {
-            "f1": float(best_validation_metrics.get("f1_thresh05", best_validation_metrics["f1"])),
-            "precision": float(best_validation_metrics.get("precision_thresh05", best_validation_metrics["precision"])),
-            "recall": float(best_validation_metrics.get("recall_thresh05", best_validation_metrics["recall"])),
-        },
-        "best_val_calibrated": {
-            "f1": float(best_validation_metrics.get("calibrated_f1", best_validation_metrics["f1"])),
-            "precision": float(best_validation_metrics.get("calibrated_precision", best_validation_metrics["precision"])),
-            "recall": float(best_validation_metrics.get("calibrated_recall", best_validation_metrics["recall"])),
-            "threshold": float(best_validation_metrics.get("calibrated_threshold", 0.5)),
-        },
-    }
     return {
         "strategy": strategy,
         "history": history,
@@ -958,7 +909,6 @@ def train_scenario2(
         "final_metrics": final_eval,
         "last_metrics": last_metrics,
         "best_validation_metrics": best_validation_metrics,
-        "quadrant_metrics": quadrant_metrics,
         "val_metrics": history[-1] if history else last_metrics,
         "test_metrics": last_metrics if test_features is not None else None,
         "computational_costs": computational_costs,
