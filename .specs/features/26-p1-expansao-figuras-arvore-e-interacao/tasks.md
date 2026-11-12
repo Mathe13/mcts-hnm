@@ -159,8 +159,8 @@ T5
 
 **Done when**:
 
-- [ ] Notebook 05 contém células demonstrando a geração e exibição das três figuras da Fase 2
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p1_expansion_figures.py -k "test_notebook_05_integration_p1"`  
+- [x] Notebook 05 contém células demonstrando a geração e exibição das três figuras da Fase 2
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p1_expansion_figures.py -k "test_notebook_05_integration_p1"`  
 
 **Tests**: integration  
 **Gate**: quick  
