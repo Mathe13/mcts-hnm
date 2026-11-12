@@ -129,11 +129,11 @@ T4
 
 **Done when**:
 
-- [ ] Teste valida execução multi-razão e subsampling positivo proporcional
-- [ ] Teste valida cálculo de interação método $\times$ razão com IC 95% e testes pareados
-- [ ] Teste valida execução multi-classe e identificação de `target_class` nos registros
-- [ ] Teste valida compatibilidade dos carregadores de publicação com schemas multi-razão
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_p2_study_expansion.py`  
+- [x] Teste valida execução multi-razão e subsampling positivo proporcional
+- [x] Teste valida cálculo de interação método $\times$ razão com IC 95% e testes pareados
+- [x] Teste valida execução multi-classe e identificação de `target_class` nos registros
+- [x] Teste valida compatibilidade dos carregadores de publicação com schemas multi-razão
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_p2_study_expansion.py`  
 
 **Tests**: integration  
 **Gate**: full  
@@ -151,10 +151,10 @@ T4
 
 **Done when**:
 
-- [ ] Notebook 03 Seção 2 documenta e expõe `IMBALANCE_RATIOS_AXIS1` e `TARGET_CLASSES_AXIS1`
-- [ ] Notebook 03 exibe tabela de interação método $\times$ razão quando múltiplas razões forem executadas
-- [ ] Teste de fumaça do Notebook 03 executa com exit code 0
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p2_study_expansion.py tests/test_tier1_benchmarks_real.py -k "notebook_03"`  
+- [x] Notebook 03 Seção 2 documenta e expõe `IMBALANCE_RATIOS_AXIS1` e `TARGET_CLASSES_AXIS1`
+- [x] Notebook 03 exibe tabela de interação método $\times$ razão quando múltiplas razões forem executadas
+- [x] Teste de fumaça do Notebook 03 executa com exit code 0
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p2_study_expansion.py tests/test_tier1_benchmarks_real.py -k "notebook_03"`  
 
 **Tests**: integration  
 **Gate**: build  
