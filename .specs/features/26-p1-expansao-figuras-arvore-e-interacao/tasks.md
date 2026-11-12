@@ -178,10 +178,10 @@ T5
 
 **Done when**:
 
-- [ ] `paper/main.tex` contém bloco figure para `fig_class_exposure_vs_delta_recall` (`fig:class_exposure_recall`)
-- [ ] `paper/main.tex` contém bloco figure para `fig_ward_vs_semantic_dendrogram` (`fig:ward_dendrogram`)
-- [ ] `paper/main.tex` contém bloco figure para `fig_interaction_ratio_methods` (`fig:interaction_ratio`)
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p1_expansion_figures.py`  
+- [x] `paper/main.tex` contém bloco figure para `fig_class_exposure_vs_delta_recall` (`fig:class_exposure_recall`)
+- [x] `paper/main.tex` contém bloco figure para `fig_ward_vs_semantic_dendrogram` (`fig:ward_dendrogram`)
+- [x] `paper/main.tex` contém bloco figure para `fig_interaction_ratio_methods` (`fig:interaction_ratio`)
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p1_expansion_figures.py`  
 
 **Tests**: integration  
 **Gate**: build  
