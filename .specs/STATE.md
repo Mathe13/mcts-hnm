@@ -186,20 +186,28 @@
 - **Date**: 2026-11-11
 - **Status**: active (AD-023)
 
+### AD-024
+- **Decision**: Harmonize `run_sensitivity_ablation` with Axis 1 experimental conditions under Scenario 1: (1) partition positive and negative training samples per seed using `build_scenario1_split` parameterized with `imbalance_ratio="1:50"` default (`pos_fraction=0.02`), eliminating the pool discrepancy between 9 positives (~1:4,950 pool) and 450 positives (~1:99 pool); (2) align step budget default to `num_steps=1000` (permitting explicit override); (3) formalize an unambiguous 4-quadrant evaluation policy explicitly exporting `test_f1_last_thresh05`, `test_f1_last_calibrated`, `test_f1_best_val_thresh05`, and `test_f1_best_val_calibrated` along with precision, recall, and AUPRC in JSON and CSV outputs; and (4) enforce strict bit-level index equivalence (`np.array_equal`) between `run_benchmark` and `run_sensitivity_ablation` verified by regression test suite `tests/test_sensitivity_runner_equivalence.py`.
+- **Reason**: Fixes critical P0 methodological audit finding where sensitivity analysis trained on all 450 class positives instead of the subsampled 9 positives used in Axis 1, producing artificially inflated F1 metrics and invalid comparisons.
+- **Trade-off**: Requires passing validation features and labels to `run_sensitivity_ablation` to prevent leakage and compute $\tau_{\text{val}}$.
+- **Scope**: `src/training/benchmark_runner.py`, `src/training/trainer.py`, `tests/`
+- **Date**: 2026-11-11
+- **Status**: active (AD-024)
+
 ## Handoff
 
-- **Feature**: `20-fase-d-campanha-cientifica-e-artefatos` (`.specs/features/20-fase-d-campanha-cientifica-e-artefatos/`)
-- **Status**: Complete & Verified (Gate D PASS, Verification PASS)
+- **Feature**: `21-p0-sensibilidade-split-e-avaliacao-inequivoca` (`.specs/features/21-p0-sensibilidade-split-e-avaliacao-inequivoca/`)
+- **Status**: Complete & Verified (Verification PASS, 0 errors, 0 warnings)
 - **Completed**:
   - Specified requirements in `spec.md` with explicit user approval (validated with 0 errors, 0 warnings).
   - Designed architecture and components in `design.md`.
-  - Structured 5 atomic tasks across 5 phases in `tasks.md` with 17 verifiable checks.
-  - Executed T1–T5 with atomic commits (`fe74914` through `fcf6dd1`).
-  - Ran `check_proofs.py` (18/18 passed at `fcf6dd1`).
-  - Independent Verifier sub-agent audit passed with Verdict: PASS.
+  - Structured 4 atomic tasks in `tasks.md` with 6 verifiable checks.
+  - Executed T1–T4 with atomic commits (`9581931`, `2e0195f`, `9e36a74`, `8942267`, `7ecb09b`).
+  - Ran `check_proofs.py` (7/7 passed at clean `HEAD`).
+  - Independent Scientific Verifier audit passed with Verdict: PASS.
   - Validated verification with `validate_verification.py` (0 errors, 0 warnings).
-  - Recorded Decision AD-023.
-- **In-progress**: Completed Fase D (Gate D). All 4 phases of `roadmap_mcts_hnm_proxima_run_v2.md` (Fases A, B, C, D) are now fully implemented, verified, and certified!
-- **Next step**: Present the final completion of the entire Roadmap v2 to the user.
+  - Recorded Decision AD-024.
+- **In-progress**: P0-1 (Sensibilidade) e P0-2 (Política de avaliação) totalmente concluídos e certificados.
+- **Next step**: Apresentar ao usuário a conclusão dos P0s de sensibilidade/avaliação e alinhar o início do P0-3 (Investigação e variantes de política de cobertura no Scenario 2 multiclasse).
 - **Blockers**: None
 - **Branch**: `main`

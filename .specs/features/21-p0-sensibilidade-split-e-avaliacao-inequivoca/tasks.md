@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/21-p0-sensibilidade-split-e-avaliacao-inequivoca/design.md`  
-**Status**: Ready  
+**Status**: Complete  
 **Approved**: 2026-11-11 - user: "prossiga"  
 **Build**: `.venv/bin/python -m compileall -q src tests`  
 **Run unit**: `.venv/bin/pytest -v tests/test_sensitivity_runner_equivalence.py tests/test_tier1_benchmarks_real.py -k "sensitivity"`  
@@ -185,4 +185,5 @@ Proof: run unit | tests/test_sensitivity_runner_equivalence.py::test_benchmark_a
 
 ## Handoff
 
-- **Dispatched:** none
+- **Dispatched:** Independent Scientific Verifier (subagent 19deab51-84e3-4545-b1a4-105cc4afd851)
+- **Verdict**: PASS (7/7 proofs passed, validate_verification 0 errors / 0 warnings)
