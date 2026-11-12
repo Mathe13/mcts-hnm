@@ -87,9 +87,9 @@ T4
 
 **Done when**:
 
-- [ ] `compute_tree_topology_diagnostics()` calcula `max_depth`, `mean_leaf_depth`, `total_nodes`, `num_leaves` e fatores de ramificação
-- [ ] `compute_2x2_factorial_effects()` calcula efeitos marginais de Q-norm, Dual-Stream e termo de interação com IC e testes pareados
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests`  
+- [x] `compute_tree_topology_diagnostics()` calcula `max_depth`, `mean_leaf_depth`, `total_nodes`, `num_leaves` e fatores de ramificação
+- [x] `compute_2x2_factorial_effects()` calcula efeitos marginais de Q-norm, Dual-Stream e termo de interação com IC e testes pareados
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests`  
 
 **Tests**: unit  
 **Gate**: quick  

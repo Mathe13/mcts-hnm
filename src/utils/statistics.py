@@ -229,3 +229,130 @@ def compute_method_by_ratio_interaction(
         "t_pvalue": t_pvalue,
         "interaction_differences": list(interaction.tolist()),
     }
+
+
+def _summarize_effect_series(series: np.ndarray) -> dict[str, Any]:
+    """Helper to summarize a 1D effect difference series with statistics and tests."""
+    arr = np.asarray(series, dtype=np.float64)
+    n = int(arr.size)
+    mean_val = float(np.mean(arr)) if n > 0 else 0.0
+    std_val = float(np.std(arr, ddof=1)) if n > 1 else 0.0
+    se_val = float(std_val / np.sqrt(n)) if n > 0 else 0.0
+    cohens_d = float(mean_val / std_val) if std_val > 1e-12 else 0.0
+
+    t_crit = float(t.ppf(0.975, df=n - 1)) if n > 1 else 0.0
+    ci_lower = float(mean_val - t_crit * se_val)
+    ci_upper = float(mean_val + t_crit * se_val)
+
+    if n >= 2 and not np.allclose(arr, 0.0, atol=1e-12):
+        t_res = ttest_1samp(arr, popmean=0.0)
+        t_stat = float(t_res.statistic)
+        t_pval = float(t_res.pvalue)
+    else:
+        t_stat = 0.0
+        t_pval = 1.0
+
+    return {
+        "n": n,
+        "mean": mean_val,
+        "std": std_val,
+        "se": se_val,
+        "cohens_d": cohens_d,
+        "ci_95": (ci_lower, ci_upper),
+        "ci_95_lower": ci_lower,
+        "ci_95_upper": ci_upper,
+        "t_stat": t_stat,
+        "t_pvalue": t_pval,
+        "per_seed": [float(x) for x in arr],
+    }
+
+
+def compute_2x2_factorial_effects(
+    scores_strict: np.ndarray | list[float] | dict[str, Any],
+    scores_qnorm: np.ndarray | list[float] | None = None,
+    scores_dualstream: np.ndarray | list[float] | None = None,
+    scores_enhanced: np.ndarray | list[float] | None = None,
+) -> dict[str, Any]:
+    r"""Compute 2x2 factorial mechanism decomposition across paired seeds.
+
+    Evaluates:
+    - Main Effect of Q-normalization (ME_Q):
+      $$\text{ME}_Q = \frac{1}{2} [(S_{10} + S_{11}) - (S_{00} + S_{01})]$$
+    - Main Effect of Dual-Stream (ME_DS):
+      $$\text{ME}_{\text{DS}} = \frac{1}{2} [(S_{01} + S_{11}) - (S_{00} + S_{10})]$$
+    - Interaction Term (IE):
+      $$\text{IE} = (S_{11} - S_{10}) - (S_{01} - S_{00})$$
+
+    Args:
+        scores_strict: 1D array or dictionary containing variant keys.
+        scores_qnorm: 1D array of scores for mcts_qnorm_only across seeds.
+        scores_dualstream: 1D array of scores for mcts_dualstream_only across seeds.
+        scores_enhanced: 1D array of scores for mcts_enhanced across seeds.
+
+    Returns:
+        Dictionary containing summarized effect sizes, p-values, and variant means.
+    """
+    if isinstance(scores_strict, dict):
+        d = scores_strict
+        s00_raw = d.get("mcts_strict", d.get("strict"))
+        s10_raw = d.get("mcts_qnorm_only", d.get("qnorm_only", d.get("qnorm")))
+        s01_raw = d.get("mcts_dualstream_only", d.get("dualstream_only", d.get("dualstream")))
+        s11_raw = d.get("mcts_enhanced", d.get("enhanced"))
+        if s00_raw is None or s10_raw is None or s01_raw is None or s11_raw is None:
+            raise ValueError(
+                "When passing a dictionary, it must contain keys for 'mcts_strict', "
+                "'mcts_qnorm_only', 'mcts_dualstream_only', and 'mcts_enhanced'."
+            )
+        s00 = np.asarray(s00_raw, dtype=np.float64)
+        s10 = np.asarray(s10_raw, dtype=np.float64)
+        s01 = np.asarray(s01_raw, dtype=np.float64)
+        s11 = np.asarray(s11_raw, dtype=np.float64)
+    else:
+        if scores_qnorm is None or scores_dualstream is None or scores_enhanced is None:
+            raise ValueError("All 4 variant score arrays must be provided.")
+        s00 = np.asarray(scores_strict, dtype=np.float64)
+        s10 = np.asarray(scores_qnorm, dtype=np.float64)
+        s01 = np.asarray(scores_dualstream, dtype=np.float64)
+        s11 = np.asarray(scores_enhanced, dtype=np.float64)
+
+    for arr, name in [
+        (s00, "mcts_strict"),
+        (s10, "mcts_qnorm_only"),
+        (s01, "mcts_dualstream_only"),
+        (s11, "mcts_enhanced"),
+    ]:
+        if arr.ndim != 1:
+            raise ValueError(f"{name} must be 1D, got shape {arr.shape}.")
+        if not np.all(np.isfinite(arr)):
+            raise ValueError(f"{name} contains non-finite values (NaN or Inf).")
+
+    n = int(s00.size)
+    if not (s10.size == n and s01.size == n and s11.size == n):
+        raise ValueError(
+            f"All score arrays must have matching size, got {n}, {s10.size}, {s01.size}, {s11.size}."
+        )
+    if n < 1:
+        raise ValueError("At least 1 paired observation is required.")
+
+    # Main effect of Q-normalization: 0.5 * ((s10 + s11) - (s00 + s01))
+    me_q = 0.5 * ((s10 + s11) - (s00 + s01))
+
+    # Main effect of Dual-Stream: 0.5 * ((s01 + s11) - (s00 + s10))
+    me_ds = 0.5 * ((s01 + s11) - (s00 + s10))
+
+    # Interaction term: (s11 - s10) - (s01 - s00)
+    interaction = (s11 - s10) - (s01 - s00)
+
+    return {
+        "n": n,
+        "main_effect_qnorm": _summarize_effect_series(me_q),
+        "main_effect_dualstream": _summarize_effect_series(me_ds),
+        "interaction_effect": _summarize_effect_series(interaction),
+        "variant_means": {
+            "mcts_strict": float(np.mean(s00)),
+            "mcts_qnorm_only": float(np.mean(s10)),
+            "mcts_dualstream_only": float(np.mean(s01)),
+            "mcts_enhanced": float(np.mean(s11)),
+        },
+    }
+

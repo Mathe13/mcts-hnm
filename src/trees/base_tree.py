@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 
@@ -322,3 +323,62 @@ class FastHierarchyTree:
             if isinstance(exc, ValueError):
                 raise
             raise ValueError(f"Failed to load FastHierarchyTree from {src_path}: {exc}") from exc
+
+
+def compute_tree_topology_diagnostics(tree: FastHierarchyTree) -> dict[str, Any]:
+    r"""Compute structural and topological summary metrics for a hierarchy tree.
+
+    Args:
+        tree: FastHierarchyTree instance.
+
+    Returns:
+        Dictionary containing:
+        - `tree_type`: identifier of the tree origin (`"semantic"`, `"confusion_ward"`, etc.)
+        - `total_nodes`: total number of nodes in tree ($V$)
+        - `num_leaves`: count of leaf nodes
+        - `num_internal_nodes`: count of internal (non-leaf) nodes
+        - `max_depth`: maximum depth from root (root depth = 0)
+        - `mean_leaf_depth`: mean depth across leaf nodes
+        - `min_leaf_depth`: minimum depth across leaf nodes
+        - `branching_factor_mean`: mean number of children for internal nodes
+        - `branching_factor_max`: max number of children for an internal node
+        - `branching_factor_min`: min number of children for an internal node
+    """
+    if not isinstance(tree, FastHierarchyTree):
+        raise ValueError(f"tree must be a FastHierarchyTree instance, got {type(tree).__name__}.")
+
+    v = int(tree.num_nodes)
+    is_leaf = tree.is_leaf
+    internal_mask = ~is_leaf
+
+    leaf_depths = tree.depths[is_leaf]
+    mean_leaf_depth = float(np.mean(leaf_depths)) if leaf_depths.size > 0 else 0.0
+    min_leaf_depth = int(np.min(leaf_depths)) if leaf_depths.size > 0 else 0
+    max_depth = int(np.max(tree.depths)) if v > 0 else 0
+
+    num_leaves = int(np.sum(is_leaf))
+    num_internal = int(np.sum(internal_mask))
+
+    if num_internal > 0:
+        internal_children = tree.child_counts[internal_mask]
+        b_mean = float(np.mean(internal_children))
+        b_max = int(np.max(internal_children))
+        b_min = int(np.min(internal_children))
+    else:
+        b_mean = 0.0
+        b_max = 0
+        b_min = 0
+
+    return {
+        "tree_type": tree.tree_type,
+        "total_nodes": v,
+        "num_leaves": num_leaves,
+        "num_internal_nodes": num_internal,
+        "max_depth": max_depth,
+        "mean_leaf_depth": mean_leaf_depth,
+        "min_leaf_depth": min_leaf_depth,
+        "branching_factor_mean": b_mean,
+        "branching_factor_max": b_max,
+        "branching_factor_min": b_min,
+    }
+
