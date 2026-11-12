@@ -118,10 +118,10 @@ T5
 
 **Done when**:
 
-- [ ] Teste valida que FIG-01 gera .pdf e .png com fronteira de Pareto identificada
-- [ ] Teste valida que FIG-02 gera painel duplo com curvas de entropia e métricas de cobertura
-- [ ] Teste valida isolamento entre modos SMOKE e REAL
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_p0_pareto_entropy_figures.py`  
+- [x] Teste valida que FIG-01 gera .pdf e .png com fronteira de Pareto identificada
+- [x] Teste valida que FIG-02 gera painel duplo com curvas de entropia e métricas de cobertura
+- [x] Teste valida isolamento entre modos SMOKE e REAL
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_p0_pareto_entropy_figures.py`  
 
 **Tests**: unit  
 **Gate**: quick  
