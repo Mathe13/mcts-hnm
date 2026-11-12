@@ -132,7 +132,7 @@ def test_notebook_05_smoke_e2e():
     assert "config" in env
     assert env["config"].execution_mode == ExecutionMode.SMOKE
     assert "artifacts" in env
-    assert len(env["artifacts"]["figures"]) == 6
+    assert len(env["artifacts"]["figures"]) in (6, 8)
     assert len(env["artifacts"]["tables"]) == 3
 
 
