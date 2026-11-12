@@ -87,11 +87,11 @@ T4
 
 **Done when**:
 
-- [ ] `BenchmarkRunResult` e CSV possuem o campo `target_class`
-- [ ] `run_benchmark()` itera sobre `target_classes` e avalia cada classe sob idêntico cronograma de sementes
-- [ ] `compute_method_by_ratio_interaction()` calcula efeitos de interação entre pares de razões quando `len(imbalance_ratios) > 1`
-- [ ] Saídas JSON e CSV gravam `target_class`, `imbalance_ratio` e `ratio_interactions`
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests`  
+- [x] `BenchmarkRunResult` e CSV possuem o campo `target_class`
+- [x] `run_benchmark()` itera sobre `target_classes` e avalia cada classe sob idêntico cronograma de sementes
+- [x] `compute_method_by_ratio_interaction()` calcula efeitos de interação entre pares de razões quando `len(imbalance_ratios) > 1`
+- [x] Saídas JSON e CSV gravam `target_class`, `imbalance_ratio` e `ratio_interactions`
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests`  
 
 **Tests**: unit  
 **Gate**: quick  

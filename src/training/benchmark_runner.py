@@ -44,6 +44,7 @@ from src.utils.experiment_config import (
 from src.utils.seed import set_global_seed
 from src.utils.statistics import (
     compute_2x2_factorial_effects,
+    compute_method_by_ratio_interaction,
     compute_paired_statistical_tests,
 )
 
@@ -97,6 +98,7 @@ class BenchmarkRunResult:
     seed: int
     final_metrics: dict[str, float]
     imbalance_ratio: str | None = None
+    target_class: int | None = None
     run_id: str | None = None
 
 
@@ -132,6 +134,7 @@ def run_benchmark(
     num_steps: int = 500,
     eval_every: int = 100,
     target_class_scenario1: int = 0,
+    target_classes: tuple[int, ...] | None = None,
     val_features: torch.Tensor | None = None,
     val_labels: np.ndarray | torch.Tensor | None = None,
     device: torch.device | None = None,
@@ -237,229 +240,236 @@ def run_benchmark(
     visitation_payload: dict[str, Any] | None = None
 
     ratios_to_run: tuple[str | None, ...] = imbalance_ratios if scenario == "scenario1" else (None,)
+    classes_to_run: tuple[int, ...] = (
+        (target_classes if target_classes is not None else (target_class_scenario1,))
+        if scenario == "scenario1"
+        else (0,)
+    )
 
-    for rho in ratios_to_run:
-        pos_frac = IMBALANCE_RATIOS.get(rho, 0.02) if rho is not None else 1.0
-        for tree_type in tree_types:
-            for strat in strategies:
-                for seed in seeds:
-                    set_global_seed(seed)
+    for tc in classes_to_run:
+        for rho in ratios_to_run:
+            pos_frac = IMBALANCE_RATIOS.get(rho, 0.02) if rho is not None else 1.0
+            for tree_type in tree_types:
+                for strat in strategies:
+                    for seed in seeds:
+                        set_global_seed(seed)
 
-                    if scenario == "scenario1":
-                        split = build_scenario1_split(
-                            fine_labels=train_lbl_np,
-                            target_class=target_class_scenario1,
-                            pos_fraction=pos_frac,
-                            seed=seed,
-                        )
-                        pos_idx = split.positive_indices
-                        neg_idx = split.negative_indices
-                        binary_train_lbl = split.binary_labels
-                        binary_test_lbl = (test_lbl_np == target_class_scenario1).astype(np.int64)
+                        if scenario == "scenario1":
+                            split = build_scenario1_split(
+                                fine_labels=train_lbl_np,
+                                target_class=tc,
+                                pos_fraction=pos_frac,
+                                seed=seed,
+                            )
+                            pos_idx = split.positive_indices
+                            neg_idx = split.negative_indices
+                            binary_train_lbl = split.binary_labels
+                            binary_test_lbl = (test_lbl_np == tc).astype(np.int64)
 
-                        tree: FastHierarchyTree | None = None
-                        if strat in MCTS_STRATEGIES:
-                            class_to_indices = split.negative_class_to_indices
-                            if tree_type == "semantic":
-                                tree = build_semantic_tree(class_to_indices)
-                            elif tree_type == "confusion_ward":
-                                assert conf_mat is not None
-                                tree = build_confusion_tree(conf_mat, class_to_indices)
-                            if tree is not None and tree_type not in tree_diagnostics:
-                                tree_diagnostics[tree_type] = compute_tree_topology_diagnostics(tree)
+                            tree: FastHierarchyTree | None = None
+                            if strat in MCTS_STRATEGIES:
+                                class_to_indices = split.negative_class_to_indices
+                                if tree_type == "semantic":
+                                    tree = build_semantic_tree(class_to_indices)
+                                elif tree_type == "confusion_ward":
+                                    assert conf_mat is not None
+                                    tree = build_confusion_tree(conf_mat, class_to_indices)
+                                if tree is not None and tree_type not in tree_diagnostics:
+                                    tree_diagnostics[tree_type] = compute_tree_topology_diagnostics(tree)
 
-                        binary_val_lbl = (val_lbl_np == target_class_scenario1).astype(np.int64)
+                            binary_val_lbl = (val_lbl_np == tc).astype(np.int64)
 
-                        res = train_scenario1(
-                            train_features=train_features,
-                            train_binary_labels=binary_train_lbl,
-                            positive_indices=pos_idx,
-                            negative_indices=neg_idx,
-                            val_features=val_features,
-                            val_binary_labels=binary_val_lbl,
-                            test_features=test_features,
-                            test_binary_labels=binary_test_lbl,
-                            strategy=strat,
-                            tree=tree,
-                            num_steps=num_steps,
-                            eval_every=eval_every,
-                            seed=seed,
-                            device=device,
-                        )
-                    else:
-                        # Scenario 2
-                        num_cls = max(int(np.max(train_lbl_np)) + 1, 2)
-                        tree = None
-                        if strat in MCTS_STRATEGIES:
-                            class_to_indices = {
-                                c: np.flatnonzero(train_lbl_np == c).astype(np.int64)
-                                for c in range(num_cls)
-                            }
-                            if tree_type == "semantic":
-                                tree = build_semantic_tree(class_to_indices)
-                            elif tree_type == "confusion_ward":
-                                assert conf_mat is not None
-                                tree = build_confusion_tree(conf_mat, class_to_indices)
-                            if tree is not None and tree_type not in tree_diagnostics:
-                                tree_diagnostics[tree_type] = compute_tree_topology_diagnostics(tree)
+                            res = train_scenario1(
+                                train_features=train_features,
+                                train_binary_labels=binary_train_lbl,
+                                positive_indices=pos_idx,
+                                negative_indices=neg_idx,
+                                val_features=val_features,
+                                val_binary_labels=binary_val_lbl,
+                                test_features=test_features,
+                                test_binary_labels=binary_test_lbl,
+                                strategy=strat,
+                                tree=tree,
+                                num_steps=num_steps,
+                                eval_every=eval_every,
+                                seed=seed,
+                                device=device,
+                            )
+                        else:
+                                # Scenario 2
+                            num_cls = max(int(np.max(train_lbl_np)) + 1, 2)
+                            tree = None
+                            if strat in MCTS_STRATEGIES:
+                                class_to_indices = {
+                                    c: np.flatnonzero(train_lbl_np == c).astype(np.int64)
+                                    for c in range(num_cls)
+                                }
+                                if tree_type == "semantic":
+                                    tree = build_semantic_tree(class_to_indices)
+                                elif tree_type == "confusion_ward":
+                                    assert conf_mat is not None
+                                    tree = build_confusion_tree(conf_mat, class_to_indices)
+                                if tree is not None and tree_type not in tree_diagnostics:
+                                    tree_diagnostics[tree_type] = compute_tree_topology_diagnostics(tree)
 
-                        res = train_scenario2(
-                            train_features=train_features,
-                            train_labels=train_lbl_np,
-                            val_features=val_features,
-                            val_labels=val_lbl_np,
-                            test_features=test_features,
-                            test_labels=test_lbl_np,
-                            strategy=strat,
-                            tree=tree,
-                            num_classes=num_cls,
-                            num_steps=num_steps,
-                            eval_every=eval_every,
-                            seed=seed,
-                            device=device,
-                        )
+                            res = train_scenario2(
+                                train_features=train_features,
+                                train_labels=train_lbl_np,
+                                val_features=val_features,
+                                val_labels=val_lbl_np,
+                                test_features=test_features,
+                                test_labels=test_lbl_np,
+                                strategy=strat,
+                                tree=tree,
+                                num_classes=num_cls,
+                                num_steps=num_steps,
+                                eval_every=eval_every,
+                                seed=seed,
+                                device=device,
+                            )
 
-                        # Compute test predictions and per-class recall across all strategies
-                        trained_model = res["model"]
-                        trained_model.eval()
-                        m_dev = device if device is not None else next(trained_model.parameters()).device
-                        with torch.no_grad():
-                            all_p: list[torch.Tensor] = []
-                            for bi in range(0, test_features.shape[0], 512):
-                                bx = test_features[bi : bi + 512].to(m_dev)
-                                logits_b = trained_model(bx)
-                                all_p.append(torch.argmax(logits_b, dim=1).detach().cpu())
-                        preds_arr = torch.cat(all_p, dim=0).numpy()
+                            # Compute test predictions and per-class recall across all strategies
+                            trained_model = res["model"]
+                            trained_model.eval()
+                            m_dev = device if device is not None else next(trained_model.parameters()).device
+                            with torch.no_grad():
+                                all_p: list[torch.Tensor] = []
+                                for bi in range(0, test_features.shape[0], 512):
+                                    bx = test_features[bi : bi + 512].to(m_dev)
+                                    logits_b = trained_model(bx)
+                                    all_p.append(torch.argmax(logits_b, dim=1).detach().cpu())
+                            preds_arr = torch.cat(all_p, dim=0).numpy()
 
-                        per_class_recall: list[float] = []
-                        for c in range(num_cls):
-                            c_mask = (test_lbl_np == c)
-                            if np.any(c_mask):
-                                per_class_recall.append(float(np.mean(preds_arr[c_mask] == c)))
-                            else:
-                                per_class_recall.append(0.0)
-
-                        # Exposure telemetry from ExposureTracker
-                        exp_diag = res.get("exposure_diagnostics", {})
-                        exp_counts = exp_diag.get("class_exposure_counts", [0] * num_cls)
-                        exposure_entropy = float(exp_diag.get("normalized_exposure_entropy", 0.0))
-                        class_cov = float(exp_diag.get("cumulative_class_coverage", 0.0))
-                        unvisited_cls = int(exp_diag.get("unexposed_classes_count", num_cls))
-
-                        corr_metrics = compute_exposure_recall_correlation(exp_counts, per_class_recall)
-                        spearman_rho = corr_metrics["spearman_rho"]
-
-                        ent_nats = 0.0
-                        ent_norm = exposure_entropy
-                        class_visits: dict[int, int] = {}
-                        if tree is not None:
-                            leaf_ids = tree.leaf_node_ids()
-                            for lid in leaf_ids:
-                                cls_id = int(tree.leaf_to_class_id[int(lid)])
-                                class_visits[cls_id] = class_visits.get(cls_id, 0) + int(tree.visits[int(lid)])
+                            per_class_recall: list[float] = []
                             for c in range(num_cls):
-                                class_visits.setdefault(c, 0)
-                            ent_nats, ent_norm = compute_visitation_entropy(tree)
+                                c_mask = (test_lbl_np == c)
+                                if np.any(c_mask):
+                                    per_class_recall.append(float(np.mean(preds_arr[c_mask] == c)))
+                                else:
+                                    per_class_recall.append(0.0)
 
-                        diagnostics_per_strat[strat] = {
-                            "class_visit_distribution": class_visits if tree is not None else {c: int(exp_counts[c]) for c in range(num_cls)},
-                            "class_exposure_counts": exp_counts,
-                            "unvisited_classes_count": unvisited_cls,
-                            "visitation_entropy": ent_norm,
-                            "entropy_nats": ent_nats,
-                            "class_coverage_pct": class_cov * 100.0,
-                            "per_class_recall": per_class_recall,
-                            "exposure_entropy": exposure_entropy,
-                            "class_coverage": class_cov,
-                            "unvisited_classes": unvisited_cls,
-                            "exposure_recall_correlation": spearman_rho,
-                            "correlation": corr_metrics,
-                        }
+                            # Exposure telemetry from ExposureTracker
+                            exp_diag = res.get("exposure_diagnostics", {})
+                            exp_counts = exp_diag.get("class_exposure_counts", [0] * num_cls)
+                            exposure_entropy = float(exp_diag.get("normalized_exposure_entropy", 0.0))
+                            class_cov = float(exp_diag.get("cumulative_class_coverage", 0.0))
+                            unvisited_cls = int(exp_diag.get("unexposed_classes_count", num_cls))
 
-                        # Inject quantitative telemetry into final_metrics
-                        res["final_metrics"]["exposure_entropy"] = exposure_entropy
-                        res["final_metrics"]["class_coverage"] = class_cov
-                        res["final_metrics"]["unvisited_classes"] = unvisited_cls
-                        res["final_metrics"]["exposure_recall_correlation"] = spearman_rho
+                            corr_metrics = compute_exposure_recall_correlation(exp_counts, per_class_recall)
+                            spearman_rho = corr_metrics["spearman_rho"]
 
-                    # Inject computational costs into final_metrics across all scenarios
-                    costs = res.get("computational_costs", {})
-                    if isinstance(costs, dict):
-                        for ck in ("total_updates", "gradient_samples", "mining_forwards", "elapsed_seconds"):
-                            if ck in costs:
-                                res["final_metrics"][ck] = costs[ck]
+                            ent_nats = 0.0
+                            ent_norm = exposure_entropy
+                            class_visits: dict[int, int] = {}
+                            if tree is not None:
+                                leaf_ids = tree.leaf_node_ids()
+                                for lid in leaf_ids:
+                                    cls_id = int(tree.leaf_to_class_id[int(lid)])
+                                    class_visits[cls_id] = class_visits.get(cls_id, 0) + int(tree.visits[int(lid)])
+                                for c in range(num_cls):
+                                    class_visits.setdefault(c, 0)
+                                ent_nats, ent_norm = compute_visitation_entropy(tree)
 
-                    final_metrics = res["final_metrics"]
-                    if "history" in res and res["history"] and f"{strat}_f1" not in convergence_history:
-                        steps_seq = [int(h.get("step", 0)) for h in res["history"]]
-                        convergence_history["steps"] = steps_seq
-                        primary_key = "f1" if scenario == "scenario1" else "macro_f1"
-                        convergence_history[f"{strat}_f1"] = [float(h.get(primary_key, h.get("f1", 0.0))) for h in res["history"]]
-                        convergence_history[f"{strat}_loss"] = [float(h.get("loss", 0.0)) for h in res["history"]]
-                        if rho is not None and "imbalance_ratio" not in convergence_history:
-                            convergence_history["imbalance_ratio"] = rho
+                            diagnostics_per_strat[strat] = {
+                                "class_visit_distribution": class_visits if tree is not None else {c: int(exp_counts[c]) for c in range(num_cls)},
+                                "class_exposure_counts": exp_counts,
+                                "unvisited_classes_count": unvisited_cls,
+                                "visitation_entropy": ent_norm,
+                                "entropy_nats": ent_nats,
+                                "class_coverage_pct": class_cov * 100.0,
+                                "per_class_recall": per_class_recall,
+                                "exposure_entropy": exposure_entropy,
+                                "class_coverage": class_cov,
+                                "unvisited_classes": unvisited_cls,
+                                "exposure_recall_correlation": spearman_rho,
+                                "correlation": corr_metrics,
+                            }
 
-                    if strat == "mcts_enhanced" and tree_type == "semantic" and "visitation_checkpoints" in res and res["visitation_checkpoints"] and visitation_payload is None:
-                        vis_chks = res["visitation_checkpoints"]
-                        tax = get_cifar100_taxonomy()
-                        sc_names = list(tax.coarse_names)
-                        mat = [
-                            [float(chk["superclass_visit_distribution"].get(sc, 0.0)) for chk in vis_chks]
-                            for sc in sc_names
-                        ]
-                        steps_h = [int(chk["step"]) for chk in vis_chks]
-                        visitation_payload = {
-                            "benchmark_name": "tier1_visitation_diagnostics",
+                            # Inject quantitative telemetry into final_metrics
+                            res["final_metrics"]["exposure_entropy"] = exposure_entropy
+                            res["final_metrics"]["class_coverage"] = class_cov
+                            res["final_metrics"]["unvisited_classes"] = unvisited_cls
+                            res["final_metrics"]["exposure_recall_correlation"] = spearman_rho
+
+                        # Inject computational costs into final_metrics across all scenarios
+                        costs = res.get("computational_costs", {})
+                        if isinstance(costs, dict):
+                            for ck in ("total_updates", "gradient_samples", "mining_forwards", "elapsed_seconds"):
+                                if ck in costs:
+                                    res["final_metrics"][ck] = costs[ck]
+
+                        final_metrics = res["final_metrics"]
+                        if "history" in res and res["history"] and f"{strat}_f1" not in convergence_history:
+                            steps_seq = [int(h.get("step", 0)) for h in res["history"]]
+                            convergence_history["steps"] = steps_seq
+                            primary_key = "f1" if scenario == "scenario1" else "macro_f1"
+                            convergence_history[f"{strat}_f1"] = [float(h.get(primary_key, h.get("f1", 0.0))) for h in res["history"]]
+                            convergence_history[f"{strat}_loss"] = [float(h.get("loss", 0.0)) for h in res["history"]]
+                            if rho is not None and "imbalance_ratio" not in convergence_history:
+                                convergence_history["imbalance_ratio"] = rho
+
+                        if strat == "mcts_enhanced" and tree_type == "semantic" and "visitation_checkpoints" in res and res["visitation_checkpoints"] and visitation_payload is None:
+                            vis_chks = res["visitation_checkpoints"]
+                            tax = get_cifar100_taxonomy()
+                            sc_names = list(tax.coarse_names)
+                            mat = [
+                                [float(chk["superclass_visit_distribution"].get(sc, 0.0)) for chk in vis_chks]
+                                for sc in sc_names
+                            ]
+                            steps_h = [int(chk["step"]) for chk in vis_chks]
+                            visitation_payload = {
+                                "benchmark_name": "tier1_visitation_diagnostics",
+                                "scenario": scenario,
+                                "strategy": strat,
+                                "tree_type": tree_type,
+                                "seed": seed,
+                                "checkpoints": vis_chks,
+                                "heatmap": {
+                                    "steps": steps_h,
+                                    "superclasses": sc_names,
+                                    "matrix": mat,
+                                },
+                            }
+
+                        commit_hash = get_git_commit(find_repo_root())[:8]
+                        cls_id_str = f"cls{tc}" if scenario == "scenario1" else "cls100"
+                        r_str = f"r{rho.replace(':', '_')}" if rho is not None else "r_none"
+                        t_str = tree_type if strat.startswith("mcts") else "none"
+                        run_id = f"{scenario}_{cls_id_str}_{r_str}_{t_str}_{strat}_s{seed}_{commit_hash}"
+
+                        # Serialize individual atomic run
+                        runs_dir = out_path / "runs"
+                        runs_dir.mkdir(parents=True, exist_ok=True)
+                        single_run_payload = {
+                            "run_id": run_id,
                             "scenario": scenario,
                             "strategy": strat,
-                            "tree_type": tree_type,
+                            "tree_type": t_str,
                             "seed": seed,
-                            "checkpoints": vis_chks,
-                            "heatmap": {
-                                "steps": steps_h,
-                                "superclasses": sc_names,
-                                "matrix": mat,
-                            },
+                            "target_class": tc if scenario == "scenario1" else None,
+                            "imbalance_ratio": rho,
+                            "final_metrics": final_metrics,
+                            "val_metrics": res.get("val_metrics"),
+                            "test_metrics": res.get("test_metrics"),
+                            "history": res.get("history", []),
+                            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
                         }
+                        run_json_path = runs_dir / f"{run_id}.json"
+                        _atomic_save_json(single_run_payload, run_json_path)
+                        save_provenance_metadata(run_json_path, active_config, extra={"run_id": run_id})
 
-                    commit_hash = get_git_commit(find_repo_root())[:8]
-                    cls_id_str = f"cls{target_class_scenario1}" if scenario == "scenario1" else "cls100"
-                    r_str = f"r{rho.replace(':', '_')}" if rho is not None else "r_none"
-                    t_str = tree_type if strat.startswith("mcts") else "none"
-                    run_id = f"{scenario}_{cls_id_str}_{r_str}_{t_str}_{strat}_s{seed}_{commit_hash}"
-
-                    # Serialize individual atomic run
-                    runs_dir = out_path / "runs"
-                    runs_dir.mkdir(parents=True, exist_ok=True)
-                    single_run_payload = {
-                        "run_id": run_id,
-                        "scenario": scenario,
-                        "strategy": strat,
-                        "tree_type": t_str,
-                        "seed": seed,
-                        "target_class": target_class_scenario1 if scenario == "scenario1" else None,
-                        "imbalance_ratio": rho,
-                        "final_metrics": final_metrics,
-                        "val_metrics": res.get("val_metrics"),
-                        "test_metrics": res.get("test_metrics"),
-                        "history": res.get("history", []),
-                        "timestamp_utc": datetime.now(timezone.utc).isoformat(),
-                    }
-                    run_json_path = runs_dir / f"{run_id}.json"
-                    _atomic_save_json(single_run_payload, run_json_path)
-                    save_provenance_metadata(run_json_path, active_config, extra={"run_id": run_id})
-
-                    runs.append(
-                        BenchmarkRunResult(
-                            scenario=scenario,
-                            strategy=strat,
-                            tree_type=t_str,
-                            seed=seed,
-                            final_metrics=final_metrics,
-                            imbalance_ratio=rho,
-                            run_id=run_id,
+                        runs.append(
+                            BenchmarkRunResult(
+                                scenario=scenario,
+                                strategy=strat,
+                                tree_type=t_str,
+                                seed=seed,
+                                final_metrics=final_metrics,
+                                imbalance_ratio=rho,
+                                target_class=tc if scenario == "scenario1" else None,
+                                run_id=run_id,
+                            )
                         )
-                    )
 
     # Metric aggregation
     primary_metric = "auprc" if scenario == "scenario1" else "top1_accuracy"
@@ -632,10 +642,11 @@ def run_benchmark(
 
     # Flatten summary rows for CSV export
     csv_rows: list[dict[str, Any]] = []
-    all_fieldnames: set[str] = {"scenario", "strategy", "tree_type", "seed", "imbalance_ratio"}
+    all_fieldnames: set[str] = {"scenario", "target_class", "strategy", "tree_type", "seed", "imbalance_ratio"}
     for r in runs:
         row: dict[str, Any] = {
             "scenario": r.scenario,
+            "target_class": r.target_class,
             "strategy": r.strategy,
             "tree_type": r.tree_type,
             "seed": r.seed,
@@ -646,12 +657,59 @@ def run_benchmark(
             all_fieldnames.add(k)
         csv_rows.append(row)
 
-    ordered_fields = ["scenario", "strategy", "tree_type", "seed", "imbalance_ratio"] + sorted(
-        [f for f in all_fieldnames if f not in ("scenario", "strategy", "tree_type", "seed", "imbalance_ratio")]
+    ordered_fields = ["scenario", "target_class", "strategy", "tree_type", "seed", "imbalance_ratio"] + sorted(
+        [f for f in all_fieldnames if f not in ("scenario", "target_class", "strategy", "tree_type", "seed", "imbalance_ratio")]
     )
     for row in csv_rows:
         for f in ordered_fields:
             row.setdefault(f, None)
+
+    # Method x Ratio Interactions
+    ratio_interactions: dict[str, Any] = {}
+    if scenario == "scenario1" and len(imbalance_ratios) > 1:
+        base_strat = "uniform" if "uniform" in strategies else strategies[0]
+        ratio_list = list(imbalance_ratios)
+        for i in range(len(ratio_list)):
+            for j in range(i + 1, len(ratio_list)):
+                r1 = ratio_list[i]
+                r2 = ratio_list[j]
+                pair_key = f"{r1}_vs_{r2}"
+                ratio_interactions[pair_key] = {}
+                for tc in classes_to_run:
+                    for strat in strategies:
+                        if strat == base_strat:
+                            continue
+                        runs_s_r1 = {r.seed: r for r in runs if r.strategy == strat and r.imbalance_ratio == r1 and r.target_class == tc}
+                        runs_b_r1 = {r.seed: r for r in runs if r.strategy == base_strat and r.imbalance_ratio == r1 and r.target_class == tc}
+                        runs_s_r2 = {r.seed: r for r in runs if r.strategy == strat and r.imbalance_ratio == r2 and r.target_class == tc}
+                        runs_b_r2 = {r.seed: r for r in runs if r.strategy == base_strat and r.imbalance_ratio == r2 and r.target_class == tc}
+                        common_sd = sorted(set(runs_s_r1.keys()) & set(runs_b_r1.keys()) & set(runs_s_r2.keys()) & set(runs_b_r2.keys()))
+                        if len(common_sd) >= 2:
+                            s_r1 = [runs_s_r1[s].final_metrics.get("auprc", 0.0) for s in common_sd]
+                            b_r1 = [runs_b_r1[s].final_metrics.get("auprc", 0.0) for s in common_sd]
+                            s_r2 = [runs_s_r2[s].final_metrics.get("auprc", 0.0) for s in common_sd]
+                            b_r2 = [runs_b_r2[s].final_metrics.get("auprc", 0.0) for s in common_sd]
+                            inter_res = compute_method_by_ratio_interaction(s_r1, b_r1, s_r2, b_r2)
+                            comp_key = f"{strat}_vs_{base_strat}_class{tc}" if len(classes_to_run) > 1 else f"{strat}_vs_{base_strat}"
+                            ratio_interactions[pair_key][comp_key] = inter_res
+
+    # Aggregations across target classes
+    aggregated_by_class: dict[int, Any] = {}
+    if scenario == "scenario1" and len(classes_to_run) > 1:
+        for tc in classes_to_run:
+            aggregated_by_class[tc] = {}
+            for strat in strategies:
+                c_runs = [r for r in runs if r.target_class == tc and r.strategy == strat]
+                if not c_runs:
+                    continue
+                auprc_vals = [r.final_metrics.get("auprc", 0.0) for r in c_runs]
+                f1_vals = [r.final_metrics.get("f1", 0.0) for r in c_runs]
+                aggregated_by_class[tc][strat] = {
+                    "auprc_mean": float(np.mean(auprc_vals)),
+                    "auprc_std": float(np.std(auprc_vals, ddof=1)) if len(auprc_vals) > 1 else 0.0,
+                    "f1_mean": float(np.mean(f1_vals)),
+                    "f1_std": float(np.std(f1_vals, ddof=1)) if len(f1_vals) > 1 else 0.0,
+                }
 
     json_export: dict[str, Any] = {
         "scenario": scenario,
@@ -664,6 +722,7 @@ def run_benchmark(
         "paired_hierarchy_tests": paired_hierarchy_tests,
         "tree_diagnostics": tree_diagnostics,
         "factorial_2x2_effects": factorial_2x2_effects,
+        "ratio_interactions": ratio_interactions,
         "aggregated_summary": aggregated_summary,
         "runs": [asdict(r) for r in runs],
         "per_seed_results": [asdict(r) for r in runs],
@@ -671,6 +730,9 @@ def run_benchmark(
 
     if scenario == "scenario1" and imbalance_ratios:
         json_export["imbalance_ratio"] = imbalance_ratios[0] if len(imbalance_ratios) == 1 else list(imbalance_ratios)
+        json_export["target_classes"] = list(classes_to_run)
+        if aggregated_by_class:
+            json_export["aggregated_by_class"] = aggregated_by_class
 
     if imbalance_audit is not None:
         json_export["imbalance_audit"] = imbalance_audit
