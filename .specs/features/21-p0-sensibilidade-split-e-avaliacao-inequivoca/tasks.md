@@ -150,10 +150,10 @@ T4
 
 **Done when**:
 
-- [ ] Todos os testes de sensibilidade em `test_tier1_benchmarks_real.py` passam com a nova assinatura e split
-- [ ] `test_phase_a_runner_equivalence.py` passa sem divergências
-- [ ] Suíte completa de testes de benchmarks e sensibilidade passa com exit code 0
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_sensitivity_runner_equivalence.py tests/test_tier1_benchmarks_real.py`  
+- [x] Todos os testes de sensibilidade em `test_tier1_benchmarks_real.py` passam com a nova assinatura e split
+- [x] `test_phase_a_runner_equivalence.py` passa sem divergências
+- [x] Suíte completa de testes de benchmarks e sensibilidade passa com exit code 0
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_sensitivity_runner_equivalence.py tests/test_tier1_benchmarks_real.py`  
 
 **Tests**: integration  
 **Gate**: build  

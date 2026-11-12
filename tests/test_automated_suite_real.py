@@ -236,6 +236,8 @@ def test_reduced_real_integration_path(tmp_path: Path):
         train_binary_labels=fake_binary_labels,
         positive_indices=pos_idx,
         negative_indices=neg_idx,
+        val_features=fake_embeddings[:10],
+        val_binary_labels=fake_binary_labels[:10],
         test_features=fake_embeddings[:10],
         test_binary_labels=fake_binary_labels[:10],
         strategy="uniform",

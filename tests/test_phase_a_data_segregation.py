@@ -72,14 +72,16 @@ def test_periodic_eval_uses_validation_strictly(dummy_data, monkeypatch):
     test_id = id(test_f)
 
     # In-training evaluations (step 5 and step 10) must be against val_f
-    in_training_evals = eval_calls[:-1]
+    # Note: final evaluation tests both last_metrics and best_validation_metrics on test_f
+    in_training_evals = eval_calls[:-2] if len(eval_calls) >= 3 else eval_calls[:-1]
     assert len(in_training_evals) >= 2
     for call_id in in_training_evals:
         assert call_id == val_id, "In-training evaluation must evaluate strictly on val_features."
         assert call_id != test_id, "In-training evaluation must NEVER evaluate on test_features."
 
-    # Final evaluation is permitted to evaluate test_features once at the end
+    # Final evaluations evaluate test_features
     assert eval_calls[-1] == test_id
+    assert eval_calls[-2] == test_id
 
 
 def test_missing_validation_raises_value_error(dummy_data):

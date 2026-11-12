@@ -416,6 +416,8 @@ def test_tier1_trainers_with_dynamic_leaf_expansion(toy_tree: FastHierarchyTree)
         train_binary_labels=bin_labels,
         positive_indices=pos_idx,
         negative_indices=neg_idx,
+        val_features=features,
+        val_binary_labels=bin_labels,
         test_features=features,
         test_binary_labels=bin_labels,
         strategy="mcts_enhanced",
@@ -452,6 +454,8 @@ def test_tier1_trainers_with_dynamic_leaf_expansion(toy_tree: FastHierarchyTree)
     res2 = train_scenario2(
         train_features=features,
         train_labels=labels,
+        val_features=features,
+        val_labels=labels,
         test_features=features,
         test_labels=labels,
         strategy="mcts_enhanced",

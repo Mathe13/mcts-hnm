@@ -915,6 +915,8 @@ def test_phase4_sensitivity_ablation_persists_measured_values(tmp_path: Path):
     res = run_sensitivity_ablation(
         train_features=train_x,
         train_labels=train_y,
+        val_features=test_x,
+        val_labels=test_y,
         test_features=test_x,
         test_labels=test_y,
         c_values=(0.5, 1.0),
@@ -962,6 +964,8 @@ def test_phase4_visitation_diagnostics_records_real_counters():
         train_binary_labels=train_y,
         positive_indices=np.where(train_y == 1)[0],
         negative_indices=np.where(train_y == 0)[0],
+        val_features=train_x[:20],
+        val_binary_labels=train_y[:20],
         test_features=train_x[:20],
         test_binary_labels=train_y[:20],
         strategy="mcts_enhanced",
