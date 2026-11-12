@@ -536,7 +536,8 @@ def run_sensitivity_ablation(
     alpha_values: tuple[float, ...] = (0.1, 0.3, 0.5, 0.7),
     output_dir: str | Path = "results",
     benchmark_name: str = "tier1_hyperparameter_sensitivity",
-    num_steps: int = 500,
+    imbalance_ratio: str = "1:50",
+    num_steps: int = 1000,
     eval_every: int = 100,
     seeds: tuple[int, ...] = (42,),
     target_class_scenario1: int = 0,
@@ -547,6 +548,10 @@ def run_sensitivity_ablation(
     if val_features is None or val_labels is None:
         raise ValueError(
             "val_features and val_labels are required in run_sensitivity_ablation to prevent data leakage."
+        )
+    if imbalance_ratio not in IMBALANCE_RATIOS:
+        raise ValueError(
+            f"Invalid imbalance_ratio: '{imbalance_ratio}'. Valid choices are: {list(IMBALANCE_RATIOS.keys())}"
         )
     if config is not None:
         active_config = config
@@ -579,32 +584,34 @@ def run_sensitivity_ablation(
         else np.asarray(val_labels)
     ).astype(np.int64)
 
-    pos_mask = train_lbl_np == target_class_scenario1
-    pos_idx = np.flatnonzero(pos_mask).astype(np.int64)
-    neg_idx = np.flatnonzero(~pos_mask).astype(np.int64)
-    binary_train_lbl = pos_mask.astype(np.int64)
+    pos_frac = IMBALANCE_RATIOS[imbalance_ratio]
     binary_val_lbl = (val_lbl_np == target_class_scenario1).astype(np.int64)
     binary_test_lbl = (test_lbl_np == target_class_scenario1).astype(np.int64)
 
-    neg_classes = np.unique(train_lbl_np[neg_idx])
-    class_to_indices = {
-        c: np.flatnonzero(train_lbl_np == c).astype(np.int64)
-        for c in neg_classes
-    }
+    splits_by_seed: dict[int, Any] = {}
+    for s in seeds:
+        set_global_seed(s)
+        splits_by_seed[s] = build_scenario1_split(
+            fine_labels=train_lbl_np,
+            target_class=target_class_scenario1,
+            pos_fraction=pos_frac,
+            seed=s,
+        )
 
     grid_results: list[dict[str, Any]] = []
 
     for c in c_values:
         for alpha in alpha_values:
-            c_alpha_metrics: list[dict[str, float]] = []
+            c_alpha_metrics: list[dict[str, Any]] = []
             for seed in seeds:
                 set_global_seed(seed)
-                tree = build_semantic_tree(class_to_indices)
+                split = splits_by_seed[seed]
+                tree = build_semantic_tree(split.negative_class_to_indices)
                 res = train_scenario1(
                     train_features=train_features,
-                    train_binary_labels=binary_train_lbl,
-                    positive_indices=pos_idx,
-                    negative_indices=neg_idx,
+                    train_binary_labels=split.binary_labels,
+                    positive_indices=split.positive_indices,
+                    negative_indices=split.negative_indices,
                     val_features=val_features,
                     val_binary_labels=binary_val_lbl,
                     test_features=test_features,
@@ -618,13 +625,19 @@ def run_sensitivity_ablation(
                     seed=seed,
                     device=device,
                 )
-                c_alpha_metrics.append(res["final_metrics"])
+                run_metrics = dict(res["final_metrics"])
+                run_metrics["seed"] = seed
+                run_metrics["imbalance_ratio"] = imbalance_ratio
+                run_metrics["num_positives_train"] = int(len(split.positive_indices))
+                run_metrics["num_negatives_train"] = int(len(split.negative_indices))
+                c_alpha_metrics.append(run_metrics)
 
             auprc_vals = [m["auprc"] for m in c_alpha_metrics]
             f1_vals = [m["f1"] for m in c_alpha_metrics]
             grid_results.append({
                 "c": float(c),
                 "alpha": float(alpha),
+                "imbalance_ratio": imbalance_ratio,
                 "auprc_mean": float(np.mean(auprc_vals)),
                 "auprc_std": float(np.std(auprc_vals, ddof=1)) if len(auprc_vals) > 1 else 0.0,
                 "f1_mean": float(np.mean(f1_vals)),
@@ -632,8 +645,13 @@ def run_sensitivity_ablation(
                 "runs": c_alpha_metrics,
             })
 
+    first_split = next(iter(splits_by_seed.values())) if splits_by_seed else None
     json_export = {
         "benchmark_name": benchmark_name,
+        "imbalance_ratio": imbalance_ratio,
+        "num_positives_train": int(len(first_split.positive_indices)) if first_split is not None else 0,
+        "num_negatives_train": int(len(first_split.negative_indices)) if first_split is not None else 0,
+        "num_steps": num_steps,
         "exploration_c": list(c_values),
         "momentum_alpha": list(alpha_values),
         "seeds": list(seeds),
