@@ -31,6 +31,7 @@ MCTS_STRATEGIES = (
     "mcts_qnorm_only",
     "mcts_dualstream_only",
     "mcts_enhanced",
+    "mcts_coverage_balanced",
 )
 
 SUPPORTED_STRATEGIES = (
@@ -41,6 +42,7 @@ SUPPORTED_STRATEGIES = (
     "mcts_qnorm_only",
     "mcts_dualstream_only",
     "mcts_enhanced",
+    "mcts_coverage_balanced",
     "greedy_loss_ema",
     "flat_ucb",
 )
@@ -56,6 +58,7 @@ def resolve_mcts_hyperparameters(
     - mcts_qnorm_only: q_norm=True, beta=0.0
     - mcts_dualstream_only: q_norm=False, beta=0.5
     - mcts_enhanced: q_norm=True, beta=0.5
+    - mcts_coverage_balanced: q_norm=True, beta=0.25 (balanced 25% focal / 75% uniform)
     """
     if strategy == "mcts_strict":
         return False, 0.0
@@ -65,6 +68,8 @@ def resolve_mcts_hyperparameters(
         return False, dual_stream_ratio if dual_stream_ratio > 0.0 else 0.5
     elif strategy == "mcts_enhanced":
         return True, dual_stream_ratio if dual_stream_ratio > 0.0 else 0.5
+    elif strategy == "mcts_coverage_balanced":
+        return True, 0.25
     raise ValueError(f"Unknown MCTS strategy '{strategy}'. Supported: {MCTS_STRATEGIES}")
 
 
