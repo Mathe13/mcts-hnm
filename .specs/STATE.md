@@ -194,20 +194,30 @@
 - **Date**: 2026-11-11
 - **Status**: active (AD-024)
 
+### AD-025
+- **Decision**: Orchestrate and evaluate all 7 sampling policy variants in Scenario 2 multiclass curriculum (`uniform`, `uniform_grouped`, `mcts_strict`, `mcts_qnorm_only`, `mcts_dualstream_only`, `mcts_enhanced`, and corrective policy `mcts_coverage_balanced`), preserving historical `mcts_enhanced` (50% focal / 50% uniform) intact while implementing `mcts_coverage_balanced` with attenuated 25% focal ratio (16 focal + 48 uniform in batch 64) via `dual_stream_ratio=0.75` with Min-Max Q-normalization; enrich runner telemetry with quantitative diagnostics ($H_{\text{norm}}$, $C_{\text{cov}}$, $N_{\text{unvisited}}$, and Spearman/Pearson exposure-recall rank correlation), persist `tier1_scenario2_diagnostics.json` with pairwise differences vs uniform baseline ($\Delta_{\text{acc}}$, $\Delta_{\text{macro\_f1}}$, $\Delta_{\text{worst10}}$, Cohen's d, paired t-tests), and integrate causal inference report into Notebook 03 Section 4.
+- **Reason**: Fixes critical P0 audit finding on Scenario 2 multi-class collapse (Uniform 63.85% vs MCTS Enhanced 33.43% Top-1, worst-10 recall 0.68%), empirically isolating whether degradation stems from minibatch label saturation (`uniform_grouped`) or tree search exploration starvation, and providing a validated corrective policy without altering historical baseline comparisons.
+- **Trade-off**: Increases results payload with per-class exposure diagnostics and correlation metrics.
+- **Scope**: `src/training/trainer.py`, `src/training/benchmark_runner.py`, `src/training/exposure.py`, `notebooks/03_tier1_mcts_benchmarks.ipynb`, `tests/`
+- **Date**: 2026-11-11
+- **Status**: active (AD-025)
+
 ## Handoff
 
-- **Feature**: `21-p0-sensibilidade-split-e-avaliacao-inequivoca` (`.specs/features/21-p0-sensibilidade-split-e-avaliacao-inequivoca/`)
+- **Feature**: `22-p0-scenario2-cobertura-e-politicas-amostragem` (`.specs/features/22-p0-scenario2-cobertura-e-politicas-amostragem/`)
 - **Status**: Complete & Verified (Verification PASS, 0 errors, 0 warnings)
 - **Completed**:
   - Specified requirements in `spec.md` with explicit user approval (validated with 0 errors, 0 warnings).
   - Designed architecture and components in `design.md`.
   - Structured 4 atomic tasks in `tasks.md` with 6 verifiable checks.
-  - Executed T1–T4 with atomic commits (`9581931`, `2e0195f`, `9e36a74`, `8942267`, `7ecb09b`).
+  - Executed T1–T4 with atomic commits (`c45ea20`, `9c6b9d9`, `48834ad`, `71f07ae`).
   - Ran `check_proofs.py` (7/7 passed at clean `HEAD`).
   - Independent Scientific Verifier audit passed with Verdict: PASS.
   - Validated verification with `validate_verification.py` (0 errors, 0 warnings).
-  - Recorded Decision AD-024.
-- **In-progress**: P0-1 (Sensibilidade) e P0-2 (Política de avaliação) totalmente concluídos e certificados.
-- **Next step**: Apresentar ao usuário a conclusão dos P0s de sensibilidade/avaliação e alinhar o início do P0-3 (Investigação e variantes de política de cobertura no Scenario 2 multiclasse).
+  - Recorded Decision AD-025.
+- **In-progress**: Todos os itens P0 (P0-1 Sensibilidade, P0-2 Avaliação Inequívoca 4-Quadrantes, P0-3 Scenario 2 Cobertura & Variantes de Amostragem) concluídos e verificados.
+- **Next step**: P1 da lista de prioridades:
+  1. P1: Executar ablações controladas Strict vs Enhanced (isolar Q-norm e Dual-Stream no Scenario 1 e Scenario 2 com controles de custo).
+  2. P1: Comparação estatística pareada e metodológica de hierarquias (Ward vs Semantic).
 - **Blockers**: None
 - **Branch**: `main`
