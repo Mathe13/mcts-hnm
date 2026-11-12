@@ -29,7 +29,18 @@
 \maketitle
 
 \begin{abstract}
-Deep image classification under severe class imbalance and hierarchical label structures presents formidable challenges for standard gradient-based optimization. Uniform negative sampling is statistically inefficient when rare positive classes must be discriminated from hundreds of negative categories, while naive batch-level hard negative mining (OHEM) suffers from high gradient variance, loss osculation, and representational collapse. In this work, we investigate Monte Carlo Tree Search (MCTS) as an active reinforcement learning agent for hierarchical hard negative mining (MCTS-HNM). Formulating negative selection as sequential tree traversal under Upper Confidence Bound applied to Trees (UCT), our agent navigates semantic and empirical confusion taxonomies to mine informative, high-loss negatives. We introduce two key algorithmic innovations: sibling Min-Max $Q$-value normalization to stabilize UCB1 exploration across heterogeneous hierarchy depths, and a Dual-Stream batching mechanism combining MCTS hard negatives with uniform anchors to prevent mode collapse. Evaluated across Imbalanced Binary One-vs-Rest and 100-way Multi-Class curriculum settings on CIFAR-100 across 5 random seeds, MCTS-HNM statistically significantly outperforms Uniform Sampling, OHEM, and strict unnormalized MCTS, improving minority AUPRC by up to $8.4\%$ and worst-class recall by $11.2\%$.
+We evaluate hierarchical Monte Carlo Tree Search (MCTS) for hard negative
+mining using CIFAR-100 frozen ResNet-18 embeddings, comparing Uniform,
+Online Hard Example Mining, Strict MCTS, and several Enhanced variants.
+Across five seeds, Strict MCTS is competitive in binary one-vs-rest
+classification, whereas the complete Enhanced variant does not improve
+AUPRC over Strict. In 100-class classification, a coverage-balanced
+sampling variant improves substantially on the original Enhanced policy
+but remains below Uniform sampling. Factorial and batch-composition
+ablations identify limitations of Q-normalization and focal-class
+batching, motivating further evaluation rather than a general
+superiority claim.
+
 \end{abstract}
 
 \keywords{Monte Carlo Tree Search, Hard Negative Mining, Hierarchical Classification, Class Imbalance, Curriculum Learning, Reinforcement Learning}
@@ -51,7 +62,7 @@ In this paper, we present \textbf{MCTS-HNM}, a unified, mathematically rigorous 
     \item \textbf{Dynamic Leaf Sub-Clustering}: An entropy-driven tree expansion mechanism that partitions visited leaf nodes by classifier uncertainty, mining hard instances within difficult fine classes.
 \end{enumerate}
 
-Extensive empirical evaluations on CIFAR-100~\cite{krizhevsky2009learning} across 5 random seeds demonstrate that MCTS-HNM achieves statistically significant gains over Uniform Sampling, OHEM, and strict GiantHunter across both binary imbalanced and multi-class curriculum settings.
+Experiments on CIFAR-100~\cite{krizhevsky2009learning} across five seeds quantify where hierarchical negative mining helps, where it falls short, and how batch composition affects results.
 
 \section{Related Work}
 \label{sec:related}
@@ -108,13 +119,13 @@ Every ancestor $p$ on the path from $l$ to the root aggregates child values weig
 
 \textbf{Dataset and Environments.} Experiments are conducted on CIFAR-100~\cite{krizhevsky2009learning} (50,000 train, 10,000 test images across 100 fine classes and 20 superclasses). We evaluate two execution tiers:
 \begin{itemize}
-    \item \textbf{Tier 1}: Feature extraction using a frozen ResNet-18~\cite{he2016deep} backbone ($512$-dim embeddings) with a 2-layer MLP head ($512 \rightarrow 128 \rightarrow K$) trained via Adam ($\eta = 10^{-3}$) for 10,000 steps.
+    \item \textbf{Tier 1}: Feature extraction using a frozen ResNet-18~\cite{he2016deep} backbone ($512$-dim embeddings) with a 2-layer MLP head ($512 \rightarrow 128 \rightarrow K$) trained via Adam ($\eta = 10^{-3}$) for 1,000 steps in the principal binary benchmark (2,000 in the multi-class benchmark).
     \item \textbf{Tier 2}: End-to-end convolutional training of a CIFAR-adapted ResNet-18 on raw $32 \times 32$ RGB images with periodic Ward confusion tree refreshes.
 \end{itemize}
 
 \textbf{Evaluation Scenarios.}
 \begin{itemize}
-    \item \textbf{Scenario 1 (One-vs-Rest Binary)}: A rare positive class is chosen from diverse superclasses (\textit{beaver}, \textit{oak tree}, \textit{pickup truck}, \textit{rocket}, \textit{shark}) evaluated at imbalance ratios $\rho \in \{1:10, 1:50, 1:100\}$. Evaluated on Minority F1, AUPRC, and False Positive Rate at 95\% recall (FPR@95).
+    \item \textbf{Scenario 1 (One-vs-Rest Binary)}: The target class is \textit{beaver} and the reported principal experiment uses the configured positive-subset setting $\rho=1:50$. Evaluated on Minority F1, AUPRC, and False Positive Rate at 95\% recall (FPR@95).
     \item \textbf{Scenario 2 (100-way Multi-Class)}: Full multi-class curriculum evaluated on Top-1 Accuracy, Macro-F1, and Worst-10-Class Recall.
 \end{itemize}
 
@@ -123,136 +134,146 @@ Every ancestor $p$ on the path from $l$ to the root aggregates child values weig
 \section{Results}
 \label{sec:results}
 
-\subsection{Scenario 1: Imbalanced Binary One-vs-Rest}
-Table~\ref{tab:scenario1_imbalanced} presents the primary benchmark results across imbalance ratios $\rho \in \{1:10, 1:50, 1:100\}$. Enhanced MCTS-HNM achieves the highest minority F1-score and AUPRC across all ratios. At $\rho=1:10$, Enhanced MCTS-HNM reaches $56.4\%$ F1, outperforming Uniform ($42.1\%$), OHEM ($48.5\%$), and Strict GiantHunter ($51.2\%$) with paired $t$-test $p < 0.001$. Crucially, FPR@95 drops from $0.352$ (Uniform) to $0.213$ (Ours), demonstrating superior boundary discrimination.
+\subsection{Scenario 1: Binary One-vs-Rest}
+At the configured positive-subset setting labeled $1:50$ (target class \emph{beaver}),
+we compare four principal sampling strategies over five paired seeds and 1,000 optimizer steps.
+This label denotes the positive subsampling setting; it should not be confused with
+an empirical 1:50 ratio between all available positive and negative pool instances.
+Table~\ref{tab:scenario1_imbalanced} contains the measurements exported by the benchmark.
+The Strict method obtains the highest mean AUPRC (0.736), whereas Enhanced
+MCTS-HNM obtains 0.685. The current experiments therefore do not establish
+superiority of the Enhanced method across the reported metrics.
 
 \input{tables/tab_scenario1_imbalanced.tex}
 
-\subsection{Scenario 2: 100-Way Multi-Class Curriculum}
-In the 100-way multi-class curriculum setting (Table~\ref{tab:scenario2_multiclass}), Enhanced MCTS-HNM achieves $70.4\%$ Top-1 Accuracy and $69.8\%$ Macro-F1. Notably, Worst-10-Class Recall increases from $38.2\%$ (Uniform) to $49.5\%$ (Ours)---an $11.3\%$ absolute improvement---confirming that tree-guided negative mining effectively prevents the classifier from collapsing on difficult minority classes.
+\subsection{Scenario 2: 100-Class Curriculum}
+The uniform sampler achieves mean Top-1 accuracy of 63.85\%, compared with
+33.43\% for the original Enhanced method over 2,000 steps and five seeds.
+A coverage-balanced MCTS variant achieves 53.06\%, recovering part of this
+gap without surpassing Uniform. The performance of the original Enhanced method
+requires additional investigation of batch composition and class-level learning.
 
 \input{tables/tab_scenario2_multiclass.tex}
 
-\subsection{Training Convergence Dynamics}
-Figure~\ref{fig:convergence} illustrates the training trajectories over 10,000 optimization steps. While OHEM exhibits erratic loss oscillations due to batch-level variance, Enhanced MCTS-HNM converges smoothly. The running momentum formulation ($\alpha = 0.3$) filters transient gradient spikes, maintaining steady AUPRC progression throughout training.
+\subsection{Training and Hierarchy Diagnostics}
+Figure~\ref{fig:convergence} displays the observed training history.
+Figure~\ref{fig:heatmap} shows measured MCTS superclass visit distributions.
+Neither figure alone establishes an improvement in generalization.
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=0.92\linewidth]{figures/fig_convergence_curves.pdf}
-  \caption{Training dynamics on CIFAR-100 ($\rho=1:10$): (a) Test minority F1-score and (b) Binary Cross-Entropy loss convergence across 10,000 steps for Uniform, OHEM, Strict GiantHunter, and Enhanced MCTS-HNM.}
+  \caption{Recorded Scenario-1 training trajectories for the configured $1:50$ subsampling setting over 1,000 steps.}
   \label{fig:convergence}
 \end{figure*}
 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=0.78\linewidth]{figures/fig_tree_visitation_heatmap.pdf}
-  \caption{MCTS Superclass Visitation Density ($p_k$) over training steps. Early steps exhibit uniform exploration across all superclasses ($p_k \approx 0.05$), smoothly transitioning to focused exploitation of hard negative superclasses (e.g., SC-01, SC-04, SC-07) as action values converge.}
+  \caption{Measured superclass visitation distributions during hierarchical sampling.}
   \label{fig:heatmap}
 \end{figure*}
 
-\subsection{Tree Exploration--Exploitation Dynamics}
-Figure~\ref{fig:heatmap} visualizes the temporal distribution of superclass visitations. In initial steps ($t < 1,000$), UCB1 exploration dominates, visiting all 20 superclasses uniformly ($p_k \approx 0.05$). As backpropagated loss rewards accumulate, visit density shifts selectively toward the most confusing superclasses (e.g., SC-01 and SC-04), demonstrating targeted active mining without manual curriculum tuning.
-
-\subsection{Computational Efficiency and Pareto Frontier}
-Figure~\ref{fig:pareto_cost} presents the Pareto frontier evaluating downstream accuracy against cumulative computational training costs (wall-clock seconds and evaluated gradient samples). While Uniform sampling minimizes per-step cost, its low sample efficiency mandates substantially longer training schedules to achieve competitive recall. OHEM adds forward-pass filtering overhead without matching MCTS sample quality. Enhanced and Coverage-Balanced MCTS establish the non-dominated Pareto frontier, demonstrating that tree search overhead is decisively compensated by rapid error reduction.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.92\linewidth]{figures/fig_pareto_cost_vs_accuracy.pdf}
-  \caption{Empirical Pareto frontier of computational training cost versus downstream performance on CIFAR-100. Points denote mean $\pm 1$ standard deviation across paired random seeds. The dashed curve connects non-dominated strategies, demonstrating that the sample-efficiency gains of MCTS-HNM substantially outweigh the tree search overhead.}
-  \label{fig:pareto_cost}
-\end{figure}
-
-\subsection{Class Coverage and Entropy Dynamics}
-Figure~\ref{fig:coverage_entropy} diagnoses the exploration dynamics of 100-way multi-class curriculum optimization (Scenario 2). In panel (a), unnormalized Strict GiantHunter experiences rapid entropy collapse ($H(t)/H_{\max} < 0.35$ within $300$ steps), starving difficult minority classes. In contrast, Coverage-Balanced and Enhanced MCTS maintain stable entropy in the optimal regime ($0.75$--$0.85$). In panel (b), cumulative class coverage shows that Coverage-Balanced MCTS samples $96\%$ of all CIFAR-100 fine classes at least once, compared to only $38\%$ under Strict GiantHunter.
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.95\linewidth]{figures/fig_coverage_entropy_dynamics.pdf}
-  \caption{Exploration and coverage dynamics in 100-way multi-class curriculum (Scenario 2): (a) Normalized visitation entropy $H(t)/H_{\max}$ over 1,000 steps, highlighting premature exploration collapse in Strict GiantHunter ($< 0.35$) contrasted with sustained balance in Coverage-Balanced and Enhanced MCTS-HNM ($0.75$--$0.85$); (b) Cumulative class coverage percentage ($k \ge 1$ and $k \ge 5$ samples) at final step.}
-  \label{fig:coverage_entropy}
-\end{figure*}
-
-\subsection{Active Curriculum and Class Recall Gains}
-Figure~\ref{fig:class_exposure_recall} evaluates whether MCTS-HNM behaves as an adaptive curriculum learner by plotting the relative sampling frequency allocated to each class against its marginal recall improvement ($\Delta\mathrm{Recall}(c) = \mathrm{Recall}_{\mathrm{MCTS}}(c) - \mathrm{Recall}_{\mathrm{Uniform}}(c)$). The statistically significant positive Spearman rank correlation ($\rho_s = 0.52$, $p < 10^{-4}$) empirically proves that the reinforcement learning policy directs mining capacity preferentially toward concepts where the gradient signal produces the largest learning returns.
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.92\linewidth]{figures/fig_class_exposure_vs_delta_recall.pdf}
-  \caption{Active curriculum verification: Relative MCTS class exposure frequency vs. marginal recall gain ($\Delta\mathrm{Recall} = \mathrm{Recall}_{\mathrm{MCTS}} - \mathrm{Recall}_{\mathrm{Uniform}}$) across all 100 CIFAR-100 classes. The strong positive Spearman rank correlation confirms that MCTS prioritizes classes where learning yield is highest.}
-  \label{fig:class_exposure_recall}
-\end{figure}
-
-\subsection{Dendrogram Divergence: Empirical Confusion vs. Human Taxonomy}
-Figure~\ref{fig:ward_dendrogram} illustrates the structural divergence between human conceptual ontology and neural perceptual representations. In the Ward clustering dendrogram constructed from the validation confusion matrix, several leaves belonging to distinct semantic superclasses are clustered together based on visual geometry (e.g., aquatic mammals grouped adjacent to fish species rather than terrestrial mammals). This alignment explains why the data-driven Ward confusion tree consistently outperforms the native semantic hierarchy in hard negative mining.
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.98\linewidth]{figures/fig_ward_vs_semantic_dendrogram.pdf}
-  \caption{Hierarchical Ward clustering dendrogram computed from empirical CNN validation confusion. Leaf labels and links are colored by the 20 ground-truth human superclasses. The grouping of visually similar categories across distinct semantic superclasses justifies the superior mining efficiency of empirical confusion trees.}
-  \label{fig:ward_dendrogram}
-\end{figure*}
-
-\subsection{Imbalance Severity and Method Interaction}
-Figure~\ref{fig:interaction_ratio} analyzes method resilience across increasing imbalance severity ($\rho \in [1:10, 1:50, 1:100]$). While Uniform sampling and OHEM suffer steep performance degradation in extreme imbalance regimes ($\rho=1:100$), Enhanced MCTS-HNM displays a significantly flatter degradation slope ($\Delta_{\mathrm{ratio}} = +7.8\,\mathrm{pp}$ interaction gain), demonstrating that tree-guided negative selection becomes increasingly critical as positive support diminishes.
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.95\linewidth]{figures/fig_interaction_ratio_methods.pdf}
-  \caption{Interaction effects between sampling methods and class imbalance severity $\rho \in [1:10, 1:50, 1:100]$: (a) Minority F1-Score and (b) Minority AUPRC with 95\% confidence interval bands across paired seeds. Enhanced MCTS-HNM maintains a resilient performance profile as positive instances become scarcer.}
-  \label{fig:interaction_ratio}
-\end{figure*}
-
-\subsection{Continuous Precision-Recall Trade-off}
-Figure~\ref{fig:precision_recall_curves} visualizes the continuous precision-recall curves $P(R)$ interpolated across a 100-point uniform recall grid with shaded $\pm 1$ standard deviation bands. While Uniform sampling experiences rapid precision degradation for recall levels above $0.50$, Enhanced MCTS-HNM sustains an elevated precision envelope across all sensitivity tiers. Crucially, the marked operating point chosen by validation threshold calibration ($\tau_{\mathrm{val}}$) aligns with an optimal F1 profile ($0.76$ recall at $0.54$ precision).
-
-\begin{figure}[t]
-  \centering
-  \includegraphics[width=0.92\linewidth]{figures/fig_precision_recall_curves.pdf}
-  \caption{Aggregated Precision-Recall curves on CIFAR-100 ($\rho=1:10$). Solid lines denote mean interpolated precision across 5 seeds and shaded areas represent $\pm 1$ standard deviation bands. Markers indicate operating points under the validation-calibrated threshold $\tau_{\mathrm{val}}$. Enhanced MCTS-HNM sustains superior precision across high-recall operating regimes.}
-  \label{fig:precision_recall_curves}
-\end{figure}
-
-\subsection{Evaluation Transparency Across 4 Quadrants}
-To preclude any reliance on favorable evaluation criteria, Figure~\ref{fig:evaluation_4quadrants} systematically reports performance across all four canonical evaluation quadrants: final checkpoint vs. validation-selected checkpoint crossed with fixed default ($\tau=0.5$) vs. calibrated threshold ($\tau=\tau_{\mathrm{val}}$). Enhanced MCTS-HNM maintains a decisive margin over all baselines across every single quadrant ($+5.2\,\mathrm{pp}$ over Strict GiantHunter and $+14.3\,\mathrm{pp}$ over Uniform in Q4), verifying that methodological gains are invariant to thresholding choices.
-
-\begin{figure*}[t]
-  \centering
-  \includegraphics[width=0.95\linewidth]{figures/fig_evaluation_4quadrants_comparison.pdf}
-  \caption{Methodological robustness across the 4 Evaluation Quadrants: Q1 (Last checkpoint, $\tau=0.5$), Q2 (Last checkpoint, $\tau=\tau_{\mathrm{val}}$), Q3 (Best validation checkpoint, $\tau=0.5$), and Q4 (Best validation checkpoint, $\tau=\tau_{\mathrm{val}}$). Enhanced MCTS-HNM reliably outperforms baselines regardless of checkpoint selection or decision threshold calibration.}
-  \label{fig:evaluation_4quadrants}
-\end{figure*}
-
-\subsection{Ablation Studies}
-Table~\ref{tab:ablation_study} breaks down the contribution of each algorithmic component:
-\begin{itemize}
-    \item \textbf{Hierarchy Geometry}: Ward Confusion Trees ($56.4\%$ F1) outperform human Semantic Trees ($54.8\%$ F1), confirming that empirical misclassification geometry provides more direct mining signals than taxonomic labels.
-    \item \textbf{Min-Max Normalization}: Enabling sibling $Q$-normalization yields a $+5.2\%$ F1 gain over raw $Q$-values, preventing deeper nodes from suffering exploration starvation.
-    \item \textbf{Dual-Stream Batching}: A balanced 50/50 mix ($\beta=0.5$) outperforms both $100\%$ MCTS ($\beta=0.0$, $50.8\%$ F1) and $100\%$ Uniform ($\beta=1.0$, $42.1\%$ F1).
-    \item \textbf{Dynamic Leaf Expansion}: Sub-clustering class leaves by prediction entropy provides an additional $+1.7\%$ F1 boost ($58.1\%$ F1), confirming the utility of instance-level difficulty refinement.
-\end{itemize}
+\subsection{Mechanism and Hierarchy Ablations}
+Table~\ref{tab:ablation_study} reports measured ablations.
+The Q-normalization-only variant obtains a lower AUPRC than the Strict baseline
+in the current experimental setting. With five seeds, the comparison of
+Semantic and Ward hierarchies does not provide sufficient evidence for declaring
+one universally superior. The large differences in tree topology and depth
+are potential confounders to investigate.
 
 \input{tables/tab_ablation_study.tex}
 
+\IfFileExists{figures/fig_ablation_2x2.pdf}{
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.94\linewidth]{figures/fig_ablation_2x2.pdf}
+  \caption{Empirically measured 2-by-2 mechanism ablation; bars show mean and standard deviation across seeds.}
+  \label{fig:factorial}
+\end{figure*}
+}{}
+
+\subsection{Hyperparameter Sensitivity}
+The sensitivity experiment uses the same configured positive subsampling
+protocol as the primary Scenario-1 experiment (nine positive instances in
+the training pool), with five seeds per grid configuration. The reported
+outcomes are exploratory; selected hyperparameters require confirmation
+under a common final benchmark protocol.
+
+\IfFileExists{figures/fig_hyperparameter_sensitivity.pdf}{
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.95\linewidth]{figures/fig_hyperparameter_sensitivity.pdf}
-  \caption{Hyperparameter sensitivity of Enhanced MCTS-HNM on CIFAR-100 ($\rho=1:10$): (a) UCB1 exploration factor $c$ and (b) Leaf momentum update rate $\alpha$. Optimal performance is robustly achieved near $c=1.0$ and $\alpha=0.3$.}
+  \caption{Measured sensitivity to UCB exploration coefficient $c$ and momentum parameter $\alpha$ at the configured $1:50$ subsampling setting.}
   \label{fig:sensitivity}
 \end{figure}
+}{}
 
-\subsection{Hyperparameter Sensitivity}
-Figure~\ref{fig:sensitivity} displays sensitivity across exploration constant $c \in [0.25, 3.0]$ and momentum rate $\alpha \in [0.05, 0.9]$. Performance exhibits a convex profile peaking at $c=1.0$ and $\alpha=0.3$. Excessively small $c$ leads to premature exploitation of initial errors, while large $c$ degrades into uniform random sampling.
+\subsection{Supplementary Diagnostic Figures}
+The following figures are included only when the publication pipeline
+produces them from verified measurements. Missing figures are omitted,
+not reconstructed using illustrative data.
+
+\IfFileExists{figures/fig_pareto_cost_vs_accuracy.pdf}{
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/fig_pareto_cost_vs_accuracy.pdf}
+  \caption{Measured computational cost against observed benchmark performance.}
+\end{figure}
+}{}
+
+\IfFileExists{figures/fig_coverage_entropy_dynamics.pdf}{
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/fig_coverage_entropy_dynamics.pdf}
+  \caption{Observed entropy and class coverage statistics where per-step telemetry is available.}
+\end{figure}
+}{}
+
+\IfFileExists{figures/fig_class_exposure_vs_delta_recall.pdf}{
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/fig_class_exposure_vs_delta_recall.pdf}
+  \caption{Measured class exposure and differences in recall between sampling policies.}
+\end{figure}
+}{}
+
+\IfFileExists{figures/fig_ward_vs_semantic_dendrogram.pdf}{
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.95\linewidth]{figures/fig_ward_vs_semantic_dendrogram.pdf}
+  \caption{Empirical clustering structure from validation confusion measurements.}
+\end{figure}
+}{}
+
+\IfFileExists{figures/fig_interaction_ratio_methods.pdf}{
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.95\linewidth]{figures/fig_interaction_ratio_methods.pdf}
+  \caption{Measured performance across the imbalance configurations actually evaluated. Error bands show sample standard deviations.}
+\end{figure*}
+}{}
 
 \section{Discussion and Limitations}
 \label{sec:discussion}
-
-While MCTS-HNM significantly improves classification under extreme imbalance, several trade-offs warrant consideration. First, maintaining tree structures requires an initial warm-up pass to construct confusion matrices, adding minor setup overhead ($< 30$ seconds for CIFAR-100). Second, in dynamic leaf expansion, periodically evaluating prediction entropy requires extra forward passes on candidate pools. However, by amortizing tree updates and batching vector operations, MCTS-HNM adds less than $4\%$ wall-clock training overhead compared to standard SGD.
+The experiments do not establish that Enhanced MCTS-HNM outperforms
+Uniform, OHEM, or Strict MCTS across settings. Instead, the factorial
+ablation suggests that Q-normalization may be detrimental in the evaluated
+binary setting, while the coverage-balanced variant partially mitigates
+the multi-class performance deficit. Further experiments are required to
+separate effects of focal batch composition, hierarchy geometry, and
+sampling policy. The binary results are concentrated on one target class
+and one configured subsampling setting.
 
 \section{Conclusion}
 \label{sec:conclusion}
-
-In this paper, we introduced MCTS-HNM, an active reinforcement learning framework that formulates hard negative mining as sequential Monte Carlo Tree Search over class hierarchies. By combining sibling Min-Max $Q$-normalization with Dual-Stream hybrid batching, MCTS-HNM resolves the training instability of prior online mining techniques. Rigorous benchmarking on CIFAR-100 confirms statistically significant improvements in minority F1, AUPRC, and worst-class recall across both semantic and empirical confusion trees. All code, versioned Jupyter notebooks, and paper artifact generators are publicly available for full scientific reproducibility.
+We implemented and evaluated hierarchical MCTS-based negative mining
+using reproducible CIFAR-100 embeddings. The present results reveal
+important trade-offs rather than a uniform gain over standard sampling:
+Strict MCTS remains competitive in the binary scenario, and balanced
+sampling improves the multi-class MCTS variant without overtaking
+uniform sampling. Broader evaluations and validation-selected
+hyperparameter protocols are needed before claiming general superiority.
 
 \bibliographystyle{unsrt}
 \bibliography{references}

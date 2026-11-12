@@ -1313,102 +1313,80 @@ def generate_ablation_table(
     data: dict[str, Any],
     output_dir: str | Path = "paper/tables",
 ) -> Path:
-    """Generate LaTeX booktabs table for ablation studies.
-
-    Args:
-        data: Benchmark results dictionary containing 'ablation'.
-        output_dir: Directory where the table will be saved.
-
-    Returns:
-        Path to the saved .tex file.
-    """
+    """Generate an evidence-only ablation table with one explicit Strict reference."""
     validate_artifact_completeness(data, "ablation_table")
     out = _ensure_dir(Path(output_dir))
     tex_path = out / "tab_ablation_study.tex"
-
-    ablation = data.get("ablation", {})
-    if not ablation:
-        raise ValueError("Ablation results dictionary is empty or missing.")
-
-    all_configs = [
-        ("Hierarchy Geometry", "semantic_tree", "Native Semantic Tree (20 superclasses)"),
-        ("Hierarchy Geometry", "confusion_ward_tree", "Ward Confusion Tree (Empirical)"),
-        ("UCB1 Normalization", "q_norm_off", "Raw Unnormalized Q (Strict GiantHunter)"),
-        ("UCB1 Normalization", "q_norm_on", "Min-Max Sibling Q-Normalization"),
-        ("Dual-Stream Batch", "dual_stream_0.0", r"100\% MCTS Negatives ($\beta=0.0$)"),
-        ("Dual-Stream Batch", "dual_stream_0.5", r"50/50 Dual-Stream Hybrid ($\beta=0.5$)"),
-        ("Dual-Stream Batch", "dual_stream_1.0", r"100\% Uniform Random ($\beta=1.0$)"),
-        ("Leaf Granularity", "dynamic_expansion_off", "Fixed 100 Class Leaves (P1 MVP)"),
-        ("Leaf Granularity", "dynamic_expansion_on", "Dynamic Entropy Sub-Clustering (P2)"),
-    ]
-
+    ablation = data["ablation"]
+    scen1 = data.get("scenario1", {})
+    variants = (
+        ("mcts_strict", "Strict GiantHunter"),
+        ("mcts_qnorm_only", "Q-Norm only"),
+        ("mcts_dualstream_only", "Dual-Stream only"),
+        ("mcts_enhanced", "Enhanced (both)")
+    )
+    common = None
+    for strategy, _ in variants:
+        if strategy not in scen1:
+            common = set()
+            break
+        rr = {str(k).replace("1:", "") for k in scen1[strategy]}
+        common = rr if common is None else common.intersection(rr)
+    ratio = ("50" if "50" in common else sorted(common, key=int)[0]) if common else None
     rows = []
-    for axis, cfg_key, cfg_label in all_configs:
-        if cfg_key in ablation:
-            cfg_data = ablation[cfg_key]
-            if not isinstance(cfg_data, dict) or "f1" not in cfg_data or "auprc" not in cfg_data:
-                raise ValueError(
-                    f"Missing required ablation metrics ('f1', 'auprc') for '{cfg_key}': {cfg_data}"
-                )
-            f1_val = float(cfg_data["f1"])
-            auprc_val = float(cfg_data["auprc"])
-            rows.append((axis, cfg_label, f1_val, auprc_val))
-
+    strict_reference = None
+    if ratio is not None:
+        for strategy, label in variants:
+            m = scen1[strategy].get(ratio, scen1[strategy].get("1:"+ratio))
+            try:
+                f1 = float(m["f1"]["mean"])
+                auprc = float(m["auprc"]["mean"])
+            except (KeyError, TypeError) as exc:
+                raise ValueError(f"Missing measured ablation metrics for {strategy}") from exc
+            rows.append(("Mechanism factorial", label, f1, auprc))
+            if strategy == "mcts_strict":
+                strict_reference = f1
+    for key, label in (("semantic_tree", "Enhanced / Semantic"),
+                       ("confusion_ward_tree", "Enhanced / Ward Confusion")):
+        if key in ablation:
+            m = ablation[key]
+            if "f1" not in m or "auprc" not in m:
+                raise ValueError(f"Missing measured hierarchy metrics: {key}")
+            rows.append(("Hierarchy geometry", label, float(m["f1"]), float(m["auprc"])))
     if not rows:
-        raise ValueError("Ablation results dictionary has no recognized configurations.")
-
-    baseline_f1 = float(ablation["q_norm_off"]["f1"]) if "q_norm_off" in ablation and "f1" in ablation["q_norm_off"] else rows[0][2]
-
-    rho_label = None
-    if "scenario1" in data and isinstance(data["scenario1"], dict):
-        present_keys = [k for sk, rdict in data["scenario1"].items() if isinstance(rdict, dict) for k in rdict.keys()]
-        if present_keys:
-            pk = present_keys[0]
-            rho_label = pk if str(pk).startswith("1:") else f"1:{pk}"
-    caption_rho = f" ($\\rho={rho_label}$)" if rho_label else ""
-
+        raise ValueError("No measured ablation runs found")
+    # If Strict is not available, do not pretend a Strict baseline exists.
+    if strict_reference is None:
+        ref_caption = "Enhanced / Semantic"
+        reference = next((f for axis, label, f, a in rows if label == ref_caption), None)
+        if reference is None:
+            raise ValueError("Cannot establish an empirical ablation reference")
+    else:
+        ref_caption = "Strict GiantHunter"
+        reference = strict_reference
+    rho = f" ($\\rho=1:{ratio}$)" if ratio else ""
     lines = [
-        r"% Auto-generated by src/utils/paper_artifacts.py",
-        r"% SMOKE TEST — NOT VALID FOR SCIENTIFIC PUBLICATION" if data.get("is_smoke") else "",
-        r"\begin{table}[t]",
-        r"\centering",
-        r"\small",
-        f"\\caption{{Ablation study on CIFAR-100{caption_rho} isolating tree hierarchy structure, $Q$-normalization, "
-        r"Dual-Stream sampling ratio, and dynamic prediction-entropy leaf sub-clustering.}",
-        r"\label{tab:ablation_study}",
-        r"\begin{tabular}{llccc}",
+        "% Auto-generated: empirical ablation measurements only",
+        "% SMOKE TEST — NOT FOR PUBLICATION" if data.get("is_smoke") else "",
+        r"\begin{table}[t]", r"\centering", r"\small",
+        rf"\caption{{Measured CIFAR-100 ablations{rho}. "
+        rf"The F1 difference is in percentage points relative to {ref_caption}.}}",
+        r"\label{tab:ablation_study}", r"\begin{tabular}{llccc}",
         r"\toprule",
-        r"Ablation Axis & Configuration & F1-Score & AUPRC & $\Delta$ F1 vs. Strict \\",
+        r"Ablation axis & Configuration & F1 & AUPRC & $\Delta$ F1 (pp) \\" ,
         r"\midrule",
     ]
     lines = [l for l in lines if l]
-
-    last_axis = ""
-    for axis, config, f1, auprc in rows:
-        axis_label = axis if axis != last_axis else ""
-        last_axis = axis
-        delta = (f1 - baseline_f1) * 100.0
-        delta_str = f"+{delta:.1f}\\%" if delta >= 0 else f"{delta:.1f}\\%"
-        lines.append(f"  {axis_label} & {config} & {f1:.3f} & {auprc:.3f} & {delta_str} \\\\")
-        if axis in ["Hierarchy Geometry", "UCB1 Normalization", "Dual-Stream Batch"] and config == rows[rows.index((axis, config, f1, auprc))][1]:
-            # Add small separator if next row changes axis
-            idx = rows.index((axis, config, f1, auprc))
-            if idx + 1 < len(rows) and rows[idx + 1][0] != axis:
-                lines.append(r"\midrule")
-
-    lines.extend([
-        r"\bottomrule",
-        r"\end{tabular}",
-        r"\end{table}",
-        "",
-    ])
-
-    with open(tex_path, "w", encoding="utf-8") as f:
-        f.write("\n".join(lines))
-
-    logger.info("Saved ablation table to %s", tex_path)
+    prev_axis = None
+    for axis, label, f1, ap in rows:
+        if prev_axis is not None and prev_axis != axis:
+            lines.append(r"\midrule")
+        delta = (f1 - reference) * 100.0
+        lines.append(f"{axis if axis != prev_axis else ''} & {label} & {f1:.3f} & {ap:.3f} & {delta:+.1f} \\\\")
+        prev_axis = axis
+    lines.extend([r"\bottomrule", r"\end{tabular}", r"\end{table}", ""])
+    tex_path.write_text("\n".join(lines), encoding="utf-8")
     return tex_path
-
 
 def generate_artifact_manifest(
     output_dir: str | Path,
@@ -1476,6 +1454,125 @@ def generate_artifact_manifest(
     return manifest_path
 
 
+class OptionalEvidenceMissing(ValueError):
+    """A scientifically optional figure cannot be produced from available measurements."""
+
+
+def _measured_ratio_plot(data, output_dir, file_prefix):
+    """FIG-05: only observed strategy/ratio summaries, never interpolated fixtures."""
+    import numpy as np
+    import matplotlib.pyplot as plt
+    if not isinstance(data, dict) or not isinstance(data.get("scenario1"), dict):
+        raise OptionalEvidenceMissing("FIG-05 requires measured scenario1 results")
+    scen1 = data["scenario1"]
+    methods = ("uniform", "ohem", "mcts_strict", "mcts_enhanced")
+    if any(m not in scen1 for m in methods):
+        raise OptionalEvidenceMissing("FIG-05 requires four measured sampler strategies")
+    common = None
+    for m in methods:
+        rr = {str(x).replace("1:", "") for x in scen1[m]}
+        common = rr if common is None else (common & rr)
+    ratios = sorted((common or []), key=lambda r: int(r))
+    if len(ratios) < 2:
+        raise OptionalEvidenceMissing(
+            "FIG-05 requires >=2 measured imbalance ratios per strategy; "
+            "currently only one is available. Run 1:10 and/or 1:100 before plotting."
+        )
+
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.7), dpi=180)
+    styles = {"uniform": "o", "ohem": "s", "mcts_strict": "^", "mcts_enhanced": "D"}
+    for idx, key in enumerate(("f1", "auprc")):
+        ax = axes[idx]
+        for strategy in methods:
+            means, stds = [], []
+            for ratio in ratios:
+                metrics = scen1[strategy].get(ratio, scen1[strategy].get("1:" + ratio))
+                if not isinstance(metrics, dict) or key not in metrics:
+                    raise ValueError(f"Malformed measured metric {strategy}/{ratio}/{key}")
+                vals = metrics[key]
+                if not isinstance(vals, dict) or "mean" not in vals or "std" not in vals:
+                    raise ValueError(f"Missing mean/std for {strategy}/{ratio}/{key}")
+                mean, sd = float(vals["mean"]), float(vals["std"])
+                if not (np.isfinite(mean) and np.isfinite(sd) and 0 <= mean <= 1 and sd >= 0):
+                    raise ValueError(f"Invalid measured values for {strategy}/{ratio}/{key}")
+                means.append(mean)
+                stds.append(sd)
+            x = np.arange(len(ratios))
+            line, = ax.plot(x, means, marker=styles[strategy], label=strategy, linewidth=1.8)
+            ax.fill_between(x, np.clip(np.array(means)-stds, 0, 1),
+                            np.clip(np.array(means)+stds, 0, 1),
+                            color=line.get_color(), alpha=0.13)
+        ax.set_xticks(np.arange(len(ratios)), ["1:" + r for r in ratios])
+        ax.set_ylim(0, 1)
+        ax.set_xlabel("Configured positive-subset fraction (ratio label)")
+        ax.set_ylabel("F1 (measured)" if key == "f1" else "AUPRC (measured)")
+        ax.grid(alpha=0.25)
+    axes[0].legend(fontsize=8)
+    fig.suptitle("Observed performance across evaluated imbalance settings (mean +/- SD)")
+    fig.tight_layout()
+    out = _ensure_dir(Path(output_dir))
+    pdf, png = out / f"{file_prefix}.pdf", out / f"{file_prefix}.png"
+    fig.savefig(pdf, bbox_inches="tight")
+    fig.savefig(png, bbox_inches="tight", dpi=220)
+    plt.close(fig)
+    return {"pdf": pdf, "png": png, "ratios": ["1:"+r for r in ratios]}
+
+
+def _measured_factorial_plot(data, output_dir, watermark=None):
+    """Generate FIG-04 from four measured Scenario-1 variants at one shared ratio."""
+    import numpy as np
+    import matplotlib.pyplot as plt
+    variants = [
+        ("mcts_strict", "Strict"),
+        ("mcts_qnorm_only", "Q-Norm only"),
+        ("mcts_dualstream_only", "Dual-Stream only"),
+        ("mcts_enhanced", "Combined Enhanced"),
+    ]
+    scenario = data.get("scenario1", {})
+    if any(s not in scenario for s, _ in variants):
+        raise OptionalEvidenceMissing("Factorial plot requires the four measured Scenario-1 variants")
+    common = set(str(r).replace("1:", "") for r in scenario[variants[0][0]])
+    for s, _ in variants[1:]:
+        common &= {str(r).replace("1:", "") for r in scenario[s]}
+    if not common:
+        raise OptionalEvidenceMissing("No shared measured imbalance ratio for factorial plot")
+    ratio = "50" if "50" in common else sorted(common, key=int)[0]
+    vals = {"f1": [], "auprc": []}
+    errs = {"f1": [], "auprc": []}
+    for strat, _ in variants:
+        metrics = scenario[strat].get(ratio, scenario[strat].get("1:"+ratio))
+        for key in ("f1", "auprc"):
+            if not isinstance(metrics, dict) or key not in metrics:
+                raise ValueError(f"Missing {strat}/{ratio}/{key} in empirical ablation")
+            x = metrics[key]
+            if not isinstance(x, dict) or "mean" not in x or "std" not in x:
+                raise ValueError(f"Missing mean/std for {strat}/{ratio}/{key}")
+            v, sd = float(x["mean"]), float(x["std"])
+            if not (np.isfinite(v) and np.isfinite(sd) and 0 <= v <= 1 and sd >= 0):
+                raise ValueError(f"Invalid {key} for {strat}")
+            vals[key].append(v)
+            errs[key].append(sd)
+    fig, axes = plt.subplots(1, 2, figsize=(10, 4.2))
+    x = np.arange(len(variants))
+    for ax, key in zip(axes, ("auprc", "f1")):
+        ax.bar(x, vals[key], yerr=errs[key], capsize=4, alpha=.85)
+        ax.set_xticks(x, [label for _, label in variants], rotation=22, ha="right")
+        ax.set_ylim(0, 1)
+        ax.set_ylabel(key.upper() + " (mean +/- SD across seeds)")
+        ax.grid(axis="y", alpha=.2)
+    fig.suptitle(f"Measured Q-Norm x Dual-Stream ablation, configured ratio 1:{ratio}")
+    if watermark:
+        fig.text(.5, .5, watermark, ha="center", va="center", alpha=.18,
+                 fontsize=20, color="crimson", rotation=20)
+    fig.tight_layout()
+    out = _ensure_dir(Path(output_dir))
+    pdf, png = out / "fig_ablation_2x2.pdf", out / "fig_ablation_2x2.png"
+    fig.savefig(pdf, bbox_inches="tight")
+    fig.savefig(png, bbox_inches="tight", dpi=240)
+    plt.close(fig)
+    return {"pdf": pdf, "png": png, "ratio": "1:" + ratio}
+
+
 def generate_all_paper_artifacts(
     results_dir: str | Path = "results",
     paper_dir: str | Path = "paper",
@@ -1530,6 +1627,24 @@ def generate_all_paper_artifacts(
     tables: list[Path] = []
     skipped: dict[str, str] = {}
 
+    def mark_optional_skip(name: str, reason: str, prefix: str) -> None:
+        """Record omissions and quarantine previously published unverified figures."""
+        skipped[name] = reason
+        logger.warning("Omitted optional figure %s: %s", name, reason)
+        if mode == ExecutionMode.REAL:
+            quarantine = fig_dir / "_unverified_legacy"
+            for suffix in ("pdf", "png"):
+                stale = fig_dir / f"{prefix}.{suffix}"
+                if stale.is_file():
+                    quarantine.mkdir(exist_ok=True, parents=True)
+                    candidate = quarantine / stale.name
+                    number = 1
+                    while candidate.exists():
+                        candidate = quarantine / f"{prefix}_{number}.{suffix}"
+                        number += 1
+                    stale.rename(candidate)
+                    logger.warning("Quarantined stale, unverified figure: %s", candidate)
+
     # 1. Figures: Convergence Plot (Mandatory)
     c_pdf, c_png = generate_convergence_plot(data, output_dir=fig_dir, watermark=watermark)
     figures.extend([c_pdf, c_png])
@@ -1576,119 +1691,117 @@ def generate_all_paper_artifacts(
         s_pdf, s_png = generate_hyperparameter_sensitivity_plot(data, output_dir=fig_dir, watermark=watermark)
         figures.extend([s_pdf, s_png])
 
-    # 3b. Figures: 2x2 Factorial Ablation Plot (Optional if runs exist)
-    runs_dir = res_dir / "runs"
-    if runs_dir.exists() and list(runs_dir.glob("*.json")):
-        try:
-            run_files = list(runs_dir.glob("*.json"))
-            manifest_sim = {
-                "runs": {
-                    p.stem: {
-                        "payload_path": str(p),
-                        "scenario": "scenario1" if "scenario1" in p.name else "scenario2",
-                        "strategy": p.stem.split("_")[4] if len(p.stem.split("_")) > 4 else "unknown",
-                    }
-                    for p in run_files
-                }
-            }
-            abl_paths = generate_qnorm_dualstream_ablation_plot(
-                manifest_sim, output_dir=fig_dir, expected_mode=mode
+    # 3b. Measured 2x2 factorial ablation from the four REAL strategy summaries.
+    try:
+        f2 = _measured_factorial_plot(data, fig_dir, watermark=watermark)
+        figures.extend((f2["pdf"], f2["png"]))
+    except OptionalEvidenceMissing as exc:
+        mark_optional_skip("factorial_2x2", str(exc), "fig_ablation_2x2")
+
+    # Build a manifest from exact benchmark run IDs, never from guessed file names.
+    # In particular, exclude .meta.json files and reject stale unreferenced runs.
+    required_run_ids = set()
+    for result_file in ("tier1_axis1_samplers.json", "tier1_scenario2_curriculum.json"):
+        fp = res_dir / result_file
+        if fp.is_file():
+            doc = json.loads(fp.read_text(encoding="utf-8"))
+            required_run_ids.update(
+                row["run_id"] for row in doc.get("runs", []) if row.get("run_id")
             )
-            figures.extend([abl_paths["pdf"], abl_paths["png"]])
-        except Exception as e:
-            logger.info("2x2 factorial ablation plot omitted: %s", e)
+    runs_dir = res_dir / "runs"
+    run_items = {}
+    for fp in sorted(runs_dir.glob("*.json")) if runs_dir.exists() else []:
+        if fp.name.endswith(".meta.json") or fp.stem not in required_run_ids:
+            continue
+        if mode == ExecutionMode.REAL:
+            validate_provenance_metadata(fp.with_name(fp.name + ".meta.json"), expected_mode=mode)
+        payload = json.loads(fp.read_text(encoding="utf-8"))
+        if payload.get("run_id") != fp.stem or not payload.get("strategy"):
+            raise ValueError(f"Malformed atomic REAL run: {fp}")
+        run_items[fp.stem] = {
+            "run_id": fp.stem,
+            "run_file": str(fp.resolve()),
+            "scenario": payload["scenario"],
+            "strategy": payload["strategy"],
+            "tree_type": payload.get("tree_type", "none"),
+            "seed": payload.get("seed"),
+        }
+    manifest_sim = {
+        "runs": run_items,
+        "mode": mode.value,
+        "campaign_dir": str(runs_dir.resolve()),
+        "completed_runs": len(run_items),
+        "total_expected_runs": len(run_items),
+        "failed_runs": 0,
+    } if run_items else None
+
+    # Auxiliary figures: attempt only where their underlying records exist.
+    def try_measured_optional(name, prefix, make):
+        if manifest_sim is None:
+            mark_optional_skip(name, "No verified atomic per-run records", prefix)
+            return
+        try:
+            pair = make()
+            figures.extend((pair["pdf"], pair["png"]))
+        except (FileNotFoundError, OptionalEvidenceMissing) as exc:
+            mark_optional_skip(name, str(exc), prefix)
+
+    try_measured_optional(
+        "pareto_cost", "fig_pareto_cost_vs_accuracy",
+        lambda: generate_pareto_cost_performance_plot(
+            manifest_sim, output_dir=fig_dir, expected_mode=mode, watermark=watermark
+        ),
+    )
+    # Per-step class coverage / entropy and paired per-class recall deltas are
+    # not included in the atomic benchmark payloads used by these plotters.
+    # Do not silently substitute class coverage snapshots or synthetic points.
+    mark_optional_skip(
+        "coverage_entropy",
+        "Per-step normalized entropy and class coverage histories are not persisted",
+        "fig_coverage_entropy_dynamics",
+    )
+    mark_optional_skip(
+        "exposure_recall",
+        "Paired per-class recall arrays and sampling exposure are not jointly persisted",
+        "fig_class_exposure_vs_delta_recall",
+    )
+
+    cm = data.get("confusion_matrix", data.get("matrix"))
+    if cm is None:
+        mark_optional_skip("dendrogram", "REAL confusion matrix not persisted", "fig_ward_vs_semantic_dendrogram")
     else:
-        manifest_sim = None
-
-    # 3c. Figures: Pareto Frontier Plot (FIG-01)
-    try:
-        m_pareto = manifest_sim if manifest_sim is not None else {
-            "runs": {},
-            "mode": "smoke" if (mode == ExecutionMode.SMOKE or data.get("is_smoke")) else "real",
-            "is_smoke": (mode == ExecutionMode.SMOKE or data.get("is_smoke")),
-        }
-        pareto_paths = generate_pareto_cost_performance_plot(
-            m_pareto, output_dir=fig_dir, expected_mode=mode, watermark=watermark
+        dend = generate_ward_vs_semantic_dendrogram_plot(
+            confusion_matrix_or_data=cm, output_dir=fig_dir, expected_mode=mode, watermark=watermark
         )
-        figures.extend([pareto_paths["pdf"], pareto_paths["png"]])
-    except Exception as e:
-        logger.info("Pareto frontier plot omitted: %s", e)
+        figures.extend((dend["pdf"], dend["png"]))
 
-    # 3d. Figures: Coverage and Entropy Dynamics Plot (FIG-02)
     try:
-        m_entropy = manifest_sim if manifest_sim is not None else {
-            "runs": {},
-            "mode": "smoke" if (mode == ExecutionMode.SMOKE or data.get("is_smoke")) else "real",
-            "is_smoke": (mode == ExecutionMode.SMOKE or data.get("is_smoke")),
-        }
-        entropy_paths = generate_coverage_entropy_dynamics_plot(
-            m_entropy, output_dir=fig_dir, expected_mode=mode, watermark=watermark
+        interaction = generate_interaction_ratio_plot(
+            data_or_path=data, output_dir=fig_dir, expected_mode=mode, watermark=watermark
         )
-        figures.extend([entropy_paths["pdf"], entropy_paths["png"]])
-    except Exception as e:
-        logger.info("Coverage and entropy dynamics plot omitted: %s", e)
+        figures.extend((interaction["pdf"], interaction["png"]))
+    except OptionalEvidenceMissing as exc:
+        mark_optional_skip("interaction_ratio", str(exc), "fig_interaction_ratio_methods")
 
-    # 3e. Figures: Class Exposure vs Delta Recall (FIG-03)
+    # Aggregated AUPRC does not define the continuous PR curve. The current
+    # benchmark exports neither per-seed prediction scores nor measured PR arrays.
     try:
-        m_exp_rec = manifest_sim if manifest_sim is not None else {
-            "runs": {},
-            "mode": "smoke" if (mode == ExecutionMode.SMOKE or data.get("is_smoke")) else "real",
-            "is_smoke": (mode == ExecutionMode.SMOKE or data.get("is_smoke")),
-        }
-        exp_rec_paths = generate_class_exposure_vs_delta_recall_plot(
-            m_exp_rec, output_dir=fig_dir, expected_mode=mode, watermark=watermark
+        pr = generate_precision_recall_curves_plot(
+            manifest_sim or {}, output_dir=fig_dir, expected_mode=mode, watermark=watermark
         )
-        figures.extend([exp_rec_paths["pdf"], exp_rec_paths["png"]])
-    except Exception as e:
-        logger.info("Class exposure vs delta recall plot omitted: %s", e)
+        figures.extend((pr["pdf"], pr["png"]))
+    except OptionalEvidenceMissing as exc:
+        mark_optional_skip("precision_recall", str(exc), "fig_precision_recall_curves")
 
-    # 3f. Figures: Ward vs Semantic Dendrogram (FIG-04)
+    # The four evaluation quadrants require four measured metric records per
+    # seed. The current atomic run export lacks the best-checkpoint quadrants.
     try:
-        dend_paths = generate_ward_vs_semantic_dendrogram_plot(
-            confusion_matrix_or_data=data.get("confusion_matrix") or data.get("matrix"),
-            output_dir=fig_dir,
-            expected_mode=mode,
-            watermark=watermark,
+        quad = generate_quadrant_evaluation_plot(
+            data_or_manifest=data, output_dir=fig_dir, expected_mode=mode, watermark=watermark
         )
-        figures.extend([dend_paths["pdf"], dend_paths["png"]])
-    except Exception as e:
-        logger.info("Ward vs semantic dendrogram plot omitted: %s", e)
-
-    # 3g. Figures: Interaction Ratio Curves (FIG-05)
-    try:
-        int_paths = generate_interaction_ratio_plot(
-            data_or_path=data,
-            output_dir=fig_dir,
-            expected_mode=mode,
-            watermark=watermark,
-        )
-        figures.extend([int_paths["pdf"], int_paths["png"]])
-    except Exception as e:
-        logger.info("Interaction ratio plot omitted: %s", e)
-
-    # 3h. Figures: Precision-Recall Curves (FIG-06)
-    try:
-        pr_paths = generate_precision_recall_curves_plot(
-            campaign_dir_or_manifest=manifest_sim if manifest_sim is not None else {"runs": {}, "mode": "smoke" if (mode == ExecutionMode.SMOKE or data.get("is_smoke")) else "real", "is_smoke": (mode == ExecutionMode.SMOKE or data.get("is_smoke"))},
-            output_dir=fig_dir,
-            expected_mode=mode,
-            watermark=watermark,
-        )
-        figures.extend([pr_paths["pdf"], pr_paths["png"]])
-    except Exception as e:
-        logger.info("Precision-Recall curves plot omitted: %s", e)
-
-    # 3i. Figures: 4-Quadrant Evaluation Comparison (FIG-07)
-    try:
-        quad_paths = generate_quadrant_evaluation_plot(
-            data_or_manifest=data,
-            output_dir=fig_dir,
-            expected_mode=mode,
-            watermark=watermark,
-        )
-        figures.extend([quad_paths["pdf"], quad_paths["png"]])
-    except Exception as e:
-        logger.info("4-Quadrant evaluation plot omitted: %s", e)
+        figures.extend((quad["pdf"], quad["png"]))
+    except OptionalEvidenceMissing as exc:
+        mark_optional_skip("evaluation_quadrants", str(exc), "fig_evaluation_4quadrants_comparison")
 
     # 4. Tables: Scenario 1, Scenario 2, Ablation (Mandatory)
     t_scen1 = generate_scenario1_table(data, output_dir=tab_dir)
@@ -1709,6 +1822,7 @@ def generate_all_paper_artifacts(
         Path(metadata_path),
     ]
     source_files = [p for p in source_candidates if p.exists()]
+    source_files.extend(Path(info["run_file"]) for info in run_items.values())
 
     # 6. Manifest
     manifest_path = generate_artifact_manifest(
@@ -2313,18 +2427,28 @@ def generate_pareto_cost_performance_plot(
             or {}
         )
 
-        cost_val = float(costs.get(cost_metric, 0.0))
+        cost_val = float(costs.get(cost_metric, metrics.get(cost_metric, 0.0)))
+        if cost_val <= 0 and expected_mode == ExecutionMode.REAL:
+            raise OptionalEvidenceMissing(
+                f"Missing measured computational cost {cost_metric} for {run_id}"
+            )
         if cost_val <= 0.0:
             if cost_metric == "elapsed_seconds":
                 cost_val = float(costs.get("elapsed_time", metrics.get("elapsed_time", 10.0)))
             else:
                 cost_val = float(costs.get("gradient_samples", costs.get("total_updates", 1000) * 64))
 
+        if expected_mode == ExecutionMode.REAL:
+            actual_key = "f1" if performance_metric == "minority_f1" else performance_metric
+            if actual_key not in metrics or metrics[actual_key] is None:
+                raise OptionalEvidenceMissing(
+                    f"Missing measured performance metric {actual_key} for {run_id}"
+                )
         perf_val = None
         if performance_metric in metrics:
             perf_val = float(metrics[performance_metric])
         elif performance_metric == "minority_f1":
-            perf_val = float(metrics.get("val_F1", metrics.get("F1", metrics.get("macro_f1", 0.0))))
+            perf_val = float(metrics.get("f1", metrics.get("val_F1", metrics.get("F1", metrics.get("macro_f1", 0.0)))))
         elif performance_metric == "macro_f1":
             perf_val = float(metrics.get("macro_f1", metrics.get("top1_accuracy", metrics.get("accuracy", 0.0))))
         elif performance_metric == "top1_accuracy":
@@ -3059,7 +3183,9 @@ def generate_interaction_ratio_plot(
     import numpy as np
 
     out = _ensure_dir(Path(output_dir))
-    is_smoke = (expected_mode == ExecutionMode.SMOKE) or ("smoke" in str(out).lower())
+    is_smoke = (expected_mode == ExecutionMode.SMOKE)
+    if not is_smoke:
+        return _measured_ratio_plot(data_or_path, output_dir, file_prefix)
 
     # Strategy styles
     strategies = ["uniform", "ohem", "mcts_strict", "mcts_enhanced"]
@@ -3202,7 +3328,9 @@ def generate_precision_recall_curves_plot(
     import numpy as np
 
     out = _ensure_dir(Path(output_dir))
-    is_smoke = (expected_mode == ExecutionMode.SMOKE) or ("smoke" in str(out).lower())
+    is_smoke = (expected_mode == ExecutionMode.SMOKE)
+    if not is_smoke:
+        raise OptionalEvidenceMissing('Per-seed y_true/y_score or measured PR points are not exported; cannot infer a PR curve from AUPRC')
 
     # Official palette
     palette = {
@@ -3352,7 +3480,9 @@ def generate_quadrant_evaluation_plot(
     import numpy as np
 
     out = _ensure_dir(Path(output_dir))
-    is_smoke = (expected_mode == ExecutionMode.SMOKE) or ("smoke" in str(out).lower())
+    is_smoke = (expected_mode == ExecutionMode.SMOKE)
+    if not is_smoke:
+        raise OptionalEvidenceMissing('Four measured test-quadrant metrics per seed are not exported in atomic run JSON')
 
     quadrant_labels = [
         "Q1: Last Chk\n" + r"($\tau=0.5$)",
