@@ -132,3 +132,64 @@ class ExposureTracker:
             "mean_unique_classes_per_batch": mean_unique_classes,
             "cumulative_class_coverage": cumulative_coverage,
         }
+
+
+def compute_exposure_recall_correlation(
+    exposure_counts: np.ndarray | list[int] | list[float],
+    class_recalls: np.ndarray | list[float],
+) -> dict[str, float]:
+    r"""Compute Spearman rank and Pearson linear correlation between per-class exposures and recalls.
+
+    Args:
+        exposure_counts: Array or list of exposure counts per class ($K$ classes).
+        class_recalls: Array or list of test recall scores per class ($K$ classes).
+
+    Returns:
+        Dictionary with keys:
+        - `spearman_rho`: Spearman rank correlation coefficient in [-1.0, 1.0]
+        - `spearman_pvalue`: Two-sided p-value for Spearman correlation
+        - `pearson_r`: Pearson correlation coefficient in [-1.0, 1.0]
+        - `pearson_pvalue`: Two-sided p-value for Pearson correlation
+    """
+    exp = np.asarray(exposure_counts, dtype=np.float64)
+    rec = np.asarray(class_recalls, dtype=np.float64)
+
+    if exp.size < 2 or rec.size < 2 or exp.size != rec.size:
+        return {
+            "spearman_rho": 0.0,
+            "spearman_pvalue": 1.0,
+            "pearson_r": 0.0,
+            "pearson_pvalue": 1.0,
+        }
+
+    if np.all(exp == exp[0]) or np.all(rec == rec[0]):
+        return {
+            "spearman_rho": 0.0,
+            "spearman_pvalue": 1.0,
+            "pearson_r": 0.0,
+            "pearson_pvalue": 1.0,
+        }
+
+    try:
+        from scipy import stats
+
+        s_res = stats.spearmanr(exp, rec)
+        p_res = stats.pearsonr(exp, rec)
+        s_rho = float(s_res.statistic) if not np.isnan(s_res.statistic) else 0.0
+        s_pval = float(s_res.pvalue) if not np.isnan(s_res.pvalue) else 1.0
+        p_r = float(p_res.statistic) if not np.isnan(p_res.statistic) else 0.0
+        p_pval = float(p_res.pvalue) if not np.isnan(p_res.pvalue) else 1.0
+        return {
+            "spearman_rho": s_rho,
+            "spearman_pvalue": s_pval,
+            "pearson_r": p_r,
+            "pearson_pvalue": p_pval,
+        }
+    except Exception:
+        return {
+            "spearman_rho": 0.0,
+            "spearman_pvalue": 1.0,
+            "pearson_r": 0.0,
+            "pearson_pvalue": 1.0,
+        }
+

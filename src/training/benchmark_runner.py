@@ -21,7 +21,13 @@ from src.data.splits import (
     build_scenario1_split,
 )
 from src.mcts.diagnostics import compute_visitation_entropy
-from src.training.trainer import train_scenario1, train_scenario2
+from src.training.exposure import compute_exposure_recall_correlation
+from src.training.trainer import (
+    MCTS_STRATEGIES,
+    SUPPORTED_STRATEGIES,
+    train_scenario1,
+    train_scenario2,
+)
 from src.trees.base_tree import FastHierarchyTree
 from src.trees.confusion_tree import build_confusion_tree, estimate_validation_confusion_matrix
 from src.trees.semantic_tree import build_semantic_tree
@@ -141,6 +147,11 @@ def run_benchmark(
         raise ValueError(f"scenario must be 'scenario1' or 'scenario2', got '{scenario}'.")
     if len(seeds) < 1:
         raise ValueError("At least 1 seed required.")
+    for strat in strategies:
+        if strat not in SUPPORTED_STRATEGIES:
+            raise ValueError(
+                f"Unknown strategy '{strat}' for {scenario}. Supported: {sorted(SUPPORTED_STRATEGIES)}."
+            )
     if val_features is None or val_labels is None:
         raise ValueError(
             "val_features and val_labels are required in run_benchmark to prevent data leakage. "
@@ -243,7 +254,7 @@ def run_benchmark(
                         binary_test_lbl = (test_lbl_np == target_class_scenario1).astype(np.int64)
 
                         tree: FastHierarchyTree | None = None
-                        if strat in ("mcts_strict", "mcts_enhanced"):
+                        if strat in MCTS_STRATEGIES:
                             class_to_indices = split.negative_class_to_indices
                             if tree_type == "semantic":
                                 tree = build_semantic_tree(class_to_indices)
@@ -273,7 +284,7 @@ def run_benchmark(
                         # Scenario 2
                         num_cls = max(int(np.max(train_lbl_np)) + 1, 2)
                         tree = None
-                        if strat in ("mcts_strict", "mcts_enhanced"):
+                        if strat in MCTS_STRATEGIES:
                             class_to_indices = {
                                 c: np.flatnonzero(train_lbl_np == c).astype(np.int64)
                                 for c in range(num_cls)
@@ -300,46 +311,68 @@ def run_benchmark(
                             device=device,
                         )
 
+                        # Compute test predictions and per-class recall across all strategies
+                        trained_model = res["model"]
+                        trained_model.eval()
+                        m_dev = device if device is not None else next(trained_model.parameters()).device
+                        with torch.no_grad():
+                            all_p: list[torch.Tensor] = []
+                            for bi in range(0, test_features.shape[0], 512):
+                                bx = test_features[bi : bi + 512].to(m_dev)
+                                logits_b = trained_model(bx)
+                                all_p.append(torch.argmax(logits_b, dim=1).detach().cpu())
+                        preds_arr = torch.cat(all_p, dim=0).numpy()
+
+                        per_class_recall: list[float] = []
+                        for c in range(num_cls):
+                            c_mask = (test_lbl_np == c)
+                            if np.any(c_mask):
+                                per_class_recall.append(float(np.mean(preds_arr[c_mask] == c)))
+                            else:
+                                per_class_recall.append(0.0)
+
+                        # Exposure telemetry from ExposureTracker
+                        exp_diag = res.get("exposure_diagnostics", {})
+                        exp_counts = exp_diag.get("class_exposure_counts", [0] * num_cls)
+                        exposure_entropy = float(exp_diag.get("normalized_exposure_entropy", 0.0))
+                        class_cov = float(exp_diag.get("cumulative_class_coverage", 0.0))
+                        unvisited_cls = int(exp_diag.get("unexposed_classes_count", num_cls))
+
+                        corr_metrics = compute_exposure_recall_correlation(exp_counts, per_class_recall)
+                        spearman_rho = corr_metrics["spearman_rho"]
+
+                        ent_nats = 0.0
+                        ent_norm = exposure_entropy
+                        class_visits: dict[int, int] = {}
                         if tree is not None:
                             leaf_ids = tree.leaf_node_ids()
-                            class_visits: dict[int, int] = {}
                             for lid in leaf_ids:
                                 cls_id = int(tree.leaf_to_class_id[int(lid)])
                                 class_visits[cls_id] = class_visits.get(cls_id, 0) + int(tree.visits[int(lid)])
                             for c in range(num_cls):
                                 class_visits.setdefault(c, 0)
-
-                            unvisited_classes = sum(1 for c in range(num_cls) if class_visits.get(c, 0) == 0)
                             ent_nats, ent_norm = compute_visitation_entropy(tree)
-                            coverage_pct = float((num_cls - unvisited_classes) / num_cls * 100.0) if num_cls > 0 else 0.0
 
-                            trained_model = res["model"]
-                            trained_model.eval()
-                            m_dev = device if device is not None else next(trained_model.parameters()).device
-                            with torch.no_grad():
-                                all_p: list[torch.Tensor] = []
-                                for bi in range(0, test_features.shape[0], 512):
-                                    bx = test_features[bi : bi + 512].to(m_dev)
-                                    logits_b = trained_model(bx)
-                                    all_p.append(torch.argmax(logits_b, dim=1).detach().cpu())
-                            preds_arr = torch.cat(all_p, dim=0).numpy()
+                        diagnostics_per_strat[strat] = {
+                            "class_visit_distribution": class_visits if tree is not None else {c: int(exp_counts[c]) for c in range(num_cls)},
+                            "class_exposure_counts": exp_counts,
+                            "unvisited_classes_count": unvisited_cls,
+                            "visitation_entropy": ent_norm,
+                            "entropy_nats": ent_nats,
+                            "class_coverage_pct": class_cov * 100.0,
+                            "per_class_recall": per_class_recall,
+                            "exposure_entropy": exposure_entropy,
+                            "class_coverage": class_cov,
+                            "unvisited_classes": unvisited_cls,
+                            "exposure_recall_correlation": spearman_rho,
+                            "correlation": corr_metrics,
+                        }
 
-                            per_class_recall: list[float] = []
-                            for c in range(num_cls):
-                                c_mask = (test_lbl_np == c)
-                                if np.any(c_mask):
-                                    per_class_recall.append(float(np.mean(preds_arr[c_mask] == c)))
-                                else:
-                                    per_class_recall.append(0.0)
-
-                            diagnostics_per_strat[strat] = {
-                                "class_visit_distribution": class_visits,
-                                "unvisited_classes_count": unvisited_classes,
-                                "visitation_entropy": ent_norm,
-                                "entropy_nats": ent_nats,
-                                "class_coverage_pct": coverage_pct,
-                                "per_class_recall": per_class_recall,
-                            }
+                        # Inject quantitative telemetry into final_metrics
+                        res["final_metrics"]["exposure_entropy"] = exposure_entropy
+                        res["final_metrics"]["class_coverage"] = class_cov
+                        res["final_metrics"]["unvisited_classes"] = unvisited_cls
+                        res["final_metrics"]["exposure_recall_correlation"] = spearman_rho
 
                     final_metrics = res["final_metrics"]
                     if "history" in res and res["history"] and f"{strat}_f1" not in convergence_history:
@@ -437,6 +470,44 @@ def run_benchmark(
                     enhanced_scores, scores
                 )
 
+    # Paired comparisons against uniform baseline
+    paired_differences_against_uniform: dict[str, Any] = {}
+    uni_runs = {r.seed: r for r in runs if r.strategy == "uniform"}
+    if uni_runs:
+        for strat in sorted(set(r.strategy for r in runs if r.strategy != "uniform")):
+            strat_runs = {r.seed: r for r in runs if r.strategy == strat}
+            common_seeds = sorted(set(uni_runs.keys()) & set(strat_runs.keys()))
+            if common_seeds:
+                primary_k = "auprc" if scenario == "scenario1" else "top1_accuracy"
+                uni_primary = [uni_runs[s].final_metrics.get(primary_k, 0.0) for s in common_seeds]
+                strat_primary = [strat_runs[s].final_metrics.get(primary_k, 0.0) for s in common_seeds]
+                f1_k = "f1" if scenario == "scenario1" else "macro_f1"
+                uni_f1 = [uni_runs[s].final_metrics.get(f1_k, 0.0) for s in common_seeds]
+                strat_f1 = [strat_runs[s].final_metrics.get(f1_k, 0.0) for s in common_seeds]
+                uni_w10 = [uni_runs[s].final_metrics.get("worst_10_class_recall", 0.0) for s in common_seeds]
+                strat_w10 = [strat_runs[s].final_metrics.get("worst_10_class_recall", 0.0) for s in common_seeds]
+
+                delta_primary = [float(st - un) for st, un in zip(strat_primary, uni_primary)]
+                delta_f1 = [float(st - un) for st, un in zip(strat_f1, uni_f1)]
+                delta_w10 = [float(st - un) for st, un in zip(strat_w10, uni_w10)]
+
+                diff_entry: dict[str, Any] = {
+                    "common_seeds": common_seeds,
+                    "delta_primary_mean": float(np.mean(delta_primary)),
+                    "delta_f1_mean": float(np.mean(delta_f1)),
+                    "delta_worst_10_mean": float(np.mean(delta_w10)),
+                    "delta_primary_per_seed": delta_primary,
+                    "delta_f1_per_seed": delta_f1,
+                    "delta_worst_10_per_seed": delta_w10,
+                }
+                if len(common_seeds) >= 2:
+                    diff_entry["primary_stats"] = compute_paired_statistical_tests(uni_primary, strat_primary)
+                    diff_entry["f1_stats"] = compute_paired_statistical_tests(uni_f1, strat_f1)
+                    diff_entry["worst_10_stats"] = compute_paired_statistical_tests(uni_w10, strat_w10)
+                    statistical_comparisons[f"uniform_vs_{strat}"] = diff_entry["primary_stats"]
+
+                paired_differences_against_uniform[strat] = diff_entry
+
     # Compute aggregated summary across tree_types and strategies
     aggregated_summary: dict[str, dict[str, dict[str, float]]] = {}
     for tt in tree_types:
@@ -493,6 +564,7 @@ def run_benchmark(
         "seeds": list(seeds),
         "computational_budget": computational_budget,
         "statistical_comparisons": statistical_comparisons,
+        "paired_differences_against_uniform": paired_differences_against_uniform,
         "aggregated_summary": aggregated_summary,
         "runs": [asdict(r) for r in runs],
         "per_seed_results": [asdict(r) for r in runs],
@@ -513,6 +585,19 @@ def run_benchmark(
         vis_path = out_path / "tier1_visitation_diagnostics.json"
         _atomic_save_json(visitation_payload, vis_path)
         save_provenance_metadata(vis_path, active_config)
+
+    if scenario == "scenario2":
+        diag_path = out_path / "tier1_scenario2_diagnostics.json"
+        diag_payload = {
+            "benchmark_name": "tier1_scenario2_diagnostics",
+            "scenario": scenario,
+            "diagnostics": diagnostics_per_strat,
+            "paired_differences_against_uniform": paired_differences_against_uniform,
+            "timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        }
+        _atomic_save_json(diag_payload, diag_path)
+        save_provenance_metadata(diag_path, active_config)
+        json_export["scenario2_diagnostics"] = diag_payload
 
     json_path = out_path / f"{benchmark_name}.json"
     csv_path = out_path / f"{benchmark_name}.csv"

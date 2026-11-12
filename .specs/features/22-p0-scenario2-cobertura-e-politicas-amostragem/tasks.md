@@ -108,10 +108,10 @@ T4
 
 **Done when**:
 
-- [ ] `run_benchmark()` executa as estratégias do Scenario 2 registrando métricas padronizadas
-- [ ] Telemetria por execução calcula $H_{\text{norm}}$, $C_{\text{cov}}$, $N_{\text{unvisited}}$ e correlação exposição–recall
-- [ ] JSON e CSV exportam todas as colunas de diagnóstico por estratégia e semente
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests`  
+- [x] `run_benchmark()` executa as estratégias do Scenario 2 registrando métricas padronizadas
+- [x] Telemetria por execução calcula $H_{\text{norm}}$, $C_{\text{cov}}$, $N_{\text{unvisited}}$ e correlação exposição–recall
+- [x] JSON e CSV exportam todas as colunas de diagnóstico por estratégia e semente
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests`  
 
 **Tests**: unit  
 **Gate**: quick  
