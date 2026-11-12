@@ -1,25 +1,25 @@
 {
-  "timestamp_utc": "2026-11-12T17:04:02.836221+00:00",
+  "timestamp_utc": "2026-11-12T17:39:41.464849+00:00",
   "execution_mode": "real",
-  "git_commit": "2f3af6b301c2d10cc616fc2c5fa749038f821c3e",
+  "git_commit": "fca1800de67f9f83bb9b78c4dd7bcc92ad365131",
   "status": "complete",
   "artifacts": [
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_convergence_curves.pdf",
       "name": "fig_convergence_curves.pdf",
-      "sha256": "06954726431d5f8eeedb498e868f4b6f2e0677c7f0d0390945381b5091b2474a",
-      "bytes": 31699
+      "sha256": "d4efdc794ccc42bf5ef215a84c6f6e2c3cf5a7164e1ff445e50d7f0f185a7fce",
+      "bytes": 38110
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_convergence_curves.png",
       "name": "fig_convergence_curves.png",
-      "sha256": "eab116622ee7d726c3c5691ef657dfc4f37934484571e8132cf17f96ae1b00ad",
-      "bytes": 332111
+      "sha256": "e825d5d39319a8b00d10429178fbb947653d98a4027c1fee1c1e0c608381d83b",
+      "bytes": 656767
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_tree_visitation_heatmap.pdf",
       "name": "fig_tree_visitation_heatmap.pdf",
-      "sha256": "3359e06a33ee7ac3fd15a8cbb66c74f3eec1f4704c4887b852f53b387e7b8829",
+      "sha256": "64915bd5026b96b08824426f29300c238fd9d63e58869149661c8c9f1215b71c",
       "bytes": 41962
     },
     {
@@ -31,7 +31,7 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_hyperparameter_sensitivity.pdf",
       "name": "fig_hyperparameter_sensitivity.pdf",
-      "sha256": "d9b944f07ca5876f61de8ec25ba4233c37594b0ed32ef9892acd02cb94d283ea",
+      "sha256": "89eabf66674732571455e88a5d38d536b727bb41ab05b6c9729b54a34aa1c829",
       "bytes": 28774
     },
     {
@@ -43,7 +43,7 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_ablation_2x2.pdf",
       "name": "fig_ablation_2x2.pdf",
-      "sha256": "c6068080326e08068d7a72c0fb66fe9f08f2497a42ad3978f41548330f3c8c67",
+      "sha256": "45fbc56d4dc00c0b89a0bb6d51ddad97337fbca4d59a48521d9b5a3f798ec2ba",
       "bytes": 17876
     },
     {
@@ -53,21 +53,81 @@
       "bytes": 122510
     },
     {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy_r1_10.pdf",
+      "name": "fig_pareto_cost_vs_accuracy_r1_10.pdf",
+      "sha256": "0fb548f2567dc9d2cc0804cdf7485d7b6f230410d1ea9a04f8f24442a264c337",
+      "bytes": 19197
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy_r1_10.png",
+      "name": "fig_pareto_cost_vs_accuracy_r1_10.png",
+      "sha256": "ac84a4e03b80837b79dfa525528aac8bc1b47c186cbb7a4535c3de5c2c5fe5ce",
+      "bytes": 95298
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy_bestval_r1_10.pdf",
+      "name": "fig_pareto_cost_vs_accuracy_bestval_r1_10.pdf",
+      "sha256": "91e84fd8d021d516ea7023d5f0a63518f091adc40882075d8d3c2179a8f025f8",
+      "bytes": 19280
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy_bestval_r1_10.png",
+      "name": "fig_pareto_cost_vs_accuracy_bestval_r1_10.png",
+      "sha256": "f7d2b3a0ace5b039d206710806c013a8a404486e2c59082efd0c41bdc86a699a",
+      "bytes": 104489
+    },
+    {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy.pdf",
       "name": "fig_pareto_cost_vs_accuracy.pdf",
-      "sha256": "817d7cf39e6b5efec2d67a34b210d10ee96cc7dd8572d6caa8789ef4a96c2fbb",
-      "bytes": 31206
+      "sha256": "c6d38305603585e5eae93fe3edf0ed598a26257f6c766da272e4a992c188f9c6",
+      "bytes": 19098
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy.png",
       "name": "fig_pareto_cost_vs_accuracy.png",
-      "sha256": "6df4b62aa78cdf4dc9db6fb2e237a47b675e6cec7e6a932155aa664ad3be6177",
-      "bytes": 230045
+      "sha256": "727ff39b167697a40203b00e0009ad3c6f18078a14dddf9b665ec2cf2c731327",
+      "bytes": 93146
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy_bestval_r1_50.pdf",
+      "name": "fig_pareto_cost_vs_accuracy_bestval_r1_50.pdf",
+      "sha256": "8ff09f86347eb7df51ebd9ce2fc7b8662f30bccaf235df77905f6e698d97d056",
+      "bytes": 19589
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy_bestval_r1_50.png",
+      "name": "fig_pareto_cost_vs_accuracy_bestval_r1_50.png",
+      "sha256": "66fac3fcaeb09d4129c633eede8efd7060124fe7556e2d5e6501971925b1fe98",
+      "bytes": 103195
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy_r1_100.pdf",
+      "name": "fig_pareto_cost_vs_accuracy_r1_100.pdf",
+      "sha256": "15027fa6b30eecba7fd3142fe2790038d040834b6eda8ab4473106d9e7a128a2",
+      "bytes": 18877
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy_r1_100.png",
+      "name": "fig_pareto_cost_vs_accuracy_r1_100.png",
+      "sha256": "d4d71ffb6b880b835dd4b5bd663c6eae4b2a5a6744aeca08c0ff96a109a88e91",
+      "bytes": 88583
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy_bestval_r1_100.pdf",
+      "name": "fig_pareto_cost_vs_accuracy_bestval_r1_100.pdf",
+      "sha256": "5b0c20bbcb944d92b0badfdf1ea9d46aa61d316f8a1ed89d3ab6f63938b37319",
+      "bytes": 19145
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy_bestval_r1_100.png",
+      "name": "fig_pareto_cost_vs_accuracy_bestval_r1_100.png",
+      "sha256": "df0e1a64471f80e4674824c08098f2873f24bed1ab6b0d1831dbdb90ebd9fb75",
+      "bytes": 107781
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_coverage_entropy_dynamics.pdf",
       "name": "fig_coverage_entropy_dynamics.pdf",
-      "sha256": "bd23eba6606bafa07f75f231064df809b5ce1309536cb91e69d308d5ce851f01",
+      "sha256": "f0ece3c7a8320b60337fc9aebf1fd234626db2f296f792219ef5fcc1bf3e0655",
       "bytes": 24140
     },
     {
@@ -77,9 +137,21 @@
       "bytes": 165124
     },
     {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_class_exposure_concentration.pdf",
+      "name": "fig_class_exposure_concentration.pdf",
+      "sha256": "86f7058054805e564116bd66b3f2f3908f85b2efbce50f0a28934108298a11b3",
+      "bytes": 16011
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_class_exposure_concentration.png",
+      "name": "fig_class_exposure_concentration.png",
+      "sha256": "e9185c10b9f110396f40d7936662b5333354424f87df5101ea6b6f19bc035851",
+      "bytes": 112963
+    },
+    {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_measured_visitation_entropy.pdf",
       "name": "fig_measured_visitation_entropy.pdf",
-      "sha256": "73a6132500565d170e4e567225b65a164e3ea7ecdc99c7715c122cbc649453bb",
+      "sha256": "b04c37a640e71e4d27941b2396bd1ec43c1025a9313933b24b08ae03e247c629",
       "bytes": 20975
     },
     {
@@ -91,7 +163,7 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_class_exposure_vs_delta_recall.pdf",
       "name": "fig_class_exposure_vs_delta_recall.pdf",
-      "sha256": "d667ccaa080c6362adf72a0c3b5c2c437a2142c4e6002f35c684ec337596bded",
+      "sha256": "d1faf510efb9bf7e8edb411aec5bbccbe5beb2b5c26bd4c720a17d10f02bf63e",
       "bytes": 18049
     },
     {
@@ -103,7 +175,7 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_ward_vs_semantic_dendrogram.pdf",
       "name": "fig_ward_vs_semantic_dendrogram.pdf",
-      "sha256": "09008672515fc573fde85b71c845ff1884fa610bf2f02e9ff2ee7d9f0586907a",
+      "sha256": "45e003309de93722c575a8732fdec66ceef7780c90a9267c063c975407be13f3",
       "bytes": 33894
     },
     {
@@ -115,7 +187,7 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_interaction_ratio_methods.pdf",
       "name": "fig_interaction_ratio_methods.pdf",
-      "sha256": "8cfb48acd72b29a8613e07a15349a31c15b9b7596eb38956ba8d7d156ea537ea",
+      "sha256": "1621f20a834a4c92abbcf2ab58e0bac33776dea12d1a74c84e3515fa02c66d44",
       "bytes": 20226
     },
     {
@@ -127,7 +199,7 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_precision_recall_curves.pdf",
       "name": "fig_precision_recall_curves.pdf",
-      "sha256": "8eadf9bb43e99e8ad9301a399cfb0d976e0f3ba647fc9a87288e4116ec23b959",
+      "sha256": "8addd9757fce8e502a7d1111dca4357cbfb35d5de32194f6d436556aa58779c1",
       "bytes": 27754
     },
     {
@@ -139,7 +211,7 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_evaluation_4quadrants_comparison.pdf",
       "name": "fig_evaluation_4quadrants_comparison.pdf",
-      "sha256": "3fdd027d5802b448454f6aea48368977ccd6f00c02b636e43529e70f2fe308cb",
+      "sha256": "d66d0f94863e467e45caed58315960e6a9f019082c5da4ddd0a3d790babe9760",
       "bytes": 16402
     },
     {
@@ -151,20 +223,26 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/tables/tab_scenario1_imbalanced.tex",
       "name": "tab_scenario1_imbalanced.tex",
-      "sha256": "5d512ae31bfbd7562a4c6be7697b9e5e1c9ac97a5388d5e6f9e17df046d60d3e",
-      "bytes": 2029
+      "sha256": "5a7ce01277fa4f2ac663b583c6d427dad44ccafb029e946182e3cc2f6771660d",
+      "bytes": 2126
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/tables/tab_scenario2_multiclass.tex",
       "name": "tab_scenario2_multiclass.tex",
-      "sha256": "95c314427317d16b8ab7aff9a1129dcd1f0395fd3062520dfa9305371821e72c",
-      "bytes": 669
+      "sha256": "32f2bc072a0fe9c30bcc683ca97bcd28bd3a35e3eaf63969de94153151cddf85",
+      "bytes": 943
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/tables/tab_ablation_study.tex",
       "name": "tab_ablation_study.tex",
       "sha256": "4ecf7d031a2b2dca43ad2cc8098f90765984efe2a96253f19e920a562a94a28e",
       "bytes": 719
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/tables/tab_paired_effects.tex",
+      "name": "tab_paired_effects.tex",
+      "sha256": "c760adc4fe225f53b82c76ad9ab65bf71ceda3309ae416dd81528c83124cb2a6",
+      "bytes": 1601
     }
   ],
   "source_files": [

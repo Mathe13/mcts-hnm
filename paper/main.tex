@@ -48,7 +48,7 @@ superiority claim.
 \section{Introduction}
 \label{sec:intro}
 
-Class imbalance is ubiquitous across real-world computer vision tasks, including medical diagnosis, rare object detection, and fine-grained species identification. In extreme imbalance regimes, where negative instances outnumber positives by orders of magnitude ($1:10$ to $1:100$), standard stochastic gradient descent (SGD) with uniform mini-batch sampling is dominated by trivial, uninformative negative examples. Consequently, gradient updates provide negligible error signals for refining the decision boundary around rare minority concepts.
+Class imbalance is ubiquitous across real-world computer vision tasks, including medical diagnosis, rare object detection, and fine-grained species identification. In settings with increasingly scarce positive training examples, standard stochastic gradient descent (SGD) with uniform mini-batch sampling is dominated by trivial, uninformative negative examples. Consequently, gradient updates provide negligible error signals for refining the decision boundary around rare minority concepts.
 
 To counteract this inefficiency, practitioners commonly employ Online Hard Example Mining (OHEM)~\cite{shrivastava2016training} or focal loss weighting~\cite{lin2017focal}. However, OHEM evaluates candidate hardness strictly within small, randomly sampled candidate pools, rendering it inherently myopic. In large label spaces, OHEM repeatedly samples boundary outliers and mislabeled instances, inducing severe training instability, high gradient variance, and catastrophic forgetting of canonical class distributions.
 
@@ -125,24 +125,28 @@ Every ancestor $p$ on the path from $l$ to the root aggregates child values weig
 
 \textbf{Evaluation Scenarios.}
 \begin{itemize}
-    \item \textbf{Scenario 1 (One-vs-Rest Binary)}: The target class is \textit{beaver} and the reported principal experiment uses the configured positive-subset setting $\rho=1:50$. Evaluated on Minority F1, AUPRC, and False Positive Rate at 95\% recall (FPR@95).
+    \item \textbf{Scenario 1 (One-vs-Rest Binary)}: The positive target class is \textit{beaver}. We retain respectively 10\%, 2\%, and 1\% of its training examples, labeled $1{:}10$, $1{:}50$, and $1{:}100$ (positive-retention settings, not literal positive:negative pool ratios). We measure Minority F1, Average Precision (AUPRC), and FPR at 95\% recall.
     \item \textbf{Scenario 2 (100-way Multi-Class)}: Full multi-class curriculum evaluated on Top-1 Accuracy, Macro-F1, and Worst-10-Class Recall.
 \end{itemize}
 
-\textbf{Baselines.} We compare Enhanced MCTS-HNM against Uniform Random Sampling, Online Hard Example Mining (OHEM)~\cite{shrivastava2016training}, and Strict GiantHunter (unnormalized $Q$, $100\%$ MCTS batch) across $N = 5$ random seeds. Paired Student's $t$-tests and Wilcoxon signed-rank tests assess statistical significance.
+\textbf{Baselines and inference.} We compare Enhanced MCTS-HNM against Uniform Random Sampling, Online Hard Example Mining (OHEM)~\cite{shrivastava2016training}, and Strict GiantHunter (unnormalized $Q$, $100\%$ MCTS batch) across five paired seeds per positive-retention setting. Point estimates and raw paired $t$-test $p$-values in the primary tables are exploratory. The separate paired-effects table reports paired mean differences, Student-$t$ 95\% confidence intervals, and Holm-adjusted $p$-values across the prespecified binary F1 and multiclass Top-1 comparisons. With five seeds, intervals may be wide; non-significance does not demonstrate equivalence.
 
 \section{Results}
 \label{sec:results}
 
 \subsection{Scenario 1: Binary One-vs-Rest}
-At the configured positive-subset setting labeled $1:50$ (target class \emph{beaver}),
-we compare four principal sampling strategies over five paired seeds and 1,000 optimizer steps.
-This label denotes the positive subsampling setting; it should not be confused with
-an empirical 1:50 ratio between all available positive and negative pool instances.
-Table~\ref{tab:scenario1_imbalanced} contains the measurements exported by the benchmark.
-The Strict method obtains the highest mean AUPRC (0.736), whereas Enhanced
-MCTS-HNM obtains 0.685. The current experiments therefore do not establish
-superiority of the Enhanced method across the reported metrics.
+We evaluate four principal samplers at three positive-retention settings
+($1{:}10$, $1{:}50$, and $1{:}100$) with five paired seeds and 1,000
+optimizer steps per run. These labels represent retaining 10\%, 2\%,
+and 1\% of the available positive training examples, respectively; they
+are not measured negative-to-positive pool ratios.
+Table~\ref{tab:scenario1_imbalanced} reports the measured results. At
+$1{:}10$, OHEM attains the highest mean minority F1 (79.5\%); at
+$1{:}50$ and $1{:}100$, Strict MCTS has the highest mean F1 (69.7\%
+and 60.0\%). At $1{:}50$, Strict also attains the highest mean AUPRC
+(0.736), whereas Enhanced attains 0.685. Dispersion is larger under the
+most severe positive subsampling setting, and these means alone do not
+establish method superiority after multiple-comparison correction.
 
 \input{tables/tab_scenario1_imbalanced.tex}
 
@@ -150,8 +154,10 @@ superiority of the Enhanced method across the reported metrics.
 The uniform sampler achieves mean Top-1 accuracy of 63.85\%, compared with
 33.43\% for the original Enhanced method over 2,000 steps and five seeds.
 A coverage-balanced MCTS variant achieves 53.06\%, recovering part of this
-gap without surpassing Uniform. The performance of the original Enhanced method
-requires additional investigation of batch composition and class-level learning.
+gap without surpassing Uniform; Uniform Grouped reaches approximately 52.24\%.
+All four measured multiclass policies are shown in the table. The class-level
+exposure diagnostics suggest that cumulative class coverage alone cannot
+account for Enhanced's poor recall, but these associations are not causal.
 
 \input{tables/tab_scenario2_multiclass.tex}
 
@@ -163,7 +169,7 @@ Neither figure alone establishes an improvement in generalization.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=0.92\linewidth]{figures/fig_convergence_curves.pdf}
-  \caption{Recorded Scenario-1 training trajectories for the configured $1:50$ subsampling setting over 1,000 steps.}
+  \caption{Scenario-1 \emph{validation} F1 and loss trajectories at the configured $1{:}50$ positive-retention setting; paired means and between-seed standard deviations over five seeds, with 1,000 training steps. The test split is not used for early stopping or trend selection.}
   \label{fig:convergence}
 \end{figure*}
 
@@ -218,7 +224,30 @@ not reconstructed using illustrative data.
 \begin{figure}[t]
   \centering
   \includegraphics[width=0.90\linewidth]{figures/fig_pareto_cost_vs_accuracy.pdf}
-  \caption{Measured computational cost against observed benchmark performance.}
+  \caption{Scenario-1 final-checkpoint \emph{test} minority F1 against total wall-clock seconds at the configured $1{:}50$ positive-retention setting (means $\pm$ SD over matched seeds). Pareto dominance is assessed on the means, not on confidence bounds.}
+\end{figure}
+}{}
+
+\IfFileExists{figures/fig_pareto_cost_vs_accuracy_r1_10.pdf}{
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/fig_pareto_cost_vs_accuracy_r1_10.pdf}
+  \caption{Supplementary Pareto comparison at 10\% positive retention ($1{:}10$); final-checkpoint test F1 and measured whole-run time.}
+\end{figure}
+}{}
+\IfFileExists{figures/fig_pareto_cost_vs_accuracy_r1_100.pdf}{
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/fig_pareto_cost_vs_accuracy_r1_100.pdf}
+  \caption{Supplementary Pareto comparison at 1\% positive retention ($1{:}100$); final-checkpoint test F1 and measured whole-run time.}
+\end{figure}
+}{}
+
+\IfFileExists{figures/fig_pareto_cost_vs_accuracy_bestval_r1_50.pdf}{
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.90\linewidth]{figures/fig_pareto_cost_vs_accuracy_bestval_r1_50.pdf}
+  \caption{Alternative Pareto evaluation protocol at 2\% positive retention: TEST F1 of the checkpoint selected using validation, against whole-run wall-clock time. Kept separate from the primary last-checkpoint Pareto plot.}
 \end{figure}
 }{}
 
@@ -236,6 +265,15 @@ not reconstructed using illustrative data.
   \centering
   \includegraphics[width=0.90\linewidth]{figures/fig_coverage_entropy_dynamics.pdf}
   \caption{Observed entropy and class coverage statistics where per-step telemetry is available.}
+\end{figure}
+}{}
+
+\IfFileExists{figures/fig_class_exposure_concentration.pdf}{
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.94\linewidth]{figures/fig_class_exposure_concentration.pdf}
+  \caption{Final, whole-run class sampling concentration: effective number of exposed classes and class-exposure Gini coefficient (paired seeds). This is not a per-step history nor evidence of a causal mechanism.}
+  \label{fig:concentration}
 \end{figure}
 }{}
 
@@ -281,26 +319,39 @@ not reconstructed using illustrative data.
 \end{figure*}
 }{}
 
+\IfFileExists{tables/tab_paired_effects.tex}{
+\input{tables/tab_paired_effects.tex}
+}{}
+
 \section{Discussion and Limitations}
 \label{sec:discussion}
-The experiments do not establish that Enhanced MCTS-HNM outperforms
-Uniform, OHEM, or Strict MCTS across settings. Instead, the factorial
-ablation suggests that Q-normalization may be detrimental in the evaluated
-binary setting, while the coverage-balanced variant partially mitigates
-the multi-class performance deficit. Further experiments are required to
-separate effects of focal batch composition, hierarchy geometry, and
-sampling policy. The binary results are concentrated on one target class
-and one configured subsampling setting.
+The evaluated Enhanced variant does not consistently outperform Uniform,
+OHEM, or Strict MCTS across any reported settings. Varying positive retention
+from 10\% to 1\% reveals substantial performance degradation and increasing
+between-seed variability, especially in the most data-scarce regime. The
+factorial analysis suggests that Q-normalization may hurt the evaluated
+binary setting; the coverage-balanced policy partially mitigates, but does
+not reverse, the large multiclass deficit. Although most classes are sampled
+at least once early in training, this cumulative coverage saturates and is
+not a sufficient explanation for class-level recall. Whole-run exposure
+inequality and class-level paired differences add descriptive evidence,
+not causal identification. There are only five seeds per setting and only
+one binary target class. Multiple tests require Holm adjustment, and
+neither a non-significant contrast nor a wide confidence interval establishes
+equivalence. Reported sampling ratios refer to positive retention, not
+literal population imbalance.
 
 \section{Conclusion}
 \label{sec:conclusion}
-We implemented and evaluated hierarchical MCTS-based negative mining
-using reproducible CIFAR-100 embeddings. The present results reveal
-important trade-offs rather than a uniform gain over standard sampling:
-Strict MCTS remains competitive in the binary scenario, and balanced
-sampling improves the multi-class MCTS variant without overtaking
-uniform sampling. Broader evaluations and validation-selected
-hyperparameter protocols are needed before claiming general superiority.
+We evaluated hierarchical MCTS-based negative mining on CIFAR-100
+frozen embeddings across three measured positive-retention conditions
+(10\%, 2\%, and 1\%) and a 100-class curriculum. Strict MCTS is
+competitive when positive data are scarce, but the full Enhanced policy
+does not demonstrate a reliable general advantage. Coverage-balanced
+sampling reduces the multiclass deficit but remains behind uniform
+sampling. Evaluation-specific Pareto diagrams and seed-paired, multiplicity-
+controlled effects delimit what these experiments support; broader target
+classes and controlled interventions are required to establish why.
 
 \bibliographystyle{unsrt}
 \bibliography{references}

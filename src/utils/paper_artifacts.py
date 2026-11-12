@@ -890,6 +890,13 @@ def generate_convergence_plot(
         if f1_key in conv:
             vals = conv[f1_key]
             ax1.plot(steps, vals, label=label, color=color, linestyle=style, linewidth=2.0)
+            if f1_key + '_sd' in conv:
+                mean = np.asarray(vals, dtype=float)
+                sd = np.asarray(conv[f1_key + '_sd'], dtype=float)
+                if mean.shape != sd.shape or not np.isfinite(sd).all() or (sd < 0).any():
+                    raise ValueError(f'Invalid between-seed validation-F1 dispersion for {key}')
+                ax1.fill_between(steps, np.clip(mean-sd, 0, 1), np.clip(mean+sd, 0, 1),
+                                 color=color, alpha=.13)
 
     rho_label = conv.get("imbalance_ratio")
     if not rho_label and "scenario1" in data and isinstance(data["scenario1"], dict):
@@ -908,6 +915,9 @@ def generate_convergence_plot(
         raise ValueError("Convergence history contains invalid F1 measurements")
     ax1.set_ylim(0.0, min(1.02, max(0.10, max(observed_f1, default=0.5) * 1.08)))
     ax1.legend(loc="lower right", frameon=True, fontsize=9)
+    if conv.get('n_paired_seeds'):
+        ax1.text(.02, .03, f"Paired N={conv['n_paired_seeds']} (mean ± SD)",
+                 transform=ax1.transAxes, fontsize=8)
 
     # Subplot 2: Loss Convergence
     for key, (color, style, label) in palette.items():
@@ -915,6 +925,13 @@ def generate_convergence_plot(
         if loss_key in conv:
             vals = conv[loss_key]
             ax2.plot(steps, vals, label=label, color=color, linestyle=style, linewidth=2.0)
+            if loss_key + '_sd' in conv:
+                mean = np.asarray(vals, dtype=float)
+                sd = np.asarray(conv[loss_key + '_sd'], dtype=float)
+                if mean.shape != sd.shape or not np.isfinite(sd).all() or (sd < 0).any():
+                    raise ValueError(f'Invalid between-seed validation-loss dispersion for {key}')
+                ax2.fill_between(steps, np.clip(mean-sd, 0, None), mean+sd,
+                                 color=color, alpha=.13)
 
     ax2.set_title("(b) Binary Cross-Entropy Loss", fontsize=11, fontweight="bold")
     ax2.set_xlabel("Training Steps", fontsize=10)
@@ -1152,7 +1169,7 @@ def generate_scenario1_table(
         r"\small",
         f"\\caption{{Scenario 1: Imbalanced Binary One-vs-Rest evaluation on CIFAR-100 across 5 random seeds ($N=5$) {ratio_desc}. "
         r"Reporting mean $\pm$ standard deviation for F1-Score, AUPRC, and False Positive Rate at 95\% recall (FPR@95). "
-        r"$p$-values computed via paired Student's $t$-test against Enhanced MCTS-HNM.}",
+        r"Exploratory unadjusted $p$-values from paired Student's $t$-tests against Enhanced MCTS-HNM; Holm-adjusted inference and paired confidence intervals are reported separately.}",
         r"\label{tab:scenario1_imbalanced}",
         r"\begin{tabular}{llcccc}",
         r"\toprule",
@@ -1242,6 +1259,8 @@ def generate_scenario2_table(
 
     cand_strategies = [
         ("uniform", "Uniform Random"),
+        ("uniform_grouped", "Uniform Grouped"),
+        ("mcts_coverage_balanced", "Coverage-Balanced MCTS"),
         ("ohem", "OHEM (Shrivastava et al.)"),
         ("mcts_strict", "Strict GiantHunter (Qu et al.)"),
         ("mcts_enhanced", "\\textbf{Enhanced MCTS-HNM (Ours)}"),
@@ -1266,7 +1285,7 @@ def generate_scenario2_table(
         r"\centering",
         r"\small",
         r"\caption{Scenario 2: 100-way multi-class curriculum classification on CIFAR-100 across 5 random seeds ($N=5$). "
-        r"Evaluating Top-1 Accuracy, Macro-Averaged F1-Score, and Worst-10-Class Recall.}",
+        r"Evaluating Top-1 Accuracy, Macro-Averaged F1-Score, and Worst-10-Class Recall. Raw paired $p$-values are exploratory; multiplicity-adjusted inference is reported separately.}",
         r"\label{tab:scenario2_multiclass}",
         r"\begin{tabular}{lcccc}",
         r"\toprule",
@@ -1631,6 +1650,27 @@ def generate_all_paper_artifacts(
 
     meta = load_paper_metadata(metadata_path)
     data = load_or_synthesize_benchmark_results(results_dir=res_dir, config=config)
+    # Figure 1 must summarize the five REAL validation histories at one named
+    # positive-retention setting, rather than the first strategy/seed encountered.
+    from src.utils.phase3_publication import (
+        MissingPublicationEvidence, RATIOS, load_campaign_runs,
+        aggregate_validation_history,
+    )
+    # Keep manuscript captions and the primary figures unambiguously aligned.
+    paper_reference_ratio = '1:50'
+    phase3_s1_runs = phase3_s2_runs = None
+    phase3_aggregation_note = None
+    if mode == ExecutionMode.REAL:
+        try:
+            phase3_s1_runs = load_campaign_runs(res_dir, 'scenario1')
+            phase3_s2_runs = load_campaign_runs(res_dir, 'scenario2')
+            data['convergence'] = aggregate_validation_history(
+                phase3_s1_runs, ratio=paper_reference_ratio)
+        except MissingPublicationEvidence as exc:
+            # Legacy mock/partial suites can still produce mandatory tables,
+            # but do not claim that a single-seed convergence is multi-seed.
+            phase3_aggregation_note = str(exc)
+            logger.warning('No paired validation convergence: %s', exc)
 
     watermark = "SMOKE TEST — NOT FOR PUBLICATION" if (mode == ExecutionMode.SMOKE or data.get("is_smoke")) else None
 
@@ -1764,18 +1804,48 @@ def generate_all_paper_artifacts(
         except (FileNotFoundError, OptionalEvidenceMissing, EvidenceUnavailable) as exc:
             mark_optional_skip(name, str(exc), prefix)
 
-    try_measured_optional(
-        "pareto_cost", "fig_pareto_cost_vs_accuracy",
-        lambda: generate_pareto_cost_performance_plot(
-            manifest_sim, output_dir=fig_dir, expected_mode=mode, watermark=watermark
-        ),
-    )
+    if mode == ExecutionMode.REAL and phase3_s1_runs is not None:
+        from src.utils.phase3_publication import plot_pareto_ratio
+        # Canonical manuscript figure = 1:50. Other ratios get separately
+        # named figures; no strategy is averaged across different ratios.
+        for ratio in RATIOS:
+            suffix = ratio.replace(':', '_')
+            prefix = ('fig_pareto_cost_vs_accuracy'
+                      if ratio == paper_reference_ratio
+                      else 'fig_pareto_cost_vs_accuracy_r' + suffix)
+            try:
+                pair = plot_pareto_ratio(phase3_s1_runs, fig_dir, ratio=ratio,
+                                         file_prefix=prefix, watermark=watermark)
+                figures.extend((pair['pdf'], pair['png']))
+                # A separate test protocol: validation-selected checkpoint.
+                best_prefix = 'fig_pareto_cost_vs_accuracy_bestval_r' + suffix
+                best = plot_pareto_ratio(phase3_s1_runs, fig_dir, ratio=ratio,
+                                         file_prefix=best_prefix,
+                                         protocol='validation_selected', watermark=watermark)
+                figures.extend((best['pdf'], best['png']))
+            except MissingPublicationEvidence as exc:
+                mark_optional_skip('pareto_' + suffix, str(exc), prefix)
+    else:
+        try_measured_optional(
+            "pareto_cost", "fig_pareto_cost_vs_accuracy",
+            lambda: generate_pareto_cost_performance_plot(
+                manifest_sim, output_dir=fig_dir, expected_mode=mode, watermark=watermark
+            ),
+        )
     # Requires observed cumulative class exposure >=1 / >=5 at each checkpoint.
     # Old atomic runs without these data remain explicitly omitted.
     try_measured_optional(
         "coverage_entropy", "fig_coverage_entropy_dynamics",
         lambda: plot_coverage_entropy(run_items, output_dir=fig_dir, watermark=watermark),
     )
+    if mode == ExecutionMode.REAL and phase3_s2_runs is not None:
+        from src.utils.phase3_publication import plot_exposure_concentration
+        try:
+            pair = plot_exposure_concentration(phase3_s2_runs, fig_dir, watermark=watermark)
+            figures.extend((pair['pdf'], pair['png']))
+        except MissingPublicationEvidence as exc:
+            mark_optional_skip('exposure_concentration', str(exc),
+                               'fig_class_exposure_concentration')
     try_measured_optional(
         "measured_visitation_entropy", "fig_measured_visitation_entropy",
         lambda: plot_measured_entropy(run_items, output_dir=fig_dir, watermark=watermark),
@@ -1832,6 +1902,14 @@ def generate_all_paper_artifacts(
     t_scen2 = generate_scenario2_table(data, output_dir=tab_dir)
     t_ablation = generate_ablation_table(data, output_dir=tab_dir)
     tables.extend([t_scen1, t_scen2, t_ablation])
+    if mode == ExecutionMode.REAL and phase3_s1_runs is not None and phase3_s2_runs is not None:
+        from src.utils.phase3_publication import write_paired_effects_table
+        try:
+            tables.append(write_paired_effects_table(phase3_s1_runs, phase3_s2_runs, tab_dir))
+        except MissingPublicationEvidence as exc:
+            skipped['paired_effects'] = str(exc)
+    if phase3_aggregation_note:
+        skipped['paired_validation_convergence'] = phase3_aggregation_note
 
     all_artifacts = list(figures) + list(tables)
 

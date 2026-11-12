@@ -1,0 +1,28 @@
+% Auto-generated from paired REAL atomic runs; not a superiority claim.
+\begin{table*}[t]
+\centering
+\small
+\caption{Prespecified paired comparisons against Enhanced MCTS-HNM. Effects are the
+comparator minus Enhanced in percentage points; 95\% paired Student-$t$ confidence
+intervals are descriptive with $N=5$ and Holm correction controls the family-wise
+error across 12 reported tests (both scenarios). Raw $p$-values in the primary tables are exploratory.}
+\label{tab:paired_effects}
+\begin{tabular}{llllrrrr}
+\toprule
+Scenario & Setting & Comparator & Metric & $N$ & $\Delta$ (pp) [95\% CI] & Raw $p$ & Holm $p$ \\
+\midrule
+S1 & 1:10 & Uniform & Minority F1 & 5 & -0.4 [-1.6, +0.9] & 0.466 & 1 \\
+S1 & 1:10 & OHEM & Minority F1 & 5 & +1.1 [-1.5, +3.7] & 0.318 & 1 \\
+S1 & 1:10 & Strict MCTS & Minority F1 & 5 & -1.8 [-3.4, -0.1] & 0.0396 & 0.356 \\
+S1 & 1:50 & Uniform & Minority F1 & 5 & +0.6 [-2.6, +3.7] & 0.646 & 1 \\
+S1 & 1:50 & OHEM & Minority F1 & 5 & -1.0 [-4.4, +2.4] & 0.463 & 1 \\
+S1 & 1:50 & Strict MCTS & Minority F1 & 5 & +1.7 [-3.2, +6.7] & 0.389 & 1 \\
+S1 & 1:100 & Uniform & Minority F1 & 5 & +3.8 [-1.2, +8.7] & 0.101 & 0.81 \\
+S1 & 1:100 & OHEM & Minority F1 & 5 & -1.0 [-6.9, +4.8] & 0.65 & 1 \\
+S1 & 1:100 & Strict MCTS & Minority F1 & 5 & +6.1 [-2.3, +14.5] & 0.115 & 0.81 \\
+S2 & — & Uniform & Top-1 & 5 & +30.4 [+28.7, +32.2] & 1.12e-06 & 1.34e-05 \\
+S2 & — & Uniform Grouped & Top-1 & 5 & +18.8 [+17.5, +20.1] & 2.3e-06 & 2.53e-05 \\
+S2 & — & Coverage-Balanced MCTS & Top-1 & 5 & +19.6 [+16.6, +22.6] & 5.27e-05 & 0.000527 \\
+\bottomrule
+\end{tabular}
+\end{table*}

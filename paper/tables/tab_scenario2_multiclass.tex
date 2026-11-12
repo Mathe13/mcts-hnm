@@ -2,13 +2,15 @@
 \begin{table}[t]
 \centering
 \small
-\caption{Scenario 2: 100-way multi-class curriculum classification on CIFAR-100 across 5 random seeds ($N=5$). Evaluating Top-1 Accuracy, Macro-Averaged F1-Score, and Worst-10-Class Recall.}
+\caption{Scenario 2: 100-way multi-class curriculum classification on CIFAR-100 across 5 random seeds ($N=5$). Evaluating Top-1 Accuracy, Macro-Averaged F1-Score, and Worst-10-Class Recall. Raw paired $p$-values are exploratory; multiplicity-adjusted inference is reported separately.}
 \label{tab:scenario2_multiclass}
 \begin{tabular}{lcccc}
 \toprule
 Strategy & Top-1 Accuracy (\%) & Macro-F1 (\%) & Worst-10 Recall (\%) & $p$-value ($t$-test) \\
 \midrule
   Uniform Random & 63.9 $\pm$ 0.4 & 63.7 $\pm$ 0.4 & 33.5 $\pm$ 1.5 & $p < 0.001$ \\
+  Uniform Grouped & 52.2 $\pm$ 1.0 & 51.4 $\pm$ 1.2 & 12.0 $\pm$ 2.2 & $p < 0.001$ \\
+  Coverage-Balanced MCTS & 53.1 $\pm$ 1.1 & 54.4 $\pm$ 0.9 & 10.2 $\pm$ 3.6 & $p < 0.001$ \\
   \textbf{Enhanced MCTS-HNM (Ours)} & 33.4 $\pm$ 1.5 & 34.3 $\pm$ 1.4 & 0.7 $\pm$ 0.5 & --- (Ref) \\
 \bottomrule
 \end{tabular}
