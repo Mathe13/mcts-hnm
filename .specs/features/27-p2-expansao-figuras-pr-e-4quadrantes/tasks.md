@@ -158,8 +158,8 @@ T5
 
 **Done when**:
 
-- [ ] Notebook 05 contém células demonstrando a geração e exibição de FIG-06 e FIG-07
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p2_pr_and_quadrant_figures.py -k "test_notebook_05_integration_p2"`  
+- [x] Notebook 05 contém células demonstrando a geração e exibição de FIG-06 e FIG-07
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p2_pr_and_quadrant_figures.py -k "test_notebook_05_integration_p2"`  
 
 **Tests**: integration  
 **Gate**: quick  
