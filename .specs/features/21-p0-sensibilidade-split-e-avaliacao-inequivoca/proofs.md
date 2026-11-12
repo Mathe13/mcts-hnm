@@ -1,6 +1,6 @@
 # 21-p0-sensibilidade-split-e-avaliacao-inequivoca proofs
 
-**HEAD**: 7ecb09b
+**HEAD**: 3af5e81
 **Tree**: clean
 **Shell**: /bin/sh
 **Result**: 7 pass, 0 fail
@@ -34,5 +34,5 @@ tests/test_tier1_benchmarks_real.py::test_run_sensitivity_ablation
     batch = mcts_sampler.sample_batch(mcts_leaf_id)
 
 -- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
-================= 7 passed, 12 deselected, 4 warnings in 7.24s =================
+================= 7 passed, 12 deselected, 4 warnings in 8.12s =================
 ```
