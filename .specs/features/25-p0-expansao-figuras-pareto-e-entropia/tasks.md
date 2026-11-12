@@ -158,8 +158,8 @@ T5
 
 **Done when**:
 
-- [ ] Notebook 05 possui células demonstrando a geração e visualização das duas novas figuras
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p0_pareto_entropy_figures.py -k "test_notebook_05_integration"`  
+- [x] Notebook 05 possui células demonstrando a geração e visualização das duas novas figuras
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p0_pareto_entropy_figures.py -k "test_notebook_05_integration"`  
 
 **Tests**: integration  
 **Gate**: quick  
