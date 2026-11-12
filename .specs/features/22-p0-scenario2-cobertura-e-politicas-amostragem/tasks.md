@@ -129,10 +129,10 @@ T4
 
 **Done when**:
 
-- [ ] Teste assere execução correta de `uniform_grouped` e `mcts_coverage_balanced`
-- [ ] Teste valida proporção 16/48 em batch 64 para `mcts_coverage_balanced`
-- [ ] Teste valida integridade dos diagnósticos quantitativos ($H_{\text{norm}}$, $C_{\text{cov}}$, correlação)
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_scenario2_coverage_and_variants.py`  
+- [x] Teste assere execução correta de `uniform_grouped` e `mcts_coverage_balanced`
+- [x] Teste valida proporção 16/48 em batch 64 para `mcts_coverage_balanced`
+- [x] Teste valida integridade dos diagnósticos quantitativos ($H_{\text{norm}}$, $C_{\text{cov}}$, correlação)
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_scenario2_coverage_and_variants.py`  
 
 **Tests**: integration  
 **Gate**: full  
