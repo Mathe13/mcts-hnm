@@ -1,37 +1,37 @@
 {
-  "timestamp_utc": "2026-11-12T14:29:33.633215+00:00",
+  "timestamp_utc": "2026-11-12T17:04:02.836221+00:00",
   "execution_mode": "real",
-  "git_commit": "b9590e6fd88204527a64233f05c1458cfeee4ef3",
-  "status": "partial",
+  "git_commit": "2f3af6b301c2d10cc616fc2c5fa749038f821c3e",
+  "status": "complete",
   "artifacts": [
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_convergence_curves.pdf",
       "name": "fig_convergence_curves.pdf",
-      "sha256": "8e8b85ad6ec0788bb61ffb5554601a3c4f35d3237d41ac21abe66d94d4717c39",
-      "bytes": 31255
+      "sha256": "06954726431d5f8eeedb498e868f4b6f2e0677c7f0d0390945381b5091b2474a",
+      "bytes": 31699
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_convergence_curves.png",
       "name": "fig_convergence_curves.png",
-      "sha256": "afd3e8b50ed5e47ff838c0060879f756fd56848640245a82b835e5c03a5c6366",
-      "bytes": 216164
+      "sha256": "eab116622ee7d726c3c5691ef657dfc4f37934484571e8132cf17f96ae1b00ad",
+      "bytes": 332111
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_tree_visitation_heatmap.pdf",
       "name": "fig_tree_visitation_heatmap.pdf",
-      "sha256": "af994dc30e3cfffefb57943a7deacc21dd46d68cf5becf1872daa4a756089abd",
-      "bytes": 44126
+      "sha256": "3359e06a33ee7ac3fd15a8cbb66c74f3eec1f4704c4887b852f53b387e7b8829",
+      "bytes": 41962
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_tree_visitation_heatmap.png",
       "name": "fig_tree_visitation_heatmap.png",
-      "sha256": "ad84191c4e22da8196337b590aa7413b64d138f009864343768012f69b9acb16",
-      "bytes": 198334
+      "sha256": "8a452bac4801070941586a5385b6c82f666781a9ebd735565028c943c35a5dd6",
+      "bytes": 197004
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_hyperparameter_sensitivity.pdf",
       "name": "fig_hyperparameter_sensitivity.pdf",
-      "sha256": "330e770d50847be3601473f549a266d19b4344c3747af9a41c87af6f8e282f28",
+      "sha256": "d9b944f07ca5876f61de8ec25ba4233c37594b0ed32ef9892acd02cb94d283ea",
       "bytes": 28774
     },
     {
@@ -43,7 +43,7 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_ablation_2x2.pdf",
       "name": "fig_ablation_2x2.pdf",
-      "sha256": "d937ee4b872c3a7f84a9ff7bcc01476add7daa3f9eafd76ff1482c7f16b762d9",
+      "sha256": "c6068080326e08068d7a72c0fb66fe9f08f2497a42ad3978f41548330f3c8c67",
       "bytes": 17876
     },
     {
@@ -55,19 +55,31 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy.pdf",
       "name": "fig_pareto_cost_vs_accuracy.pdf",
-      "sha256": "42149859a1224a4090f58bfcebd7157378461670690abd23d7f4b0b8b4eda65f",
-      "bytes": 30976
+      "sha256": "817d7cf39e6b5efec2d67a34b210d10ee96cc7dd8572d6caa8789ef4a96c2fbb",
+      "bytes": 31206
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_pareto_cost_vs_accuracy.png",
       "name": "fig_pareto_cost_vs_accuracy.png",
-      "sha256": "76bf41dc4e6435f1ec06a9483b67c47caf5fb7c3ef75d8a094298dc089a8e3d5",
-      "bytes": 231488
+      "sha256": "6df4b62aa78cdf4dc9db6fb2e237a47b675e6cec7e6a932155aa664ad3be6177",
+      "bytes": 230045
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_coverage_entropy_dynamics.pdf",
+      "name": "fig_coverage_entropy_dynamics.pdf",
+      "sha256": "bd23eba6606bafa07f75f231064df809b5ce1309536cb91e69d308d5ce851f01",
+      "bytes": 24140
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_coverage_entropy_dynamics.png",
+      "name": "fig_coverage_entropy_dynamics.png",
+      "sha256": "8998d149ec004bf438565d672305d422e5968b30dc4b5aa3af76021fafc9c901",
+      "bytes": 165124
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_measured_visitation_entropy.pdf",
       "name": "fig_measured_visitation_entropy.pdf",
-      "sha256": "a1410a119bc23f817095ef73718963199b2bbaeb740cb218fb36cd9488ad59e3",
+      "sha256": "73a6132500565d170e4e567225b65a164e3ea7ecdc99c7715c122cbc649453bb",
       "bytes": 20975
     },
     {
@@ -77,22 +89,70 @@
       "bytes": 96954
     },
     {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_class_exposure_vs_delta_recall.pdf",
+      "name": "fig_class_exposure_vs_delta_recall.pdf",
+      "sha256": "d667ccaa080c6362adf72a0c3b5c2c437a2142c4e6002f35c684ec337596bded",
+      "bytes": 18049
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_class_exposure_vs_delta_recall.png",
+      "name": "fig_class_exposure_vs_delta_recall.png",
+      "sha256": "775bf444126401bf41663f5ae8653a64d771775a3b6aa6adf0ed079969ff6f84",
+      "bytes": 96464
+    },
+    {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_ward_vs_semantic_dendrogram.pdf",
       "name": "fig_ward_vs_semantic_dendrogram.pdf",
-      "sha256": "458a7262ad0af4906fb1bf26eb83c66116ab215c83f67d01262760754f79bd93",
-      "bytes": 33933
+      "sha256": "09008672515fc573fde85b71c845ff1884fa610bf2f02e9ff2ee7d9f0586907a",
+      "bytes": 33894
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_ward_vs_semantic_dendrogram.png",
       "name": "fig_ward_vs_semantic_dendrogram.png",
-      "sha256": "bd31581a9ce3921cc6f9c152ce4ae4ff5cf944bb92383abe6b0714e90a14027e",
-      "bytes": 281435
+      "sha256": "5f7d6e14a4371514c1338c7c6c25477f461506fc11a0fa58de013d6ae5edd855",
+      "bytes": 278244
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_interaction_ratio_methods.pdf",
+      "name": "fig_interaction_ratio_methods.pdf",
+      "sha256": "8cfb48acd72b29a8613e07a15349a31c15b9b7596eb38956ba8d7d156ea537ea",
+      "bytes": 20226
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_interaction_ratio_methods.png",
+      "name": "fig_interaction_ratio_methods.png",
+      "sha256": "100e85640e74d18d9273169263548e31d07c774e97337de67462db368f47f639",
+      "bytes": 238162
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_precision_recall_curves.pdf",
+      "name": "fig_precision_recall_curves.pdf",
+      "sha256": "8eadf9bb43e99e8ad9301a399cfb0d976e0f3ba647fc9a87288e4116ec23b959",
+      "bytes": 27754
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_precision_recall_curves.png",
+      "name": "fig_precision_recall_curves.png",
+      "sha256": "21a1708db5c5943a18603b6eca09998dcf9c72b79196b35d3cc619e0dfe42e44",
+      "bytes": 280020
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_evaluation_4quadrants_comparison.pdf",
+      "name": "fig_evaluation_4quadrants_comparison.pdf",
+      "sha256": "3fdd027d5802b448454f6aea48368977ccd6f00c02b636e43529e70f2fe308cb",
+      "bytes": 16402
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_evaluation_4quadrants_comparison.png",
+      "name": "fig_evaluation_4quadrants_comparison.png",
+      "sha256": "d53e82cca0f8f4281cd2c6bf14bd48948a59aae61ba59dce784f395fffa9cb3a",
+      "bytes": 66650
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/tables/tab_scenario1_imbalanced.tex",
       "name": "tab_scenario1_imbalanced.tex",
-      "sha256": "55f770ffae0399cf6aa39fbe61f2d8b033b0c4d812b51ee7b9ecc655c7c33eee",
-      "bytes": 1097
+      "sha256": "5d512ae31bfbd7562a4c6be7697b9e5e1c9ac97a5388d5e6f9e17df046d60d3e",
+      "bytes": 2029
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/tables/tab_scenario2_multiclass.tex",
@@ -111,20 +171,20 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/results/real/tier1_axis1_samplers.json",
       "name": "tier1_axis1_samplers.json",
-      "sha256": "89579e956aa18c4e82073cdbbb21a0648f317ddfa452335aa6101c708c4594cd",
-      "bytes": 330615
+      "sha256": "c1b6b32d117fc7b8d2f13b73ce1443e063a88d2a22d6d9b3f830cdf73acac7d8",
+      "bytes": 434310
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/results/real/tier1_scenario2_curriculum.json",
       "name": "tier1_scenario2_curriculum.json",
-      "sha256": "49d8a85fe52fe57f7a41bb237e7833bac4c8f39faa1ff39a62f0d21346e2b6a7",
-      "bytes": 699175
+      "sha256": "c224d855b0f2cd53c941437106d797f2d0ddf5ce18896ef59e0d54ce8e9060ab",
+      "bytes": 700452
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/results/real/tier1_axis2_tree_ablation.json",
       "name": "tier1_axis2_tree_ablation.json",
-      "sha256": "71ecbb1ddb662dba8ef0038917fde9b2c13a3f4ac900288ad3efb0147da31f25",
-      "bytes": 248913
+      "sha256": "c6d30159dbd5b3a28104b2a17b7e6aeb873c0e58d01b76dd8cc0b668f39d7c87",
+      "bytes": 249482
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/results/real/tier1_hyperparameter_sensitivity.json",
@@ -145,304 +205,664 @@
       "bytes": 2173
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_none_ohem_s42_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_none_ohem_s42_c1d6fd0f.json",
-      "sha256": "8245719acd45a6e6718a4284f4e512702a79950bc2855d4ef0a9f12e484572b3",
-      "bytes": 33376
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_none_ohem_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_none_ohem_s42_2f3af6b3.json",
+      "sha256": "c429f4894363e6035486aed5088e3be4229a173b6e276f8cc7cc4f19b7615f86",
+      "bytes": 426816
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_none_ohem_s43_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_none_ohem_s43_c1d6fd0f.json",
-      "sha256": "36d28c8a00c3d29f380d749e3c3336967a23bc523523c01190c24811b06a0bfd",
-      "bytes": 33573
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_none_ohem_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_none_ohem_s43_2f3af6b3.json",
+      "sha256": "eca147d1ccdcea081cbf82a61df8057444034e3a6bdba83935a7d2a1c1f96bc4",
+      "bytes": 427569
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_none_ohem_s44_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_none_ohem_s44_c1d6fd0f.json",
-      "sha256": "bd35af3c7dea50c8bcf5bdb93aaaff91dfe59a25d8b97f734713b90ef9285b55",
-      "bytes": 33436
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_none_ohem_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_none_ohem_s44_2f3af6b3.json",
+      "sha256": "326baaead00a6b12c2eaa3d1958a26b5cfcc092644d91a0d45b0d5c4bc82fa7d",
+      "bytes": 425900
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_none_ohem_s45_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_none_ohem_s45_c1d6fd0f.json",
-      "sha256": "81ecd541e0b0731a5c5be3160aaa9e5e145f95f3ef8bd6d2fc332966bbf460ac",
-      "bytes": 33555
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_none_ohem_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_none_ohem_s45_2f3af6b3.json",
+      "sha256": "5bf7f7e31c745797a2a90e60930119463f7ee504e3fdc05904ed6b8b379ee526",
+      "bytes": 428263
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_none_ohem_s46_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_none_ohem_s46_c1d6fd0f.json",
-      "sha256": "59b69b79504f0fa4f5b5e1962b0c0396ac68a405491c76e7b40680eee9ee1cb9",
-      "bytes": 34384
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_none_ohem_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_none_ohem_s46_2f3af6b3.json",
+      "sha256": "8c30c6d101f5987df57da7698e1a9581cbfe33c707999078073ff85760bb8db2",
+      "bytes": 424389
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_none_uniform_s42_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_none_uniform_s42_c1d6fd0f.json",
-      "sha256": "88ea23b50eb170c20068864aad3b9f42c18a708d04f47a2883c76fd7bb3ea785",
-      "bytes": 33654
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_none_uniform_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_none_uniform_s42_2f3af6b3.json",
+      "sha256": "b2631206840642a9a1cf2e0f92ddf5321a9acf39d9eca5b97cc43b32dc97dadb",
+      "bytes": 426368
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_none_uniform_s43_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_none_uniform_s43_c1d6fd0f.json",
-      "sha256": "5a808ce280916d16378a702bfcb479af54a9b104fb0e6a93eab9e0c0a79e4f12",
-      "bytes": 33759
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_none_uniform_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_none_uniform_s43_2f3af6b3.json",
+      "sha256": "628dd373f65d50d2c717d8396ff515ba2903bddd0a4a99170250ac96d6fd104d",
+      "bytes": 428100
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_none_uniform_s44_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_none_uniform_s44_c1d6fd0f.json",
-      "sha256": "4de00a09af4baba5746e1135a47d53b78a32a4c14cb38311709428d34b20393d",
-      "bytes": 33909
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_none_uniform_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_none_uniform_s44_2f3af6b3.json",
+      "sha256": "17992dd6aac558966ea5441a6de8332e5996660472ca34c2a003773bb2024c48",
+      "bytes": 426010
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_none_uniform_s45_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_none_uniform_s45_c1d6fd0f.json",
-      "sha256": "da0a97dce6986c47eddc24fdb6bbe826b1e6c53874f1749b2415e91951ee3765",
-      "bytes": 33547
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_none_uniform_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_none_uniform_s45_2f3af6b3.json",
+      "sha256": "33e923b2020fcb5cc7dd0974e852ebb95c63a1307d819674bda0bd749593a363",
+      "bytes": 428406
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_none_uniform_s46_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_none_uniform_s46_c1d6fd0f.json",
-      "sha256": "98151734297ab8b70e96b49c514fc900c7c6386208af76407206681758f361f6",
-      "bytes": 33868
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_none_uniform_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_none_uniform_s46_2f3af6b3.json",
+      "sha256": "426be54d5b8151402718832c5bbc38c07e52a715710f95581cc8701cc53bd620",
+      "bytes": 423036
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s42_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s42_c1d6fd0f.json",
-      "sha256": "032eb1aec0c56156a2f68620443b10856eba08b80b3e06dbdf816e0dc98e95aa",
-      "bytes": 37490
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_dualstream_only_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_dualstream_only_s42_2f3af6b3.json",
+      "sha256": "ebb09ce718b353765e0161c7f974c94d7c23d956b7f37e05d249576e2a79206f",
+      "bytes": 430133
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s43_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s43_c1d6fd0f.json",
-      "sha256": "a57e0b5d8613c230129f7821fab0ba75c6149a3f44fef78672e63b7e33700e6b",
-      "bytes": 37431
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_dualstream_only_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_dualstream_only_s43_2f3af6b3.json",
+      "sha256": "7b22d8e4e1600ddb6567f0f10c00ce98fafaef81a2b5a41cb20347f2d06ebcf3",
+      "bytes": 431971
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s44_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s44_c1d6fd0f.json",
-      "sha256": "a871a9095f462f4c328b9da82334805be4e36f5ef7772235ea5f4b34258a9c3d",
-      "bytes": 37708
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_dualstream_only_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_dualstream_only_s44_2f3af6b3.json",
+      "sha256": "9344daa084b2ddb5809359a121446c36229e786506889274dc0a5297228f80dc",
+      "bytes": 431186
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s45_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s45_c1d6fd0f.json",
-      "sha256": "418e3e93a5fe406e1176a5be9ad1a936329218a9ef197ec439b448b5649cf5bf",
-      "bytes": 37788
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_dualstream_only_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_dualstream_only_s45_2f3af6b3.json",
+      "sha256": "8a9a236b5dce7810845d003ff8e8d1dcd4a5da73d7a08086efe403b0b9f30daa",
+      "bytes": 430921
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s46_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s46_c1d6fd0f.json",
-      "sha256": "afb43d7c02b03c3ef21b249947ba27528edaafd7c8cfb879b1bccd1e74a3727b",
-      "bytes": 38028
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_dualstream_only_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_dualstream_only_s46_2f3af6b3.json",
+      "sha256": "cd7418254c05d3bee5e4e060b04620db91e811c6fe677f786f6abc65a9502bcf",
+      "bytes": 428534
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_enhanced_s42_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_enhanced_s42_c1d6fd0f.json",
-      "sha256": "eb748145fd7ccf6bdf41d572d0d7c75619205d83fc326fe6fd4cc94530b6b549",
-      "bytes": 37204
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_enhanced_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_enhanced_s42_2f3af6b3.json",
+      "sha256": "795204e59c7659b92651066e31aba13b9cadc0b1cd11ba3710c178438d706578",
+      "bytes": 430272
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_enhanced_s43_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_enhanced_s43_c1d6fd0f.json",
-      "sha256": "587b6248477838c8b43ceddc5ea79017cb1481168309d44ae429ecc2d228c97e",
-      "bytes": 37316
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_enhanced_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_enhanced_s43_2f3af6b3.json",
+      "sha256": "962ac311dc10efc0ec21ccc6e66d5043606c914eac3595f49a92e8c1bd80f79d",
+      "bytes": 430790
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_enhanced_s44_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_enhanced_s44_c1d6fd0f.json",
-      "sha256": "8429aa63c099ebd156ee2cdce0fd2a659d4cabfb5a0a48abba4ab23f5f5040dd",
-      "bytes": 37093
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_enhanced_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_enhanced_s44_2f3af6b3.json",
+      "sha256": "05fcdb374da9fe567ce8d4a1e0ceb8445f0f026d73e93c414243a71fcaffd2b2",
+      "bytes": 431039
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_enhanced_s45_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_enhanced_s45_c1d6fd0f.json",
-      "sha256": "f63f09dcead3084e1c347800eaf5eb76f096a615a6ebe7c770ed440226ceb21f",
-      "bytes": 37595
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_enhanced_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_enhanced_s45_2f3af6b3.json",
+      "sha256": "a934e704b149498490c64a19ca8df809bc995cbc8e2ee5049f2b7919b4a72fde",
+      "bytes": 431469
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_enhanced_s46_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_enhanced_s46_c1d6fd0f.json",
-      "sha256": "c9e7e87899c8f7a028ff978e1838ad4dfa11e56619bc1b7ace3e15a4a720435d",
-      "bytes": 37833
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_enhanced_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_enhanced_s46_2f3af6b3.json",
+      "sha256": "1a9b926cb0a1ff3f5e84604570decdedcd3c98b069e5793a198d799d3c736b4d",
+      "bytes": 428225
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s42_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s42_c1d6fd0f.json",
-      "sha256": "e62b27ed464b29bd14d66b7dc34205d22231a1809421f75241b1758d1093c3bc",
-      "bytes": 37411
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_qnorm_only_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_qnorm_only_s42_2f3af6b3.json",
+      "sha256": "e406ddabc257f89e445ba555ee95c69e20f50fd3e4b4ca14b349c7fa10dfacb2",
+      "bytes": 430588
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s43_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s43_c1d6fd0f.json",
-      "sha256": "5b896ae0807a62e43776ad61cd40b2fa1fa9ee91417d78566dbbbfee0c5ed6a6",
-      "bytes": 37264
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_qnorm_only_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_qnorm_only_s43_2f3af6b3.json",
+      "sha256": "e2305ef05cfb0261b3394eef8d9a4e265fb661930c834d571a7256bd04d2d89f",
+      "bytes": 431272
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s44_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s44_c1d6fd0f.json",
-      "sha256": "0b2dac3c6ccbbd69fb55107008a47e2ff78e09c848c02117f047754655073207",
-      "bytes": 37029
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_qnorm_only_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_qnorm_only_s44_2f3af6b3.json",
+      "sha256": "46f8cecea1379b796cf9adc17de7fdc530cd6511a3915727d74f8bbf6d4702d7",
+      "bytes": 430353
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s45_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s45_c1d6fd0f.json",
-      "sha256": "4f5e86b6ea36f117b086afb73cc3cdd93ad65c3d6d32894799d2a39b220c3a3a",
-      "bytes": 37615
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_qnorm_only_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_qnorm_only_s45_2f3af6b3.json",
+      "sha256": "25d6b67af34516151cb61ce818ba5a7ed99570f06f83e9cc552d9b42bd67a48c",
+      "bytes": 432000
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s46_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s46_c1d6fd0f.json",
-      "sha256": "3e8eb4ec28ee3f98ed3e1357bc7ab49628af9ec7acf8bed90f7c51e7573fcf6a",
-      "bytes": 37905
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_qnorm_only_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_qnorm_only_s46_2f3af6b3.json",
+      "sha256": "6cd50224df5574c923692052bc60fe0d662b9dd9b53ae90357480be585274024",
+      "bytes": 427300
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_strict_s42_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_strict_s42_c1d6fd0f.json",
-      "sha256": "d5ccc3181c35066f84a023795e4ce764420a617c2b77faa91920ac0c4c67ba7b",
-      "bytes": 37704
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_strict_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_strict_s42_2f3af6b3.json",
+      "sha256": "1e8b6dfde91b1bc75a0441c52ad8759c8244b820e25475a013f17fc566ea63b0",
+      "bytes": 430004
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_strict_s43_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_strict_s43_c1d6fd0f.json",
-      "sha256": "ed8428f15d4dd0f2613840073003c0d2c918e3da3490019e29b8f30d5fa61c72",
-      "bytes": 37406
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_strict_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_strict_s43_2f3af6b3.json",
+      "sha256": "24e75e2b60967faa864a58a2068cd9df2f55cc02c6be763f0c2a6c74a6ddd491",
+      "bytes": 430939
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_strict_s44_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_strict_s44_c1d6fd0f.json",
-      "sha256": "62faacb9ddb464df79fe63b1ba0aef13c0af1b4abbb85131abf7385dee77b039",
-      "bytes": 37852
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_strict_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_strict_s44_2f3af6b3.json",
+      "sha256": "f984ef7ef543b079314b18df3fb525ccaa842b2c4f4dc2256b266646b110e820",
+      "bytes": 430960
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_strict_s45_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_strict_s45_c1d6fd0f.json",
-      "sha256": "56960aef0f5f804a154bd796537756c023794c3f3b4ff075bca13988b3e76553",
-      "bytes": 37873
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_strict_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_strict_s45_2f3af6b3.json",
+      "sha256": "159edf05d6be2e17a4eaf38bdf5fcba41bbef93c93f38db672aa72ac975f7fe1",
+      "bytes": 431093
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario1_cls0_r1_50_semantic_mcts_strict_s46_c1d6fd0f.json",
-      "name": "scenario1_cls0_r1_50_semantic_mcts_strict_s46_c1d6fd0f.json",
-      "sha256": "9327909b2984d1513ae01d1dbc590e7df8e4934b77896ab42d79093f7f772087",
-      "bytes": 38004
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_strict_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_100_semantic_mcts_strict_s46_2f3af6b3.json",
+      "sha256": "25e98b0ad389e725526ca4aeab55fd29650e31b1e238ed2aaf357a9c40a8e306",
+      "bytes": 428289
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_none_uniform_grouped_s42_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_none_uniform_grouped_s42_c1d6fd0f.json",
-      "sha256": "36257dd1adfef3e2041c92aa0ee08aa6a46ca60820fff3b826412408c345bc59",
-      "bytes": 47052
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_none_ohem_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_none_ohem_s42_2f3af6b3.json",
+      "sha256": "02b6dbaedbc0659d1108f22969fb4a983bacb18747fbc9b5c0ac5ab69a6749d7",
+      "bytes": 428868
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_none_uniform_grouped_s43_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_none_uniform_grouped_s43_c1d6fd0f.json",
-      "sha256": "a03c33878316285031ad6309ef825864a1e22b7a466c50685c329d0a4f7ba4a6",
-      "bytes": 46782
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_none_ohem_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_none_ohem_s43_2f3af6b3.json",
+      "sha256": "1c0bff57d5e178959520efb3f14da84172c3b6b90319a3eac0c3c83dc2245bad",
+      "bytes": 425257
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_none_uniform_grouped_s44_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_none_uniform_grouped_s44_c1d6fd0f.json",
-      "sha256": "4b43fc8fcdaa67ff0b0ff6a70239734a82732f4163645c9e509a9fd73d6dcbfd",
-      "bytes": 46814
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_none_ohem_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_none_ohem_s44_2f3af6b3.json",
+      "sha256": "6a896c988cb3c2a00499a64ad6e8cbb2a8289caf8fe5847b900c2a9aff4c6c81",
+      "bytes": 423869
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_none_uniform_grouped_s45_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_none_uniform_grouped_s45_c1d6fd0f.json",
-      "sha256": "15d9023404c32941d6724a5a64de4f01544031fb4c5a9eedc6e13d35f0e9b22a",
-      "bytes": 46780
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_none_ohem_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_none_ohem_s45_2f3af6b3.json",
+      "sha256": "701f8df8ede77fdad521aba07e31809bf4f3a9b20b9306af86da79ea2bdac68e",
+      "bytes": 423773
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_none_uniform_grouped_s46_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_none_uniform_grouped_s46_c1d6fd0f.json",
-      "sha256": "e96bc92bebc4a4aa20de9db6e29556950c2dbaca0ebaab448a6e9fd9c0215463",
-      "bytes": 46802
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_none_ohem_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_none_ohem_s46_2f3af6b3.json",
+      "sha256": "696ceee054b76de2ad6ca75a9e9e33e6e20f55e7ec42a044eef6f4b1c8eb262c",
+      "bytes": 429781
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_none_uniform_s42_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_none_uniform_s42_c1d6fd0f.json",
-      "sha256": "189ed88780c4e291e2229ff8f3933254e47630cd4f855116c64cec8b4594e6de",
-      "bytes": 46960
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_none_uniform_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_none_uniform_s42_2f3af6b3.json",
+      "sha256": "ea2e4e0e2413fbfa9b6fe42b196b481a0451d09253986bcadfcce64089f22e42",
+      "bytes": 428820
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_none_uniform_s43_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_none_uniform_s43_c1d6fd0f.json",
-      "sha256": "86696b9e6a011eb869ee178bfd2bbc72211f4db8ab07025bebe54b9c75815e87",
-      "bytes": 47001
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_none_uniform_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_none_uniform_s43_2f3af6b3.json",
+      "sha256": "b1a5a89350b4f4b012b580dc682239e7ad6c9d94316602ade05b8e24e2527637",
+      "bytes": 422850
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_none_uniform_s44_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_none_uniform_s44_c1d6fd0f.json",
-      "sha256": "06eb7ad7fc23603f7cc1647a6c6a30605747e9e64f9030143c72e0ba592935ec",
-      "bytes": 46873
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_none_uniform_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_none_uniform_s44_2f3af6b3.json",
+      "sha256": "3f30ba7e8dd5ebf16b1c3fabf844515587c562d479e99d4e1c76b0b971ef9353",
+      "bytes": 424202
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_none_uniform_s45_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_none_uniform_s45_c1d6fd0f.json",
-      "sha256": "c875df9f51f0b1598827bf40d615ba91aaf468ae86a4b4fdd8b0921399597149",
-      "bytes": 46961
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_none_uniform_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_none_uniform_s45_2f3af6b3.json",
+      "sha256": "0547e2da1391a337d0b5e509c5c1a0998956b5e0fa784293f4aec89271bd8255",
+      "bytes": 423596
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_none_uniform_s46_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_none_uniform_s46_c1d6fd0f.json",
-      "sha256": "87e4d617982eb79833dd041d2030c36c8918560f3bf9208c185fe48be69a9204",
-      "bytes": 46994
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_none_uniform_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_none_uniform_s46_2f3af6b3.json",
+      "sha256": "82b5664ddf19d855b7d2d225b7d9c77210e07b29472ee1fb8acb337be0ce7a96",
+      "bytes": 429155
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s42_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s42_c1d6fd0f.json",
-      "sha256": "6bc672a20faf4b6e98cb9673ecc519eab22bb9370de37c66b71d7eb865b4bc56",
-      "bytes": 55929
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_dualstream_only_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_dualstream_only_s42_2f3af6b3.json",
+      "sha256": "071361289afc3285a1b8db1e883868b479bf1283e6feb816cb235148a859bcb2",
+      "bytes": 431960
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s43_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s43_c1d6fd0f.json",
-      "sha256": "05c7fc12238731a62dc102a629286c75bca584b48506a156b4714144b96c3830",
-      "bytes": 55866
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_dualstream_only_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_dualstream_only_s43_2f3af6b3.json",
+      "sha256": "eefa6afffc8a55d5be84d412d39710f5064406865adf612ac9c090f90e83dac4",
+      "bytes": 426990
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s44_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s44_c1d6fd0f.json",
-      "sha256": "efa2473f6b476b0e8bbec378ce5295a1eac4be6839d0dd0f2d10e760f0fafe0e",
-      "bytes": 55913
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_dualstream_only_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_dualstream_only_s44_2f3af6b3.json",
+      "sha256": "7b5e7dbb92e471f2719762761ec030080c575f8f6d39011a04fb656c304505d0",
+      "bytes": 427481
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s45_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s45_c1d6fd0f.json",
-      "sha256": "9de03b5f7b9d0d582a656856dcbbb988bad3bcb03b74b885e70f8f0f83334eac",
-      "bytes": 55737
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_dualstream_only_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_dualstream_only_s45_2f3af6b3.json",
+      "sha256": "1dba130ec4a01b55a60cd055758295ca47ef36b92c90a71ab7880d3d13630a70",
+      "bytes": 427757
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s46_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s46_c1d6fd0f.json",
-      "sha256": "7656506eb559a61ac90b07efa82b931139085cd4ab484f32996b80474da5fb20",
-      "bytes": 55757
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_dualstream_only_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_dualstream_only_s46_2f3af6b3.json",
+      "sha256": "01c99223374663c63e1da25bacf7d4dc22481173827d5db56f6e3e17ed079cb1",
+      "bytes": 433312
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_semantic_mcts_enhanced_s42_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_semantic_mcts_enhanced_s42_c1d6fd0f.json",
-      "sha256": "2b8dd6ec6b3f72d21b1741baf12781e89cb5a38fca76b838103b31777137f7ec",
-      "bytes": 55530
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_enhanced_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_enhanced_s42_2f3af6b3.json",
+      "sha256": "d1e6d97e5545b2697a672a7666d7a464116db4a6e14b4af1ead76fb775060f9d",
+      "bytes": 431832
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_semantic_mcts_enhanced_s43_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_semantic_mcts_enhanced_s43_c1d6fd0f.json",
-      "sha256": "f533b9492d4009fcb125dfdca3cb698462474bdc0ab7b37d25ea49fe1ec344d2",
-      "bytes": 55620
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_enhanced_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_enhanced_s43_2f3af6b3.json",
+      "sha256": "5cfb5cf46eab3b933bb3cea72f3c9b49a2c1c0aa962e5d52dda91dff66cfcbc2",
+      "bytes": 426908
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_semantic_mcts_enhanced_s44_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_semantic_mcts_enhanced_s44_c1d6fd0f.json",
-      "sha256": "0b036d9f2ea3690ee2be5976f9539ba1abfe4df5eece04cb7953c5d772aef21f",
-      "bytes": 55436
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_enhanced_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_enhanced_s44_2f3af6b3.json",
+      "sha256": "cdf012938c9998fcf2536ea04671c994498fed16416160baa5dc068038e42425",
+      "bytes": 427100
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_semantic_mcts_enhanced_s45_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_semantic_mcts_enhanced_s45_c1d6fd0f.json",
-      "sha256": "7b4e3fbd5b2af878a1c594b1e5b0fdd0be0aeda100c7a445358c1cba2fbaafc4",
-      "bytes": 55636
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_enhanced_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_enhanced_s45_2f3af6b3.json",
+      "sha256": "e44054a6b92172833f0af4b353ecede52e72843ae521f1924a26f416b4c8c9fe",
+      "bytes": 428411
     },
     {
-      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/scenario2_cls100_r_none_semantic_mcts_enhanced_s46_c1d6fd0f.json",
-      "name": "scenario2_cls100_r_none_semantic_mcts_enhanced_s46_c1d6fd0f.json",
-      "sha256": "5637b412872642f651af04641ca18153e75563778e10bca5ce6a54e20f447656",
-      "bytes": 55454
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_enhanced_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_enhanced_s46_2f3af6b3.json",
+      "sha256": "806a6712597076eb90979b76a6a29dc89d8d859c4a73a98afc581b34af4f1cb3",
+      "bytes": 432974
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_qnorm_only_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_qnorm_only_s42_2f3af6b3.json",
+      "sha256": "c6220cdf7c91006f1b3b9cf350b3306c7fa5f9ca4a7ee3a4b3f0a7d2843f3400",
+      "bytes": 432406
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_qnorm_only_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_qnorm_only_s43_2f3af6b3.json",
+      "sha256": "d87281a420bc236e668d09d606e443b9c18fb72c53d0d1ef5ef98e2c9401fd10",
+      "bytes": 428627
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_qnorm_only_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_qnorm_only_s44_2f3af6b3.json",
+      "sha256": "ce77099739e4fe2fb184d0e68b37b328a3c4ec6479b59b0f42e7cda995d6d37d",
+      "bytes": 427902
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_qnorm_only_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_qnorm_only_s45_2f3af6b3.json",
+      "sha256": "5fca8e72d717403cc6124949896b99b3073c6d0b0e7c48336a08c6a02a0b00f0",
+      "bytes": 427959
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_qnorm_only_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_qnorm_only_s46_2f3af6b3.json",
+      "sha256": "c20da22ba441f552d03f6eae4fb0536fcee52dd063890de3564b995c83cc063f",
+      "bytes": 433232
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_strict_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_strict_s42_2f3af6b3.json",
+      "sha256": "40ddb5105066021577f2b08ccab699d2b7ee741f5f3daa78bc39c6cf4a9be9b2",
+      "bytes": 431145
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_strict_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_strict_s43_2f3af6b3.json",
+      "sha256": "a951447261bfdac2edbe73a4794a5da52d091446e99f0ed4b6f07beff227f48a",
+      "bytes": 427446
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_strict_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_strict_s44_2f3af6b3.json",
+      "sha256": "5be87480da211a4f7c86f3aebdb68cbf10b208e661814174845bc980e6a3369d",
+      "bytes": 427009
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_strict_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_strict_s45_2f3af6b3.json",
+      "sha256": "d406b8a9127f8f7f01109b39af5f26161a5924bba27d6888a32dbcdf2f4c8bd2",
+      "bytes": 427111
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_strict_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_10_semantic_mcts_strict_s46_2f3af6b3.json",
+      "sha256": "632bd64bced2dde1437b638e5c8348949740e6c42372426ca49f8b1a2db552b7",
+      "bytes": 432654
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_none_ohem_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_none_ohem_s42_2f3af6b3.json",
+      "sha256": "4b8e0f50afe164d1282a5c557e9ca0d30a05db58da20e18e4ff806df66199d16",
+      "bytes": 429085
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_none_ohem_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_none_ohem_s43_2f3af6b3.json",
+      "sha256": "f3a8d89f767011e20c383715415a80543322795e773ce5894c8d143306235ad8",
+      "bytes": 428276
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_none_ohem_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_none_ohem_s44_2f3af6b3.json",
+      "sha256": "2d38f97d8c654fa68c1a083523cc85072c810b0e0aa915e8298aaf97c0b217d0",
+      "bytes": 428185
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_none_ohem_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_none_ohem_s45_2f3af6b3.json",
+      "sha256": "1ceacc211c4d291c21184c7d6ead088c7c962262b74c59e05aadfac33ce93a3c",
+      "bytes": 429824
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_none_ohem_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_none_ohem_s46_2f3af6b3.json",
+      "sha256": "a56280536065d96e3e07516eb7d3250b3221af926a86012bfa494b51259d1c7b",
+      "bytes": 428369
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_none_uniform_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_none_uniform_s42_2f3af6b3.json",
+      "sha256": "2893b58fc218ebbeab0081ccd35ef109ed33e414ebea570b24acf3e76f194b59",
+      "bytes": 428645
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_none_uniform_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_none_uniform_s43_2f3af6b3.json",
+      "sha256": "2e916a8c274d3f40b5f01d002dc0dcbb20320b55f075bb294d6c8d9caa248d8e",
+      "bytes": 428685
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_none_uniform_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_none_uniform_s44_2f3af6b3.json",
+      "sha256": "1cabe95021f737fd771717a71c759d29992d3c6850b212b89453073dfc54d0b5",
+      "bytes": 428715
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_none_uniform_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_none_uniform_s45_2f3af6b3.json",
+      "sha256": "20b0e14cdf7b203216f88b5c8a47637c9f2834e6909e90a8f9aa0175fc352d7a",
+      "bytes": 429804
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_none_uniform_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_none_uniform_s46_2f3af6b3.json",
+      "sha256": "958b4d8d1bb8f4509f90756f0ac328e137de5ac6c36d2903184a6f1b6927f43f",
+      "bytes": 426796
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s42_2f3af6b3.json",
+      "sha256": "5b6076f0c4891b9a45a1f151ff1a11613d60ee170800d7d2571bc608d8c65822",
+      "bytes": 433565
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s43_2f3af6b3.json",
+      "sha256": "a995d549f1ee6f624b29cf4469d2cf84659667eedb5f5273eab19ba70049238c",
+      "bytes": 433758
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s44_2f3af6b3.json",
+      "sha256": "504fb8299449aa5a56cd5d769a2fa8e285ea408002058a61b6d3556bc9dfc0c7",
+      "bytes": 432563
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s45_2f3af6b3.json",
+      "sha256": "c3c98dbea9e801ddede465b790352f2c8b1b4d794c049169b6b6e445b58d2cb9",
+      "bytes": 434333
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_dualstream_only_s46_2f3af6b3.json",
+      "sha256": "28d2b2728765da93a227bda97dbdfb682fd1523c9cfcfc1e485769e78c39c048",
+      "bytes": 431829
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_enhanced_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_enhanced_s42_2f3af6b3.json",
+      "sha256": "369e6748bb5da867cfd98137b03233189ee7496acfc41dcd98295d19a9a7b7a6",
+      "bytes": 432805
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_enhanced_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_enhanced_s43_2f3af6b3.json",
+      "sha256": "11078f24bd103a1698dc3f81950c76ffa528a9675736d327848d27987b9440d8",
+      "bytes": 432246
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_enhanced_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_enhanced_s44_2f3af6b3.json",
+      "sha256": "fef83b6c6b1e76d955796482449b97ba327caaf2ce83ba0b9a82e93ec175f102",
+      "bytes": 431999
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_enhanced_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_enhanced_s45_2f3af6b3.json",
+      "sha256": "dad6d443872f644c66d522d346a5d00937f8b635fae989cc1b21876be1f63373",
+      "bytes": 433784
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_enhanced_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_enhanced_s46_2f3af6b3.json",
+      "sha256": "27ff8621df2c104483a2f595590c26d8d697c55150540f621a76beebfcf87785",
+      "bytes": 432869
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s42_2f3af6b3.json",
+      "sha256": "47b424e2677c273504b1db0149860fe7343f20679b83cc66aecda0e13af28abf",
+      "bytes": 433112
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s43_2f3af6b3.json",
+      "sha256": "9fc090c8496d61cd1ee57076f180852565a83c27cbcb6b54b105764635a93939",
+      "bytes": 433149
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s44_2f3af6b3.json",
+      "sha256": "0efdf4176d103234281a68eeb63e66488585b7311ec4b3b2875753c36396352a",
+      "bytes": 432564
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s45_2f3af6b3.json",
+      "sha256": "09e54c0b4c1f3b2761a1670dd1e0e0f5daca3d09c6793772423188369020c5c9",
+      "bytes": 434140
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_qnorm_only_s46_2f3af6b3.json",
+      "sha256": "a4506bf2933a53360942a59b7b81fdd2b2b1f34de91cf567d3ae091d58afcca8",
+      "bytes": 432411
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_strict_s42_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_strict_s42_2f3af6b3.json",
+      "sha256": "d589a4c0753fe79e21b6322f3d3c793e81e889fa173300bf7f74f0147a31bf87",
+      "bytes": 433304
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_strict_s43_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_strict_s43_2f3af6b3.json",
+      "sha256": "3cea86d68236c905e4ede878ec229c7e7f9fe692758b3b0bb3d0b85c31605882",
+      "bytes": 433422
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_strict_s44_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_strict_s44_2f3af6b3.json",
+      "sha256": "5d494613e2bc2e8b9fed903b3a405441083d362316e9066b0232ff4872ce3041",
+      "bytes": 432761
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_strict_s45_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_strict_s45_2f3af6b3.json",
+      "sha256": "e52e129fcefe76d0fe41acc3329b09101504ec060f5b8c06b1b4a0b46563407f",
+      "bytes": 434396
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_strict_s46_2f3af6b3.json",
+      "name": "tier1_axis1_samplers_scenario1_cls0_r1_50_semantic_mcts_strict_s46_2f3af6b3.json",
+      "sha256": "6c5fc3f6d77ca4787d083fc04a7437b5446b13aa31f918d25c190c4fe7270c19",
+      "bytes": 431604
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_grouped_s42_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_grouped_s42_2f3af6b3.json",
+      "sha256": "1436d7baccf9adaa859bfb3cc0558ed4dd61a44b027061d86c82f9549610dd66",
+      "bytes": 57253
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_grouped_s43_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_grouped_s43_2f3af6b3.json",
+      "sha256": "ad2f0df75757b80a607e3454407cf161b142e06cd850141bb9d8e008b9a39ce2",
+      "bytes": 57021
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_grouped_s44_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_grouped_s44_2f3af6b3.json",
+      "sha256": "6994efe01af8714822fdd22c5c849f370d273ccbbbefc686a91d685af90797bc",
+      "bytes": 57035
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_grouped_s45_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_grouped_s45_2f3af6b3.json",
+      "sha256": "b5b435493cef573b62bd728f443abe108f8d3bd7ce08bc90d2a9ed88e7d6a77a",
+      "bytes": 57004
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_grouped_s46_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_grouped_s46_2f3af6b3.json",
+      "sha256": "39f091af240410488c9a2f21cd50b34327ca5afce746658e57b9633a69d294b0",
+      "bytes": 57017
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_s42_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_s42_2f3af6b3.json",
+      "sha256": "6b655da08495c7b61a01640094feaa732721698922544e8eb20edc29c25716ad",
+      "bytes": 57191
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_s43_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_s43_2f3af6b3.json",
+      "sha256": "45bbb75d4685504a1226a28bb240ae89a815ec9ad89cd8c0b27c23d60769ec2f",
+      "bytes": 57237
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_s44_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_s44_2f3af6b3.json",
+      "sha256": "d8b3a68c76a24d54ad47287b4a047cca0147a7a247def24b598bc0915ffd1475",
+      "bytes": 57111
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_s45_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_s45_2f3af6b3.json",
+      "sha256": "0176e0089e98bffe916ffe8f01ec61d7e8b1c11d97344370eda5f5ca792a5468",
+      "bytes": 57168
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_s46_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_none_uniform_s46_2f3af6b3.json",
+      "sha256": "9791e2f5d91911ab04c5dbe4c10a1ec77b2454d037c0d1f62fc201c1d11184b2",
+      "bytes": 57215
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s42_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s42_2f3af6b3.json",
+      "sha256": "56a9800c42666472d60fbb9cb602bb991dae214bd47c530b5646dcc7456e1cdf",
+      "bytes": 66127
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s43_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s43_2f3af6b3.json",
+      "sha256": "27078635edceac478a19d093554407506567dcd823af69f05652f28e67a4e3ec",
+      "bytes": 66082
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s44_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s44_2f3af6b3.json",
+      "sha256": "5ee71f0f3b9093520b03c7ab0bf4a5023a9c9b4ecc1d83e192c16c0555bc3e9b",
+      "bytes": 66135
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s45_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s45_2f3af6b3.json",
+      "sha256": "7be815a9cd271c8cb96608ea4c372adf30f011aed5408892d992258540d34ba9",
+      "bytes": 65948
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s46_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_coverage_balanced_s46_2f3af6b3.json",
+      "sha256": "8a48d72d9e142f3e5bfb59ea36a6ad15001db2127545224bbad248d761c2e1c3",
+      "bytes": 65992
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_enhanced_s42_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_enhanced_s42_2f3af6b3.json",
+      "sha256": "555c90336935ed0e05bdadc7f33527529a88531561391ebfff8c41014dc88468",
+      "bytes": 65712
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_enhanced_s43_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_enhanced_s43_2f3af6b3.json",
+      "sha256": "f3b0631a16ed5fbaff331e3ad13ca6aabb55b0608b942074f42a9e11cd2d557d",
+      "bytes": 65801
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_enhanced_s44_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_enhanced_s44_2f3af6b3.json",
+      "sha256": "ef5582d2e50704f44d99f7bb69abc21e81ef2329294860a240589b05d54b752d",
+      "bytes": 65599
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_enhanced_s45_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_enhanced_s45_2f3af6b3.json",
+      "sha256": "19290913344bc5e0ef3cf0d6da3044de47b1d9f0ccbc6f623c5a62226e2c8eea",
+      "bytes": 65824
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/results/real/runs/tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_enhanced_s46_2f3af6b3.json",
+      "name": "tier1_scenario2_curriculum_scenario2_cls100_r_none_semantic_mcts_enhanced_s46_2f3af6b3.json",
+      "sha256": "ce35339276817615f42f10965e6af6ae9c69ecf8aa49ba6e837280348a61010e",
+      "bytes": 65645
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/embeddings/real/trees/validation_confusion_matrix_100.npz",
@@ -457,11 +877,5 @@
       "bytes": 667
     }
   ],
-  "skipped_artifacts": {
-    "coverage_entropy": "Per-step class coverage has not been retained; the two-panel figure remains unavailable",
-    "exposure_recall": "Atomic run lacks per-class exposure/recall; older runs cannot be treated as paired measurements",
-    "interaction_ratio": "FIG-05 requires >=2 measured imbalance ratios per strategy; currently only one is available. Run 1:10 and/or 1:100 before plotting.",
-    "precision_recall": "Per-seed y_true/y_score or measured PR points are not exported; cannot infer a PR curve from AUPRC",
-    "evaluation_quadrants": "Four actual test quadrants per strategy/seed not available in historical atomic runs"
-  }
+  "skipped_artifacts": {}
 }

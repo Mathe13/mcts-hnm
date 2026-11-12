@@ -7,6 +7,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 import json
 import logging
+import re
 from pathlib import Path
 from typing import Any
 
@@ -437,13 +438,17 @@ def run_benchmark(
                         cls_id_str = f"cls{tc}" if scenario == "scenario1" else "cls100"
                         r_str = f"r{rho.replace(':', '_')}" if rho is not None else "r_none"
                         t_str = tree_type if strat.startswith("mcts") else "none"
-                        run_id = f"{scenario}_{cls_id_str}_{r_str}_{t_str}_{strat}_s{seed}_{commit_hash}"
+                        # Include benchmark identity: Axis 2 previously overwrote Axis 1
+                        # mcts_enhanced/semantic atomic runs when their IDs collided.
+                        benchmark_slug = re.sub(r"[^A-Za-z0-9_-]+", "_", benchmark_name)
+                        run_id = f"{benchmark_slug}_{scenario}_{cls_id_str}_{r_str}_{t_str}_{strat}_s{seed}_{commit_hash}"
 
                         # Serialize individual atomic run
                         runs_dir = out_path / "runs"
                         runs_dir.mkdir(parents=True, exist_ok=True)
                         single_run_payload = {
                             "run_id": run_id,
+                            "benchmark_name": benchmark_name,
                             "scenario": scenario,
                             "strategy": strat,
                             "tree_type": t_str,
@@ -454,6 +459,10 @@ def run_benchmark(
                             "val_metrics": res.get("val_metrics"),
                             "test_metrics": res.get("test_metrics"),
                             "history": res.get("history", []),
+                            "binary_test_pr": res.get("binary_test_pr") if scenario == "scenario1" else None,
+                            "binary_test_pr_unavailable_reason": (
+                                res.get("binary_test_pr_unavailable_reason") if scenario == "scenario1" else None
+                            ),
                             # These values are already computed in the training loop.
                             # Persist for the next scientific run; historical runs
                             # lacking them are NOT silently backfilled.
@@ -504,7 +513,8 @@ def run_benchmark(
     )
 
     statistical_comparisons: dict[str, Any] = {}
-    if len(seeds) >= 2 and baseline_comp_key in grouped_scores:
+    if (len(seeds) >= 2 and baseline_comp_key in grouped_scores
+            and (scenario != "scenario1" or (len(ratios_to_run) == 1 and len(classes_to_run) == 1))):
         enhanced_scores = grouped_scores[baseline_comp_key]
         for key, scores in grouped_scores.items():
             if key != baseline_comp_key:
@@ -516,7 +526,7 @@ def run_benchmark(
     # Paired comparisons against uniform baseline
     paired_differences_against_uniform: dict[str, Any] = {}
     uni_runs = {r.seed: r for r in runs if r.strategy == "uniform"}
-    if uni_runs:
+    if uni_runs and (scenario != "scenario1" or (len(ratios_to_run) == 1 and len(classes_to_run) == 1)):
         for strat in sorted(set(r.strategy for r in runs if r.strategy != "uniform")):
             strat_runs = {r.seed: r for r in runs if r.strategy == strat}
             common_seeds = sorted(set(uni_runs.keys()) & set(strat_runs.keys()))
@@ -553,7 +563,8 @@ def run_benchmark(
 
     # Paired comparisons across hierarchies (Axis 2: Semantic vs Ward)
     paired_hierarchy_tests: dict[str, Any] = {}
-    if "semantic" in tree_types and "confusion_ward" in tree_types:
+    if ("semantic" in tree_types and "confusion_ward" in tree_types
+            and (scenario != "scenario1" or (len(ratios_to_run) == 1 and len(classes_to_run) == 1))):
         for strat in strategies:
             sem_runs = {r.seed: r for r in runs if r.strategy == strat and r.tree_type == "semantic"}
             conf_runs = {r.seed: r for r in runs if r.strategy == strat and r.tree_type == "confusion_ward"}
@@ -605,7 +616,8 @@ def run_benchmark(
     # 2x2 Factorial Mechanism Analysis (Strict vs QNorm vs DualStream vs Enhanced)
     factorial_set = {"mcts_strict", "mcts_qnorm_only", "mcts_dualstream_only", "mcts_enhanced"}
     factorial_2x2_effects: dict[str, Any] = {}
-    if factorial_set.issubset(set(strategies)):
+    if (factorial_set.issubset(set(strategies))
+            and (scenario != "scenario1" or (len(ratios_to_run) == 1 and len(classes_to_run) == 1))):
         for tt in tree_types:
             runs_by_strat = {
                 s: {r.seed: r for r in runs if r.strategy == s and (r.tree_type == tt or r.tree_type == "none")}
@@ -733,6 +745,11 @@ def run_benchmark(
         "scenario": scenario,
         "benchmark_name": benchmark_name,
         "primary_metric": primary_metric,
+        "aggregated_summary_scope": (
+            "pooled_descriptive_only__do_not_infer" if
+            scenario == "scenario1" and (len(ratios_to_run) > 1 or len(classes_to_run) > 1)
+            else "single_condition"
+        ),
         "seeds": list(seeds),
         "computational_budget": computational_budget,
         "statistical_comparisons": statistical_comparisons,

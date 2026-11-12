@@ -281,6 +281,9 @@ def measured_quadrants(run_items: dict[str, dict[str, Any]]) -> dict[str,dict[st
     strategies=('uniform','ohem','mcts_strict','mcts_enhanced')
     by={s:{} for s in strategies}
     for p in _payloads(run_items, scenario='scenario1'):
+        if (p.get('target_class') != 0 or p.get('imbalance_ratio') != '1:50'
+                or p.get('benchmark_name') not in (None, 'tier1_axis1_samplers')):
+            continue
         st=p['strategy'];sd=int(p['seed'])
         if st not in by:continue
         if st.startswith('mcts') and p.get('tree_type') != 'semantic':

@@ -263,6 +263,24 @@ not reconstructed using illustrative data.
 \end{figure*}
 }{}
 
+\IfFileExists{figures/fig_precision_recall_curves.pdf}{
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.95\linewidth]{figures/fig_precision_recall_curves.pdf}
+  \caption{Measured test precision-recall curves for the configured Scenario-1 reference condition. Shaded areas show between-seed standard deviation; Average Precision is reported separately from interpolated curves.}
+  \label{fig:precision_recall}
+\end{figure}
+}{}
+
+\IfFileExists{figures/fig_evaluation_4quadrants_comparison.pdf}{
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.95\linewidth]{figures/fig_evaluation_4quadrants_comparison.pdf}
+  \caption{Measured final-checkpoint and validation-selected-checkpoint test F1 at fixed and validation-calibrated thresholds, aggregated across paired seeds.}
+  \label{fig:four_quadrants}
+\end{figure*}
+}{}
+
 \section{Discussion and Limitations}
 \label{sec:discussion}
 The experiments do not establish that Enhanced MCTS-HNM outperforms

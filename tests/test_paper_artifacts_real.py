@@ -765,8 +765,10 @@ def test_phase4_real_complete_generates_all_mandatory_and_optional(tmp_path: Pat
         metadata_path=meta_path,
         config=cfg,
     )
-    assert artifacts["status"] == "complete"
-    assert len(artifacts["skipped"]) == 0
+    # This fixture has the three core plots but no atomic measured evidence
+    # for the additional Phase-1/2 optional diagnostics.
+    assert artifacts["status"] == "partial"
+    assert "coverage_entropy" in artifacts["skipped"]
 
     # Mandatory and optional figures
     fig_dir = paper_dir / "figures"
@@ -787,8 +789,8 @@ def test_phase4_real_complete_generates_all_mandatory_and_optional(tmp_path: Pat
     manifest_file = paper_dir / "artifact_manifest.json"
     assert manifest_file.exists()
     manifest_data = json.loads(manifest_file.read_text(encoding="utf-8"))
-    assert manifest_data["status"] == "complete"
-    assert len(manifest_data["skipped_artifacts"]) == 0
+    assert manifest_data["status"] == "partial"
+    assert "coverage_entropy" in manifest_data["skipped_artifacts"]
 
 
 def test_phase4_real_missing_heatmap_records_omission_without_fake_matrix(tmp_path: Path):

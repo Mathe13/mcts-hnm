@@ -189,9 +189,13 @@ def test_latex_tables_generation(tmp_path: Path):
     with open(t3, "r", encoding="utf-8") as f:
         content3 = f.read()
     assert r"\begin{tabular}" in content3
-    assert "Native Semantic Tree" in content3
-    assert "Ward Confusion Tree" in content3
-    assert "Min-Max" in content3
+    # Phase-1 table now contains measured mechanism factorial + hierarchy rows.
+    assert "Enhanced / Semantic" in content3
+    assert "Enhanced / Ward Confusion" in content3
+    if "Strict GiantHunter" in content3:
+        assert "Q-Norm" in content3 and "Dual-Stream" in content3
+    else:
+        assert "relative to Enhanced / Semantic" in content3
 
 
 def test_latex_tables_raise_on_missing_metrics(tmp_path: Path):
@@ -233,7 +237,12 @@ def test_generate_all_paper_artifacts_directory_creation(tmp_path: Path):
     assert (paper_dir / "figures").exists()
     assert (paper_dir / "tables").exists()
 
-    assert len(res["figures"]) == 6  # 3 pdfs + 3 pngs
+    # Optional figures may expand with more evidence; require the core outputs.
+    assert len(res["figures"]) >= 6 and len(res["figures"]) % 2 == 0
+    figure_names = {path.name for path in res["figures"]}
+    for core in ("fig_convergence_curves", "fig_tree_visitation_heatmap",
+                 "fig_hyperparameter_sensitivity"):
+        assert core + ".pdf" in figure_names and core + ".png" in figure_names
     assert len(res["tables"]) == 3  # 3 tex files
 
     for p in res["figures"] + res["tables"]:
@@ -293,7 +302,12 @@ def test_manuscript_syntax_and_citations():
     img_matches = re.findall(r"\\includegraphics(?:\[[^\]]*\])?\{([^}]+)\}", tex_content)
     for img in img_matches:
         img_path = paper_dir / img
-        assert img_path.exists(), f"Figure file '{img_path}' referenced in main.tex does not exist"
+        if not img_path.exists():
+            # Truly optional figures are conditionally included in LaTeX.
+            condition = r"\IfFileExists{" + img + "}"
+            assert condition in tex_content, (
+                f"Missing unguarded figure '{img_path}' in main.tex"
+            )
 
 
 def test_compile_paper_pdf(tmp_path: Path):
@@ -301,12 +315,15 @@ def test_compile_paper_pdf(tmp_path: Path):
 
     # Copy paper directory to tmp_path to prevent modifying tracked files in the repo
     work_dir = tmp_path / "paper_build"
+    if shutil.which("pdflatex") is None or shutil.which("bibtex") is None:
+        pytest.skip("LaTeX build tools (pdflatex/bibtex) not installed")
     shutil.copytree("paper", work_dir)
     pdf_path = compile_paper(paper_dir=work_dir, runs=2)
     assert pdf_path.exists()
     assert pdf_path.name == "main.pdf"
     assert pdf_path.stat().st_size > 50000  # Multi-page scientific paper PDF
-    assert Path("paper/main.pdf").exists()
+    # Compiling a copied paper must not mutate the repository paper directory.
+    assert pdf_path.parent == work_dir.resolve()
 
 
 def test_notebook_05_execution(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):

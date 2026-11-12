@@ -2,16 +2,26 @@
 \begin{table*}[t]
 \centering
 \small
-\caption{Scenario 1: Imbalanced Binary One-vs-Rest evaluation on CIFAR-100 across 5 random seeds ($N=5$) at imbalance ratio $\rho = 1:50$. Reporting mean $\pm$ standard deviation for F1-Score, AUPRC, and False Positive Rate at 95\% recall (FPR@95). $p$-values computed via paired Student's $t$-test against Enhanced MCTS-HNM.}
+\caption{Scenario 1: Imbalanced Binary One-vs-Rest evaluation on CIFAR-100 across 5 random seeds ($N=5$) across imbalance ratios $\rho \in \{1:10, 1:50, 1:100\}$. Reporting mean $\pm$ standard deviation for F1-Score, AUPRC, and False Positive Rate at 95\% recall (FPR@95). $p$-values computed via paired Student's $t$-test against Enhanced MCTS-HNM.}
 \label{tab:scenario1_imbalanced}
 \begin{tabular}{llcccc}
 \toprule
 Imbalance ($\rho$) & Negative Mining Strategy & Minority F1-Score (\%) & AUPRC & FPR@95 ($\downarrow$) & $p$-value ($t$-test) \\
 \midrule
+  1:10 & Uniform Random & 78.1 $\pm$ 2.9 & 0.827 $\pm$ 0.037 & 0.057 $\pm$ 0.037 & $p = 0.466$ \\
+  1:10 & OHEM (Shrivastava et al.) & 79.5 $\pm$ 2.0 & 0.836 $\pm$ 0.030 & 0.051 $\pm$ 0.028 & $p = 0.318$ \\
+  1:10 & Strict GiantHunter (Qu et al.) & 76.7 $\pm$ 1.4 & 0.831 $\pm$ 0.028 & 0.044 $\pm$ 0.029 & $p = 0.040$ \\
+  1:10 & \textbf{Enhanced MCTS-HNM (Ours)} & 78.5 $\pm$ 2.1 & 0.826 $\pm$ 0.026 & 0.060 $\pm$ 0.029 & --- (Reference) \\
+\midrule
   1:50 & Uniform Random & 68.5 $\pm$ 2.7 & 0.708 $\pm$ 0.038 & 0.282 $\pm$ 0.134 & $p = 0.646$ \\
   1:50 & OHEM (Shrivastava et al.) & 67.0 $\pm$ 1.3 & 0.703 $\pm$ 0.013 & 0.326 $\pm$ 0.177 & $p = 0.463$ \\
   1:50 & Strict GiantHunter (Qu et al.) & 69.7 $\pm$ 1.8 & 0.736 $\pm$ 0.017 & 0.240 $\pm$ 0.117 & $p = 0.389$ \\
   1:50 & \textbf{Enhanced MCTS-HNM (Ours)} & 68.0 $\pm$ 3.1 & 0.685 $\pm$ 0.023 & 0.356 $\pm$ 0.169 & --- (Reference) \\
+\midrule
+  1:100 & Uniform Random & 57.6 $\pm$ 10.1 & 0.604 $\pm$ 0.083 & 0.292 $\pm$ 0.115 & $p = 0.101$ \\
+  1:100 & OHEM (Shrivastava et al.) & 52.8 $\pm$ 8.6 & 0.621 $\pm$ 0.076 & 0.307 $\pm$ 0.149 & $p = 0.650$ \\
+  1:100 & Strict GiantHunter (Qu et al.) & 60.0 $\pm$ 6.9 & 0.611 $\pm$ 0.060 & 0.279 $\pm$ 0.129 & $p = 0.115$ \\
+  1:100 & \textbf{Enhanced MCTS-HNM (Ours)} & 53.9 $\pm$ 10.5 & 0.585 $\pm$ 0.092 & 0.306 $\pm$ 0.096 & --- (Reference) \\
 \bottomrule
 \end{tabular}
 \end{table*}

@@ -863,6 +863,7 @@ def generate_convergence_plot(
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+    import numpy as np
 
     out = _ensure_dir(Path(output_dir))
     pdf_path = out / "fig_convergence_curves.pdf"
@@ -883,7 +884,7 @@ def generate_convergence_plot(
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.2), dpi=300)
 
-    # Subplot 1: Test Minority F1-Score
+    # Subplot 1: validation F1 from periodic validation checkpoints.
     for key, (color, style, label) in palette.items():
         f1_key = f"{key}_f1"
         if f1_key in conv:
@@ -897,11 +898,15 @@ def generate_convergence_plot(
             pk = present_keys[0]
             rho_label = pk if str(pk).startswith("1:") else f"1:{pk}"
     title_suffix = f" ($\\rho={rho_label}$)" if rho_label else ""
-    ax1.set_title(f"(a) Test Minority F1-Score{title_suffix}", fontsize=11, fontweight="bold")
+    ax1.set_title(f"(a) Validation Minority F1-Score{title_suffix}", fontsize=11, fontweight="bold")
     ax1.set_xlabel("Training Steps", fontsize=10)
     ax1.set_ylabel("F1-Score", fontsize=10)
     ax1.grid(True, linestyle=":", alpha=0.6)
-    ax1.set_ylim(0.0, 0.65)
+    # The historical fixed [0, 0.65] limit clipped real F1 measurements > 0.65.
+    observed_f1 = [float(v) for k in palette for v in conv.get(f"{k}_f1", [])]
+    if observed_f1 and not np.isfinite(observed_f1).all():
+        raise ValueError("Convergence history contains invalid F1 measurements")
+    ax1.set_ylim(0.0, min(1.02, max(0.10, max(observed_f1, default=0.5) * 1.08)))
     ax1.legend(loc="lower right", frameon=True, fontsize=9)
 
     # Subplot 2: Loss Convergence
@@ -915,7 +920,11 @@ def generate_convergence_plot(
     ax2.set_xlabel("Training Steps", fontsize=10)
     ax2.set_ylabel("Loss", fontsize=10)
     ax2.grid(True, linestyle=":", alpha=0.6)
-    ax2.set_ylim(0.0, 0.8)
+    # Avoid clipping real loss trajectories under harder subsampling settings.
+    observed_loss = [float(v) for k in palette for v in conv.get(f"{k}_loss", [])]
+    if observed_loss and not np.isfinite(observed_loss).all():
+        raise ValueError("Convergence history contains invalid loss measurements")
+    ax2.set_ylim(0.0, max(0.05, max(observed_loss, default=0.5) * 1.08))
     ax2.legend(loc="upper right", frameon=True, fontsize=9)
 
     if watermark is None and data.get("is_smoke"):
@@ -981,8 +990,10 @@ def generate_tree_visitation_heatmap(
     fig, ax = plt.subplots(figsize=(8.5, 4.8), dpi=300)
     im = ax.imshow(sub_matrix, cmap="YlGnBu", aspect="auto", interpolation="nearest")
 
-    ax.set_xticks(range(len(steps)))
-    ax.set_xticklabels([str(s) for s in steps], fontsize=9)
+    # At most 12 readable tick labels; retain every measured column in the matrix.
+    tick_idx = np.unique(np.linspace(0, len(steps) - 1, min(12, len(steps)), dtype=int))
+    ax.set_xticks(tick_idx)
+    ax.set_xticklabels([str(steps[int(i)]) for i in tick_idx], fontsize=8, rotation=35, ha="right")
     ax.set_yticks(range(len(sub_names)))
     ax.set_yticklabels(sub_names, fontsize=9)
 
@@ -1696,6 +1707,7 @@ def generate_all_paper_artifacts(
         plot_measured_entropy, plot_measured_exposure_recall,
         plot_measured_quadrants,
     )
+    from src.utils.phase2_evidence import plot_coverage_entropy, plot_measured_pr
 
     # 3b. Measured 2x2 factorial ablation from the four REAL strategy summaries.
     try:
@@ -1758,15 +1770,11 @@ def generate_all_paper_artifacts(
             manifest_sim, output_dir=fig_dir, expected_mode=mode, watermark=watermark
         ),
     )
-    # Per-step class coverage / entropy and paired per-class recall deltas are
-    # not included in the atomic benchmark payloads used by these plotters.
-    # Do not silently substitute class coverage snapshots or synthetic points.
-    # Existing atomic histories contain *visitation entropy* (but NOT per-step class
-    # coverage). Generate a properly named, independently measured entropy figure.
-    mark_optional_skip(
-        "coverage_entropy",
-        "Per-step class coverage has not been retained; the two-panel figure remains unavailable",
-        "fig_coverage_entropy_dynamics",
+    # Requires observed cumulative class exposure >=1 / >=5 at each checkpoint.
+    # Old atomic runs without these data remain explicitly omitted.
+    try_measured_optional(
+        "coverage_entropy", "fig_coverage_entropy_dynamics",
+        lambda: plot_coverage_entropy(run_items, output_dir=fig_dir, watermark=watermark),
     )
     try_measured_optional(
         "measured_visitation_entropy", "fig_measured_visitation_entropy",
@@ -1804,15 +1812,13 @@ def generate_all_paper_artifacts(
     except OptionalEvidenceMissing as exc:
         mark_optional_skip("interaction_ratio", str(exc), "fig_interaction_ratio_methods")
 
-    # Aggregated AUPRC does not define the continuous PR curve. The current
-    # benchmark exports neither per-seed prediction scores nor measured PR arrays.
-    try:
-        pr = generate_precision_recall_curves_plot(
-            manifest_sim or {}, output_dir=fig_dir, expected_mode=mode, watermark=watermark
-        )
-        figures.extend((pr["pdf"], pr["png"]))
-    except OptionalEvidenceMissing as exc:
-        mark_optional_skip("precision_recall", str(exc), "fig_precision_recall_curves")
+    # Exact PR points are evaluated on the test split after checkpoint selection
+    # and persisted in the canonical Axis-1 atomic runs (one record per seed).
+    # Never infer a curve from AUPRC or from a synthetic envelope.
+    try_measured_optional(
+        "precision_recall", "fig_precision_recall_curves",
+        lambda: plot_measured_pr(run_items, output_dir=fig_dir, watermark=watermark),
+    )
 
     # Figure 11 can now be generated only from four REAL test evaluations
     # per strategy AND seed. Old runs without these measurements stay omitted.
@@ -3099,14 +3105,14 @@ def generate_ward_vs_semantic_dendrogram_plot(
         else:
             raise ValueError("Confusion matrix required for Ward dendrogram generation in REAL mode.")
 
-    # Symmetrize and build distance matrix
-    max_c = float(np.max(cm))
-    sym_c = (cm + cm.T) / (2.0 * max_c + 1e-8)
-    dist = 1.0 - sym_c
-    np.fill_diagonal(dist, 0.0)
-    condensed_dist = squareform(dist, checks=False)
-
-    link_matrix = linkage(condensed_dist, method="ward")
+    # Match build_confusion_tree(linkage_method="ward") EXACTLY: Ward requires
+    # Euclidean input vectors. The previous plot clustered non-Euclidean
+    # pairwise confusion dissimilarities and could depict a different tree.
+    from src.trees.confusion_tree import validate_confusion_matrix
+    cm = validate_confusion_matrix(cm)
+    row_sums = cm.sum(axis=1, keepdims=True)
+    p_vectors = cm / np.clip(row_sums, 1e-12, None)
+    link_matrix = linkage(p_vectors, method="ward", metric="euclidean")
 
     fig, ax = plt.subplots(figsize=(14, 5.5), dpi=300)
 
@@ -3136,7 +3142,7 @@ def generate_ward_vs_semantic_dendrogram_plot(
         except ValueError:
             pass
 
-    ax.set_title("Ward Empirical Confusion Dendrogram vs. Human Semantic Taxonomies", fontsize=12, fontweight="bold")
+    ax.set_title("Ward clustering of validation confusion (ResNet-18 features)", fontsize=12, fontweight="bold")
     ax.set_xlabel("CIFAR-100 Fine Classes (Colored by Human Ontological Superclass)", fontsize=10, fontweight="bold")
     ax.set_ylabel("Ward Confusion Linkage Distance", fontsize=10, fontweight="bold")
     ax.grid(True, linestyle=":", alpha=0.4, axis="y")
@@ -3145,9 +3151,9 @@ def generate_ward_vs_semantic_dendrogram_plot(
     ax.text(
         0.02,
         0.92,
-        "Branch colors denote clustering by CNN confusion.\n"
-        "Leaf text colors represent the 20 human semantic superclasses.\n"
-        "Intermixed clusters demonstrate where visual perception diverges from taxonomy.",
+        "Branch colors indicate Ward clusters from validation confusion.\n"
+        "Leaf colors mark the 20 CIFAR-100 semantic superclasses.\n"
+        "Clustering does not establish a mining-performance advantage.",
         transform=ax.transAxes,
         fontsize=9,
         bbox=dict(boxstyle="round,pad=0.5", facecolor="#f8f9fa", edgecolor="#dddddd", alpha=0.9),

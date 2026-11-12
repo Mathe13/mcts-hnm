@@ -132,7 +132,15 @@ def test_notebook_05_smoke_e2e():
     assert "config" in env
     assert env["config"].execution_mode == ExecutionMode.SMOKE
     assert "artifacts" in env
-    assert len(env["artifacts"]["figures"]) in (6, 8)
+    figures = env["artifacts"]["figures"]
+    assert len(figures) >= 6 and len(figures) % 2 == 0
+    names = {p.name for p in figures}
+    for required in (
+        "fig_convergence_curves", "fig_tree_visitation_heatmap",
+        "fig_hyperparameter_sensitivity",
+    ):
+        assert f"{required}.pdf" in names and f"{required}.png" in names
+    assert all("smoke" in p.parts for p in figures)
     assert len(env["artifacts"]["tables"]) == 3
 
 

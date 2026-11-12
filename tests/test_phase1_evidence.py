@@ -22,7 +22,10 @@ def _make_run(tmp_path, scenario, strat, seed, **extra):
     run_id=f'{scenario}_{strat}_seed{seed}'
     f=tmp_path/f'{run_id}.json'
     data={'scenario':scenario,'strategy':strat,'seed':seed,'run_id':run_id,
-          'tree_type':'semantic' if strat.startswith('mcts') else 'none',**extra}
+          'tree_type':'semantic' if strat.startswith('mcts') else 'none',
+          **({'target_class':0,'imbalance_ratio':'1:50',
+              'benchmark_name':'tier1_axis1_samplers'} if scenario=='scenario1' else {}),
+          **extra}
     f.write_text(json.dumps(data),encoding='utf-8')
     return run_id,dict(run_file=str(f),scenario=scenario,strategy=strat,seed=seed)
 

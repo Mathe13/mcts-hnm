@@ -19,6 +19,7 @@ from src.mcts.sampler import DualStreamBatchSampler, UniformGroupedBatchSampler
 from src.models.mlp_head import Tier1MLPHead, create_mlp_optimizer
 from src.training.baselines import OHEMSampler, UniformSampler
 from src.training.exposure import ExposureTracker
+from src.utils.phase2_evidence import capture_class_coverage, measure_binary_pr
 from src.training.selectors import FlatUCBSelector, GreedyLossEMASelector
 from src.trees.base_tree import FastHierarchyTree
 from src.utils.metrics import calibrate_binary_threshold, evaluate_binary_metrics_at_threshold
@@ -533,6 +534,26 @@ def train_scenario1(
             threshold=tau_val,
         )
 
+    # Test scores are collected only AFTER training and validation checkpoint selection.
+    # They are never used to tune thresholds, select checkpoints or control training.
+    binary_test_pr = None
+    binary_test_pr_unavailable_reason = None
+    if test_features is not None and test_binary_labels is not None:
+        test_y_for_pr = (
+            test_binary_labels.detach().cpu().numpy()
+            if isinstance(test_binary_labels, torch.Tensor)
+            else np.asarray(test_binary_labels)
+        )
+        if not (np.any(test_y_for_pr == 0) and np.any(test_y_for_pr == 1)):
+            binary_test_pr_unavailable_reason = (
+                "PR curve undefined: test labels contain only one class"
+            )
+            logger.warning("Skipping measured PR: %s", binary_test_pr_unavailable_reason)
+        else:
+            binary_test_pr = measure_binary_pr(
+                model, test_features, test_binary_labels, device=dev
+            )
+
     best_model = Tier1MLPHead(input_dim=input_dim, hidden_dim=128, num_outputs=1).to(dev)
     if best_model_state is not None:
         best_model.load_state_dict(best_model_state)
@@ -560,6 +581,8 @@ def train_scenario1(
         "final_metrics": final_eval,
         "last_metrics": last_metrics,
         "best_validation_metrics": best_validation_metrics,
+        "binary_test_pr": binary_test_pr,
+        "binary_test_pr_unavailable_reason": binary_test_pr_unavailable_reason,
         "val_metrics": history[-1] if history else last_metrics,
         "test_metrics": last_metrics if test_features is not None else None,
         "computational_costs": computational_costs,
@@ -836,6 +859,10 @@ def train_scenario2(
             metrics["accuracy"] = metrics["top1_accuracy"]
             metrics["learning_rate"] = current_lr
             metrics["elapsed_time"] = elapsed_time
+
+            # Empirical cumulative class coverage, measured from actual batch indices.
+            # The coverage history is monotonic; no synthetic values are produced.
+            metrics.update(capture_class_coverage(exposure_tracker.class_exposure_counts))
 
             # Update best validation checkpoint (using macro_f1 as primary metric)
             if metrics["macro_f1"] > best_val_score:
