@@ -218,26 +218,30 @@
 - **Date**: 2026-11-11
 - **Status**: active (AD-027)
 
+### AD-028
+- **Decision**: Implement Phase 1 (P0) analytical figures from `roadmap_analises_e_figuras_expansao.md`: (1) `generate_pareto_cost_performance_plot()` in `src/utils/paper_artifacts.py` producing `fig_pareto_cost_vs_accuracy` (.pdf + .png 300 DPI) with non-dominated Pareto frontier and error bars across seeds; (2) `generate_coverage_entropy_dynamics_plot()` producing `fig_coverage_entropy_dynamics` dual-panel (normalized entropy $H(t)/H_{\max}$ trajectories and cumulative class coverage $k \ge 1$ and $k \ge 5$); (3) integrate both generators into `generate_all_paper_artifacts()` and `notebooks/05_paper_artifacts.ipynb`; (4) add corresponding LaTeX `\begin{figure}` environments and discussion in `paper/main.tex`; and (5) guarantee strict SMOKE/REAL mode isolation and automated regression test coverage in `tests/test_p0_pareto_entropy_figures.py`.
+- **Reason**: Responds directly to top-tier reviewer concerns regarding MCTS computational training overhead and exploration collapse in multi-class regimes by providing empirical visual proofs.
+- **Trade-off**: None.
+- **Scope**: `src/utils/paper_artifacts.py`, `notebooks/05_paper_artifacts.ipynb`, `paper/main.tex`, `tests/`
+- **Date**: 2026-11-12
+- **Status**: active (AD-028)
+
 ## Handoff
 
-- **Feature**: `24-p2-expansao-estudo-razoes-e-classes-pareadas` (`.specs/features/24-p2-expansao-estudo-razoes-e-classes-pareadas/`)
+- **Feature**: `25-p0-expansao-figuras-pareto-e-entropia` (`.specs/features/25-p0-expansao-figuras-pareto-e-entropia/`)
 - **Status**: Complete & Verified (Verification PASS, 0 errors, 0 warnings)
 - **Completed**:
   - Specified requirements in `spec.md` with explicit user approval (validated with 0 errors, 0 warnings).
-  - Designed architecture and components in `design.md`.
-  - Structured 4 atomic tasks in `tasks.md` with 6 verifiable checks.
-  - Executed T1–T4 with atomic commits (`cb1f3b0`, `f27ff90`, `2eae17b`).
-  - Ran `check_proofs.py` (7/7 passed at clean `HEAD`).
-  - Independent Scientific Verifier audit passed with Verdict: PASS (all checks and criteria verified).
+  - Designed architecture in `design.md`.
+  - Structured 5 atomic tasks in `tasks.md` with 5 verifiable checks.
+  - Executed T1–T5 with atomic commits (`2bc9a07`, `54aeec8`, `d59b0c4`, `82d8639`, `5dc2c7d`).
+  - Ran `check_proofs.py` (6/6 passed at clean `HEAD`).
+  - Verification audit passed with Verdict: PASS (all checks and criteria verified).
   - Validated verification with `validate_verification.py` (0 errors, 0 warnings).
-  - Recorded Decision AD-027.
-- **In-progress**: Todos os itens prioritários do roadmap metodológico (P0-1, P0-2, P0-3, P1 e P2) concluídos e verificados:
-  - P0-1: Sensibilidade com mesmo split e razão do Axis 1 (`F21`, AD-024)
-  - P0-2: Avaliação inequívoca em 4 quadrantes (`F21`, AD-024)
-  - P0-3: Scenario 2 cobertura, entropia e política de amostragem balanceada (`F22`, AD-025)
-  - P1: Ablações Strict vs Enhanced em grid fatorial 2x2 com controle de custos (`F23`, AD-026)
-  - P1: Comparação inferencial pareada Semantic vs Ward com diagnósticos topológicos (`F23`, AD-026)
-  - P2: Expansão do estudo: Múltiplas classes-alvo e razões 1:10, 1:50 e 1:100 com interação método $\times$ razão (`F24`, AD-027)
-- **Next step**: Execução da campanha final em modo REAL (se requisitado) e validação da compilação e artefatos de publicação (Notebook 05).
+  - Recorded Decision AD-028.
+- **In-progress**:
+  - Fase 1 (P0) do roadmap de expansão analítica concluída.
+- **Next step**:
+  - Fase 2 (P1) do roadmap: FIG-03 (Alocação Amostral vs. Ganho Marginal de Recall), FIG-04 (Dendrograma Comparativo Ward vs. Semântica) e FIG-05 (Curvas de Interação Método $\times$ Severidade).
 - **Blockers**: None
 - **Branch**: `main`
