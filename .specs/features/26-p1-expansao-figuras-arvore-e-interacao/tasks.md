@@ -140,8 +140,8 @@ T5
 
 **Done when**:
 
-- [ ] `generate_all_paper_artifacts()` executa as três novas figuras e inclui seus caminhos no manifesto
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p1_expansion_figures.py`  
+- [x] `generate_all_paper_artifacts()` executa as três novas figuras e inclui seus caminhos no manifesto
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p1_expansion_figures.py`  
 
 **Tests**: integration  
 **Gate**: full  

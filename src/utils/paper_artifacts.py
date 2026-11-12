@@ -1628,6 +1628,44 @@ def generate_all_paper_artifacts(
     except Exception as e:
         logger.info("Coverage and entropy dynamics plot omitted: %s", e)
 
+    # 3e. Figures: Class Exposure vs Delta Recall (FIG-03)
+    try:
+        m_exp_rec = manifest_sim if manifest_sim is not None else {
+            "runs": {},
+            "mode": "smoke" if (mode == ExecutionMode.SMOKE or data.get("is_smoke")) else "real",
+            "is_smoke": (mode == ExecutionMode.SMOKE or data.get("is_smoke")),
+        }
+        exp_rec_paths = generate_class_exposure_vs_delta_recall_plot(
+            m_exp_rec, output_dir=fig_dir, expected_mode=mode, watermark=watermark
+        )
+        figures.extend([exp_rec_paths["pdf"], exp_rec_paths["png"]])
+    except Exception as e:
+        logger.info("Class exposure vs delta recall plot omitted: %s", e)
+
+    # 3f. Figures: Ward vs Semantic Dendrogram (FIG-04)
+    try:
+        dend_paths = generate_ward_vs_semantic_dendrogram_plot(
+            confusion_matrix_or_data=data.get("confusion_matrix") or data.get("matrix"),
+            output_dir=fig_dir,
+            expected_mode=mode,
+            watermark=watermark,
+        )
+        figures.extend([dend_paths["pdf"], dend_paths["png"]])
+    except Exception as e:
+        logger.info("Ward vs semantic dendrogram plot omitted: %s", e)
+
+    # 3g. Figures: Interaction Ratio Curves (FIG-05)
+    try:
+        int_paths = generate_interaction_ratio_plot(
+            data_or_path=data,
+            output_dir=fig_dir,
+            expected_mode=mode,
+            watermark=watermark,
+        )
+        figures.extend([int_paths["pdf"], int_paths["png"]])
+    except Exception as e:
+        logger.info("Interaction ratio plot omitted: %s", e)
+
     # 4. Tables: Scenario 1, Scenario 2, Ablation (Mandatory)
     t_scen1 = generate_scenario1_table(data, output_dir=tab_dir)
     t_scen2 = generate_scenario2_table(data, output_dir=tab_dir)
