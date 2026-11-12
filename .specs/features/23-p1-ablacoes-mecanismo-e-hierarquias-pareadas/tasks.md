@@ -151,10 +151,10 @@ T4
 
 **Done when**:
 
-- [ ] Notebook 03 Seção 3 exibe tabela de testes pareados Semantic vs Ward com $\Delta$, Cohen's d e p-valores
-- [ ] Notebook 03 exibe parecer estatístico formal indicando se a diferença é significante ou se não há evidência para declarar superioridade
-- [ ] Testes de execução do Notebook 03 em SMOKE passam com exit code 0
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p1_ablations_and_hierarchies.py tests/test_tier1_benchmarks_real.py -k "notebook_03"`  
+- [x] Notebook 03 Seção 3 exibe tabela de testes pareados Semantic vs Ward com $\Delta$, Cohen's d e p-valores
+- [x] Notebook 03 exibe parecer estatístico formal indicando se a diferença é significante ou se não há evidência para declarar superioridade
+- [x] Testes de execução do Notebook 03 em SMOKE passam com exit code 0
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p1_ablations_and_hierarchies.py tests/test_tier1_benchmarks_real.py -k "notebook_03"`  
 
 **Tests**: integration  
 **Gate**: build  

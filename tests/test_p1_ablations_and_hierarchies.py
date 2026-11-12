@@ -274,3 +274,25 @@ def test_factorial_2x2_execution_and_persistence(tmp_path: Path) -> None:
     assert "main_effect_dualstream" in prim_eff
     assert "interaction_effect" in prim_eff
     assert "variant_means" in prim_eff
+
+
+def test_notebook_03_axis2_and_factorial_integration():
+    """NOTE-01: Verify Notebook 03 contains paired hierarchy inference and 2x2 factorial tables."""
+    root = Path(__file__).resolve().parent.parent
+    nb_path = root / "notebooks" / "03_tier1_mcts_benchmarks.ipynb"
+    assert nb_path.is_file()
+
+    nb = json.loads(nb_path.read_text(encoding="utf-8"))
+    full_text = "\n".join("".join(c.get("source", [])) for c in nb["cells"])
+
+    # Verify 2x2 Factorial Mechanism references
+    assert "mcts_qnorm_only" in full_text
+    assert "mcts_dualstream_only" in full_text
+    assert "factorial_2x2_effects" in full_text
+    assert "Main Effect Q-Norm" in full_text
+    assert "Main Effect Dual-Stream" in full_text
+
+    # Verify Hierarchy paired inferential references
+    assert "paired_hierarchy_tests" in full_text
+    assert "tree_diagnostics" in full_text
+    assert "Formal Statistical Verdict" in full_text
