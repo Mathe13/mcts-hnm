@@ -177,10 +177,10 @@ T5
 
 **Done when**:
 
-- [ ] `paper/main.tex` contém bloco figure para `fig_pareto_cost_vs_accuracy` com label `fig:pareto_cost`
-- [ ] `paper/main.tex` contém bloco figure para `fig_coverage_entropy_dynamics` com label `fig:coverage_entropy`
-- [ ] Teste de integridade de referências LaTeX passa sem erro
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p0_pareto_entropy_figures.py`  
+- [x] `paper/main.tex` contém bloco figure para `fig_pareto_cost_vs_accuracy` com label `fig:pareto_cost`
+- [x] `paper/main.tex` contém bloco figure para `fig_coverage_entropy_dynamics` com label `fig:coverage_entropy`
+- [x] Teste de integridade de referências LaTeX passa sem erro
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p0_pareto_entropy_figures.py`  
 
 **Tests**: integration  
 **Gate**: build  

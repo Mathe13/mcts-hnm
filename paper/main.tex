@@ -153,6 +153,26 @@ Figure~\ref{fig:convergence} illustrates the training trajectories over 10,000 o
 \subsection{Tree Exploration--Exploitation Dynamics}
 Figure~\ref{fig:heatmap} visualizes the temporal distribution of superclass visitations. In initial steps ($t < 1,000$), UCB1 exploration dominates, visiting all 20 superclasses uniformly ($p_k \approx 0.05$). As backpropagated loss rewards accumulate, visit density shifts selectively toward the most confusing superclasses (e.g., SC-01 and SC-04), demonstrating targeted active mining without manual curriculum tuning.
 
+\subsection{Computational Efficiency and Pareto Frontier}
+Figure~\ref{fig:pareto_cost} presents the Pareto frontier evaluating downstream accuracy against cumulative computational training costs (wall-clock seconds and evaluated gradient samples). While Uniform sampling minimizes per-step cost, its low sample efficiency mandates substantially longer training schedules to achieve competitive recall. OHEM adds forward-pass filtering overhead without matching MCTS sample quality. Enhanced and Coverage-Balanced MCTS establish the non-dominated Pareto frontier, demonstrating that tree search overhead is decisively compensated by rapid error reduction.
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\linewidth]{figures/fig_pareto_cost_vs_accuracy.pdf}
+  \caption{Empirical Pareto frontier of computational training cost versus downstream performance on CIFAR-100. Points denote mean $\pm 1$ standard deviation across paired random seeds. The dashed curve connects non-dominated strategies, demonstrating that the sample-efficiency gains of MCTS-HNM substantially outweigh the tree search overhead.}
+  \label{fig:pareto_cost}
+\end{figure}
+
+\subsection{Class Coverage and Entropy Dynamics}
+Figure~\ref{fig:coverage_entropy} diagnoses the exploration dynamics of 100-way multi-class curriculum optimization (Scenario 2). In panel (a), unnormalized Strict GiantHunter experiences rapid entropy collapse ($H(t)/H_{\max} < 0.35$ within $300$ steps), starving difficult minority classes. In contrast, Coverage-Balanced and Enhanced MCTS maintain stable entropy in the optimal regime ($0.75$--$0.85$). In panel (b), cumulative class coverage shows that Coverage-Balanced MCTS samples $96\%$ of all CIFAR-100 fine classes at least once, compared to only $38\%$ under Strict GiantHunter.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.95\linewidth]{figures/fig_coverage_entropy_dynamics.pdf}
+  \caption{Exploration and coverage dynamics in 100-way multi-class curriculum (Scenario 2): (a) Normalized visitation entropy $H(t)/H_{\max}$ over 1,000 steps, highlighting premature exploration collapse in Strict GiantHunter ($< 0.35$) contrasted with sustained balance in Coverage-Balanced and Enhanced MCTS-HNM ($0.75$--$0.85$); (b) Cumulative class coverage percentage ($k \ge 1$ and $k \ge 5$ samples) at final step.}
+  \label{fig:coverage_entropy}
+\end{figure*}
+
 \subsection{Ablation Studies}
 Table~\ref{tab:ablation_study} breaks down the contribution of each algorithmic component:
 \begin{itemize}
