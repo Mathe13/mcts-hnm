@@ -1,13 +1,13 @@
 {
-  "timestamp_utc": "2026-11-11T23:46:52.832521+00:00",
+  "timestamp_utc": "2026-11-12T13:06:21.316733+00:00",
   "execution_mode": "real",
-  "git_commit": "e25d122b699068c59ee6e51d7b86a44cdfbbf05c",
+  "git_commit": "c1d6fd0fc4542870048bcc83353806bfc11dce7c",
   "status": "complete",
   "artifacts": [
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_convergence_curves.pdf",
       "name": "fig_convergence_curves.pdf",
-      "sha256": "a00e1e035937d3ecc734829acbd735d3537c89494fa4edf2db21e18663d827d8",
+      "sha256": "e444ade259f42ae1aa75dde6b0286a5eaadb7bbdd9a82a0cdc5f46174d238929",
       "bytes": 31255
     },
     {
@@ -19,7 +19,7 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_tree_visitation_heatmap.pdf",
       "name": "fig_tree_visitation_heatmap.pdf",
-      "sha256": "3f4e8750b872a18faaa0008ff0c3ec4e9ba288aacc6679653fba24f2ae2e9020",
+      "sha256": "8629d2af6c1f97993a33cef9f77036004a834d8e3ec80e8e0d765ee9b1b5bd7e",
       "bytes": 44126
     },
     {
@@ -31,14 +31,50 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_hyperparameter_sensitivity.pdf",
       "name": "fig_hyperparameter_sensitivity.pdf",
-      "sha256": "d045caea589b14576af3f12519dec96e533e408ea3265be838c3e2e4bd15b2f3",
-      "bytes": 28365
+      "sha256": "6b2bbfaf5d30f329794726de91bb94d8ff1baf867fccb508516ed8e434184d13",
+      "bytes": 28774
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_hyperparameter_sensitivity.png",
       "name": "fig_hyperparameter_sensitivity.png",
-      "sha256": "7cf48708ac1f7fc9f76ef34f82278d40c11fce3c5df7a72c803c1b1c8ec3a301",
-      "bytes": 235046
+      "sha256": "ed9ac2c334e7040cb4ddf38165b0e7710b97dc5b68a763c9c28d61bbc5c98d72",
+      "bytes": 222474
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_interaction_ratio_methods.pdf",
+      "name": "fig_interaction_ratio_methods.pdf",
+      "sha256": "63c0250d0a66b78b0dcc7ac177f3b29d8e3d23d158e06532545688840fe6b7c8",
+      "bytes": 35205
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_interaction_ratio_methods.png",
+      "name": "fig_interaction_ratio_methods.png",
+      "sha256": "e77eadc1f67b1adf93cabb28cdf58ff6fde1b9aed522794a295b4d7232f1d187",
+      "bytes": 642952
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_precision_recall_curves.pdf",
+      "name": "fig_precision_recall_curves.pdf",
+      "sha256": "b0a38e3bfa0c7d2c3aad94a019136a797929121ec0d99dde2ac2008457752022",
+      "bytes": 44959
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_precision_recall_curves.png",
+      "name": "fig_precision_recall_curves.png",
+      "sha256": "7090dc0ca38035f4045faa85a05b0d4f3760e7a7209d4f95245724ef44383172",
+      "bytes": 503295
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_evaluation_4quadrants_comparison.pdf",
+      "name": "fig_evaluation_4quadrants_comparison.pdf",
+      "sha256": "e4537572d1971d16d464667e9da8612344fbea9b3fe67d692a57c6b0cdf0f200",
+      "bytes": 35499
+    },
+    {
+      "file": "/home/mlima/workspace/mcts-hnm/paper/figures/fig_evaluation_4quadrants_comparison.png",
+      "name": "fig_evaluation_4quadrants_comparison.png",
+      "sha256": "2cd33b3d7112f2a3bbb8519ebb1b69316c0ceb79cf3214393cdb6b826d96584d",
+      "bytes": 207251
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/paper/tables/tab_scenario1_imbalanced.tex",
@@ -63,26 +99,26 @@
     {
       "file": "/home/mlima/workspace/mcts-hnm/results/real/tier1_axis1_samplers.json",
       "name": "tier1_axis1_samplers.json",
-      "sha256": "d886a4a6c933d910dec110dd00b856136b257186c591798f383e3a4da5c37945",
-      "bytes": 257217
+      "sha256": "89579e956aa18c4e82073cdbbb21a0648f317ddfa452335aa6101c708c4594cd",
+      "bytes": 330615
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/results/real/tier1_scenario2_curriculum.json",
       "name": "tier1_scenario2_curriculum.json",
-      "sha256": "61641bd79ff1f8b22169aeba71503dc83902846e1dbd2e85bde1ef9c42c5bb57",
-      "bytes": 593139
+      "sha256": "49d8a85fe52fe57f7a41bb237e7833bac4c8f39faa1ff39a62f0d21346e2b6a7",
+      "bytes": 699175
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/results/real/tier1_axis2_tree_ablation.json",
       "name": "tier1_axis2_tree_ablation.json",
-      "sha256": "c4e664a4150ef77a0bc35587dfd34fb509cef16c0caaea55d29cebb5557cfed1",
-      "bytes": 235179
+      "sha256": "71ecbb1ddb662dba8ef0038917fde9b2c13a3f4ac900288ad3efb0147da31f25",
+      "bytes": 248913
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/results/real/tier1_hyperparameter_sensitivity.json",
       "name": "tier1_hyperparameter_sensitivity.json",
-      "sha256": "5bd96a74c59695123117e4c0f5c66386a41b96c69716dd3efe6dd5f88f0eec33",
-      "bytes": 35370
+      "sha256": "0861e6e21d5d5a4935263c979c0076acd33438176bea3c862b95eb073b675b2a",
+      "bytes": 99550
     },
     {
       "file": "/home/mlima/workspace/mcts-hnm/results/real/tier1_visitation_diagnostics.json",
