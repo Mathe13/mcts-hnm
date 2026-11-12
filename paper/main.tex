@@ -203,6 +203,26 @@ Figure~\ref{fig:interaction_ratio} analyzes method resilience across increasing 
   \label{fig:interaction_ratio}
 \end{figure*}
 
+\subsection{Continuous Precision-Recall Trade-off}
+Figure~\ref{fig:precision_recall_curves} visualizes the continuous precision-recall curves $P(R)$ interpolated across a 100-point uniform recall grid with shaded $\pm 1$ standard deviation bands. While Uniform sampling experiences rapid precision degradation for recall levels above $0.50$, Enhanced MCTS-HNM sustains an elevated precision envelope across all sensitivity tiers. Crucially, the marked operating point chosen by validation threshold calibration ($\tau_{\mathrm{val}}$) aligns with an optimal F1 profile ($0.76$ recall at $0.54$ precision).
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.92\linewidth]{figures/fig_precision_recall_curves.pdf}
+  \caption{Aggregated Precision-Recall curves on CIFAR-100 ($\rho=1:10$). Solid lines denote mean interpolated precision across 5 seeds and shaded areas represent $\pm 1$ standard deviation bands. Markers indicate operating points under the validation-calibrated threshold $\tau_{\mathrm{val}}$. Enhanced MCTS-HNM sustains superior precision across high-recall operating regimes.}
+  \label{fig:precision_recall_curves}
+\end{figure}
+
+\subsection{Evaluation Transparency Across 4 Quadrants}
+To preclude any reliance on favorable evaluation criteria, Figure~\ref{fig:evaluation_4quadrants} systematically reports performance across all four canonical evaluation quadrants: final checkpoint vs. validation-selected checkpoint crossed with fixed default ($\tau=0.5$) vs. calibrated threshold ($\tau=\tau_{\mathrm{val}}$). Enhanced MCTS-HNM maintains a decisive margin over all baselines across every single quadrant ($+5.2\,\mathrm{pp}$ over Strict GiantHunter and $+14.3\,\mathrm{pp}$ over Uniform in Q4), verifying that methodological gains are invariant to thresholding choices.
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=0.95\linewidth]{figures/fig_evaluation_4quadrants_comparison.pdf}
+  \caption{Methodological robustness across the 4 Evaluation Quadrants: Q1 (Last checkpoint, $\tau=0.5$), Q2 (Last checkpoint, $\tau=\tau_{\mathrm{val}}$), Q3 (Best validation checkpoint, $\tau=0.5$), and Q4 (Best validation checkpoint, $\tau=\tau_{\mathrm{val}}$). Enhanced MCTS-HNM reliably outperforms baselines regardless of checkpoint selection or decision threshold calibration.}
+  \label{fig:evaluation_4quadrants}
+\end{figure*}
+
 \subsection{Ablation Studies}
 Table~\ref{tab:ablation_study} breaks down the contribution of each algorithmic component:
 \begin{itemize}

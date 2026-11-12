@@ -177,9 +177,9 @@ T5
 
 **Done when**:
 
-- [ ] `paper/main.tex` contém bloco figure para `fig_precision_recall_curves` (`fig:precision_recall_curves`)
-- [ ] `paper/main.tex` contém bloco figure para `fig_evaluation_4quadrants_comparison` (`fig:evaluation_4quadrants`)
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p2_pr_and_quadrant_figures.py`  
+- [x] `paper/main.tex` contém bloco figure para `fig_precision_recall_curves` (`fig:precision_recall_curves`)
+- [x] `paper/main.tex` contém bloco figure para `fig_evaluation_4quadrants_comparison` (`fig:evaluation_4quadrants`)
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests && .venv/bin/pytest -v tests/test_p2_pr_and_quadrant_figures.py`  
 
 **Tests**: integration  
 **Gate**: build  
