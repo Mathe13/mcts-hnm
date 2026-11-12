@@ -1576,6 +1576,28 @@ def generate_all_paper_artifacts(
         s_pdf, s_png = generate_hyperparameter_sensitivity_plot(data, output_dir=fig_dir, watermark=watermark)
         figures.extend([s_pdf, s_png])
 
+    # 3b. Figures: 2x2 Factorial Ablation Plot (Optional if runs exist)
+    runs_dir = res_dir / "runs"
+    if runs_dir.exists() and list(runs_dir.glob("*.json")):
+        try:
+            run_files = list(runs_dir.glob("*.json"))
+            manifest_sim = {
+                "runs": {
+                    p.stem: {
+                        "payload_path": str(p),
+                        "scenario": "scenario1" if "scenario1" in p.name else "scenario2",
+                        "strategy": p.stem.split("_")[4] if len(p.stem.split("_")) > 4 else "unknown",
+                    }
+                    for p in run_files
+                }
+            }
+            abl_paths = generate_qnorm_dualstream_ablation_plot(
+                manifest_sim, output_dir=fig_dir, expected_mode=mode
+            )
+            figures.extend([abl_paths["pdf"], abl_paths["png"]])
+        except Exception as e:
+            logger.info("2x2 factorial ablation plot omitted: %s", e)
+
     # 4. Tables: Scenario 1, Scenario 2, Ablation (Mandatory)
     t_scen1 = generate_scenario1_table(data, output_dir=tab_dir)
     t_scen2 = generate_scenario2_table(data, output_dir=tab_dir)
