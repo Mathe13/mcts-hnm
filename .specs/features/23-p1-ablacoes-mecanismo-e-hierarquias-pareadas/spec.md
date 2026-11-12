@@ -1,5 +1,7 @@
 # F23: P1 — Ablações de Mecanismo (Strict vs Enhanced) e Comparação Estatística das Hierarquias
 
+**Approved**: 2026-11-11 - user: "sim"
+
 ## Problem Statement
 
 A análise dos resultados anteriores revelou duas lacunas metodológicas críticas classificadas como P1:
