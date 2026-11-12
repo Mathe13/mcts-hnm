@@ -119,10 +119,10 @@ T5
 
 **Done when**:
 
-- [ ] Teste valida que FIG-03 plota correlação e exporta .pdf e .png
-- [ ] Teste valida que FIG-04 reconstrói o dendrograma de Ward e colore por superclasse
-- [ ] Teste valida que FIG-05 traça curvas com bandas de confiança e calcula a interação
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_p1_expansion_figures.py`  
+- [x] Teste valida que FIG-03 plota correlação e exporta .pdf e .png
+- [x] Teste valida que FIG-04 reconstrói o dendrograma de Ward e colore por superclasse
+- [x] Teste valida que FIG-05 traça curvas com bandas de confiança e calcula a interação
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_p1_expansion_figures.py`  
 
 **Tests**: unit  
 **Gate**: quick  
