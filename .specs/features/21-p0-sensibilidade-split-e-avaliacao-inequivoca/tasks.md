@@ -129,10 +129,10 @@ T4
 
 **Done when**:
 
-- [ ] Teste assere `np.array_equal(pos_indices_bench, pos_indices_sens)` para múltiplas seeds
-- [ ] Teste assere `np.array_equal(neg_indices_bench, neg_indices_sens)` para múltiplas seeds
-- [ ] Teste valida integridade dos 4 quadrantes métricos na saída da sensibilidade
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_sensitivity_runner_equivalence.py`  
+- [x] Teste assere `np.array_equal(pos_indices_bench, pos_indices_sens)` para múltiplas seeds
+- [x] Teste assere `np.array_equal(neg_indices_bench, neg_indices_sens)` para múltiplas seeds
+- [x] Teste valida integridade dos 4 quadrantes métricos na saída da sensibilidade
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_sensitivity_runner_equivalence.py`  
 
 **Tests**: integration  
 **Gate**: full  
