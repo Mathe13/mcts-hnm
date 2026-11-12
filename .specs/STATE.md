@@ -210,27 +210,34 @@
 - **Date**: 2026-11-11
 - **Status**: active (AD-026)
 
+### AD-027
+- **Decision**: Formalize and implement study expansion in Scenario 1 One-vs-Rest for multi-ratio imbalance evaluation (`1:10`, `1:50`, `1:100`) and multi-target class generalization (`target_classes=(0, 1, ...)`): (1) parameterize `run_benchmark()` to loop through `target_classes` and `imbalance_ratios` with strict seed pairing; (2) map exact positive subsampling fractions via `build_scenario1_split()` (`0.10`, `0.02`, `0.01`); (3) compute method $\times$ ratio interaction effects ($\text{Interação}_{\text{método} \times \text{razão}}$) via `compute_method_by_ratio_interaction()` with 95% confidence intervals and paired hypothesis tests; (4) persist `target_class` in CSV and individual run records, and export `target_classes`, `aggregated_by_class`, and `ratio_interactions` in `tier1_axis1_samplers.json`; (5) expose `IMBALANCE_RATIOS_AXIS1` and `TARGET_CLASSES_AXIS1` in Notebook 03 Section 2 with dynamic breakdown; and (6) guarantee downstream loader schema compatibility in `src/utils/paper_artifacts.py`.
+- **Reason**: Resolves P2 roadmap requirements by expanding the experimental scope beyond a single target class (class 0 / beaver) and canonical 1:50 ratio, testing whether MCTS performance advantages or degradation vary systematically with positive class rarefaction and visual domain.
+- **Trade-off**: Increases execution matrix dimensionality when multi-ratio and multi-class are enabled simultaneously.
+- **Scope**: `src/training/benchmark_runner.py`, `src/utils/statistics.py`, `src/utils/paper_artifacts.py`, `notebooks/03_tier1_mcts_benchmarks.ipynb`, `tests/`
+- **Date**: 2026-11-11
+- **Status**: active (AD-027)
+
 ## Handoff
 
-- **Feature**: `23-p1-ablacoes-mecanismo-e-hierarquias-pareadas` (`.specs/features/23-p1-ablacoes-mecanismo-e-hierarquias-pareadas/`)
+- **Feature**: `24-p2-expansao-estudo-razoes-e-classes-pareadas` (`.specs/features/24-p2-expansao-estudo-razoes-e-classes-pareadas/`)
 - **Status**: Complete & Verified (Verification PASS, 0 errors, 0 warnings)
 - **Completed**:
   - Specified requirements in `spec.md` with explicit user approval (validated with 0 errors, 0 warnings).
   - Designed architecture and components in `design.md`.
   - Structured 4 atomic tasks in `tasks.md` with 6 verifiable checks.
-  - Executed T1–T4 with atomic commits (`13b49b7`, `dd6c6e5`, `5768a36`, `8bf3917`, `2fdf64f`).
+  - Executed T1–T4 with atomic commits (`cb1f3b0`, `f27ff90`, `2eae17b`).
   - Ran `check_proofs.py` (7/7 passed at clean `HEAD`).
-  - Independent Scientific Verifier audit passed with Verdict: PASS (all 3 findings resolved and closed).
+  - Independent Scientific Verifier audit passed with Verdict: PASS (all checks and criteria verified).
   - Validated verification with `validate_verification.py` (0 errors, 0 warnings).
-  - Recorded Decision AD-026.
-- **In-progress**: Todos os itens P0 e P1 concluídos e verificados:
+  - Recorded Decision AD-027.
+- **In-progress**: Todos os itens prioritários do roadmap metodológico (P0-1, P0-2, P0-3, P1 e P2) concluídos e verificados:
   - P0-1: Sensibilidade com mesmo split e razão do Axis 1 (`F21`, AD-024)
   - P0-2: Avaliação inequívoca em 4 quadrantes (`F21`, AD-024)
   - P0-3: Scenario 2 cobertura, entropia e política de amostragem balanceada (`F22`, AD-025)
   - P1: Ablações Strict vs Enhanced em grid fatorial 2x2 com controle de custos (`F23`, AD-026)
   - P1: Comparação inferencial pareada Semantic vs Ward com diagnósticos topológicos (`F23`, AD-026)
-- **Next step**: P2 da lista de prioridades:
-  - P2 — Expandir o estudo: Avaliar múltiplas classes-alvo e razões 1:10, 1:50 e 1:100, com os mesmos protocolos e seeds pareadas.
-  - Geração e exportação final de artefatos do artigo (Notebook 05).
+  - P2: Expansão do estudo: Múltiplas classes-alvo e razões 1:10, 1:50 e 1:100 com interação método $\times$ razão (`F24`, AD-027)
+- **Next step**: Execução da campanha final em modo REAL (se requisitado) e validação da compilação e artefatos de publicação (Notebook 05).
 - **Blockers**: None
 - **Branch**: `main`
