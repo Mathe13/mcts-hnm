@@ -155,12 +155,12 @@ def build_confusion_tree(
     mat = validate_confusion_matrix(confusion_matrix)
     if mat.shape[0] == k:
         active_mat = mat
-    elif mat.shape[0] == 100 and k < 100:
+    elif mat.shape[0] >= k and max(sorted_class_ids) < mat.shape[0]:
         idx_arr = np.array(sorted_class_ids, dtype=np.int64)
         active_mat = validate_confusion_matrix(mat[np.ix_(idx_arr, idx_arr)])
     else:
         raise ValueError(
-            f"confusion_matrix shape {mat.shape} does not match active class count ({k}) or full CIFAR-100 (100)."
+            f"confusion_matrix shape {mat.shape} does not match active class count ({k}) or allow valid indexing."
         )
 
     dist_matrix = compute_confusion_distance_matrix(active_mat)

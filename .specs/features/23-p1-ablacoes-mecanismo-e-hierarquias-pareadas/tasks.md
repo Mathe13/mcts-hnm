@@ -129,11 +129,11 @@ T4
 
 **Done when**:
 
-- [ ] Teste valida cálculo topológico de árvore (profundidade, nós, ramificação)
-- [ ] Teste valida decomposição fatorial $2 \times 2$ (efeitos principais e interação)
-- [ ] Teste valida persistência e presença de `computational_costs` no CSV e JSON
-- [ ] Teste valida testes inferenciais pareados Semantic vs Ward no Axis 2
-- [ ] Gate check passes: `.venv/bin/pytest -v tests/test_p1_ablations_and_hierarchies.py`  
+- [x] Teste valida cálculo topológico de árvore (profundidade, nós, ramificação)
+- [x] Teste valida decomposição fatorial $2 \times 2$ (efeitos principais e interação)
+- [x] Teste valida persistência e presença de `computational_costs` no CSV e JSON
+- [x] Teste valida testes inferenciais pareados Semantic vs Ward no Axis 2
+- [x] Gate check passes: `.venv/bin/pytest -v tests/test_p1_ablations_and_hierarchies.py`  
 
 **Tests**: integration  
 **Gate**: full  
