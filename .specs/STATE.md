@@ -226,22 +226,30 @@
 - **Date**: 2026-11-12
 - **Status**: active (AD-028)
 
+### AD-029
+- **Decision**: Implement Phase 2 (P1) analytical figures from `roadmap_analises_e_figuras_expansao.md`: (1) `generate_class_exposure_vs_delta_recall_plot()` producing `fig_class_exposure_vs_delta_recall` (.pdf + .png 300 DPI) correlating relative visits $N_c/\sum N$ with marginal recall improvement $\Delta\mathrm{Recall}$ with annotated Spearman rank correlation $\rho_s$ and $p$-value; (2) `generate_ward_vs_semantic_dendrogram_plot()` producing `fig_ward_vs_semantic_dendrogram` (.pdf + .png 300 DPI) reconstructing Ward confusion linkage and coloring leaves by the 20 human semantic superclasses; (3) `generate_interaction_ratio_plot()` producing `fig_interaction_ratio_methods` (.pdf + .png 300 DPI) dual-panel (F1 and AUPRC vs. $\rho \in [1:10, 1:50, 1:100]$) with 95% CI bands and interaction effect quantification; (4) integrate all three into `generate_all_paper_artifacts()` and `notebooks/05_paper_artifacts.ipynb`; (5) include LaTeX `\begin{figure}` environments in `paper/main.tex`; and (6) enforce automated regression coverage in `tests/test_p1_expansion_figures.py`.
+- **Reason**: Visualizes MCTS active curriculum behavior, empirical confusion geometry vs human ontology, and robustness under extreme class imbalance.
+- **Trade-off**: None.
+- **Scope**: `src/utils/paper_artifacts.py`, `notebooks/05_paper_artifacts.ipynb`, `paper/main.tex`, `tests/`
+- **Date**: 2026-11-12
+- **Status**: active (AD-029)
+
 ## Handoff
 
-- **Feature**: `25-p0-expansao-figuras-pareto-e-entropia` (`.specs/features/25-p0-expansao-figuras-pareto-e-entropia/`)
+- **Feature**: `26-p1-expansao-figuras-arvore-e-interacao` (`.specs/features/26-p1-expansao-figuras-arvore-e-interacao/`)
 - **Status**: Complete & Verified (Verification PASS, 0 errors, 0 warnings)
 - **Completed**:
   - Specified requirements in `spec.md` with explicit user approval (validated with 0 errors, 0 warnings).
   - Designed architecture in `design.md`.
-  - Structured 5 atomic tasks in `tasks.md` with 5 verifiable checks.
-  - Executed T1–T5 with atomic commits (`2bc9a07`, `54aeec8`, `d59b0c4`, `82d8639`, `5dc2c7d`).
-  - Ran `check_proofs.py` (6/6 passed at clean `HEAD`).
+  - Structured 5 atomic tasks in `tasks.md` with 6 verifiable checks.
+  - Executed T1–T5 with atomic commits (`59a98fc`, `67fcc37`, `152ce85`, `24ca77e`, `3be20c3`).
+  - Ran `check_proofs.py` (7/7 passed at clean `HEAD`).
   - Verification audit passed with Verdict: PASS (all checks and criteria verified).
   - Validated verification with `validate_verification.py` (0 errors, 0 warnings).
-  - Recorded Decision AD-028.
+  - Recorded Decision AD-029.
 - **In-progress**:
-  - Fase 1 (P0) do roadmap de expansão analítica concluída.
+  - Fase 1 (P0) e Fase 2 (P1) do roadmap de expansão analítica concluídas.
 - **Next step**:
-  - Fase 2 (P1) do roadmap: FIG-03 (Alocação Amostral vs. Ganho Marginal de Recall), FIG-04 (Dendrograma Comparativo Ward vs. Semântica) e FIG-05 (Curvas de Interação Método $\times$ Severidade).
+  - Fase 3 (P2) do roadmap: FIG-06 (Curvas Precision-Recall Agregadas com Bandas de Variância) e FIG-07 (Superfície de Trade-off dos 4 Quadrantes de Avaliação).
 - **Blockers**: None
 - **Branch**: `main`
