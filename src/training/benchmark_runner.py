@@ -625,11 +625,37 @@ def run_sensitivity_ablation(
                     seed=seed,
                     device=device,
                 )
-                run_metrics = dict(res["final_metrics"])
-                run_metrics["seed"] = seed
-                run_metrics["imbalance_ratio"] = imbalance_ratio
-                run_metrics["num_positives_train"] = int(len(split.positive_indices))
-                run_metrics["num_negatives_train"] = int(len(split.negative_indices))
+                last_m = res["last_metrics"]
+                best_val_m = res["best_validation_metrics"]
+                run_metrics = {
+                    "c": float(c),
+                    "alpha": float(alpha),
+                    "seed": int(seed),
+                    "imbalance_ratio": imbalance_ratio,
+                    "num_positives_train": int(len(split.positive_indices)),
+                    "num_negatives_train": int(len(split.negative_indices)),
+                    # Backward-compatible primary metrics (mapped to best_val calibrated)
+                    "auprc": float(best_val_m.get("auprc", 0.0)),
+                    "f1": float(best_val_m.get("calibrated_f1", best_val_m.get("f1", 0.0))),
+                    "precision": float(best_val_m.get("calibrated_precision", best_val_m.get("precision", 0.0))),
+                    "recall": float(best_val_m.get("calibrated_recall", best_val_m.get("recall", 0.0))),
+                    # 4 Quadrants explicit keys
+                    "test_f1_last_thresh05": float(last_m.get("f1_thresh05", last_m.get("f1", 0.0))),
+                    "test_precision_last_thresh05": float(last_m.get("precision_thresh05", last_m.get("precision", 0.0))),
+                    "test_recall_last_thresh05": float(last_m.get("recall_thresh05", last_m.get("recall", 0.0))),
+                    "test_f1_last_calibrated": float(last_m.get("calibrated_f1", last_m.get("f1", 0.0))),
+                    "test_precision_last_calibrated": float(last_m.get("calibrated_precision", last_m.get("precision", 0.0))),
+                    "test_recall_last_calibrated": float(last_m.get("calibrated_recall", last_m.get("recall", 0.0))),
+                    "best_tau_val_last": float(last_m.get("calibrated_threshold", last_m.get("threshold", 0.5))),
+                    "test_f1_best_val_thresh05": float(best_val_m.get("f1_thresh05", best_val_m.get("f1", 0.0))),
+                    "test_precision_best_val_thresh05": float(best_val_m.get("precision_thresh05", best_val_m.get("precision", 0.0))),
+                    "test_recall_best_val_thresh05": float(best_val_m.get("recall_thresh05", best_val_m.get("recall", 0.0))),
+                    "test_f1_best_val_calibrated": float(best_val_m.get("calibrated_f1", best_val_m.get("f1", 0.0))),
+                    "test_precision_best_val_calibrated": float(best_val_m.get("calibrated_precision", best_val_m.get("precision", 0.0))),
+                    "test_recall_best_val_calibrated": float(best_val_m.get("calibrated_recall", best_val_m.get("recall", 0.0))),
+                    "best_tau_val": float(best_val_m.get("calibrated_threshold", best_val_m.get("threshold", 0.5))),
+                    "test_auprc": float(best_val_m.get("auprc", 0.0)),
+                }
                 c_alpha_metrics.append(run_metrics)
 
             auprc_vals = [m["auprc"] for m in c_alpha_metrics]
@@ -642,6 +668,10 @@ def run_sensitivity_ablation(
                 "auprc_std": float(np.std(auprc_vals, ddof=1)) if len(auprc_vals) > 1 else 0.0,
                 "f1_mean": float(np.mean(f1_vals)),
                 "f1_std": float(np.std(f1_vals, ddof=1)) if len(f1_vals) > 1 else 0.0,
+                "f1_last_thresh05_mean": float(np.mean([m["test_f1_last_thresh05"] for m in c_alpha_metrics])),
+                "f1_last_calibrated_mean": float(np.mean([m["test_f1_last_calibrated"] for m in c_alpha_metrics])),
+                "f1_best_val_thresh05_mean": float(np.mean([m["test_f1_best_val_thresh05"] for m in c_alpha_metrics])),
+                "f1_best_val_calibrated_mean": float(np.mean([m["test_f1_best_val_calibrated"] for m in c_alpha_metrics])),
                 "runs": c_alpha_metrics,
             })
 
@@ -661,5 +691,16 @@ def run_sensitivity_ablation(
     json_path = out_path / f"{benchmark_name}.json"
     _atomic_save_json(json_export, json_path)
     save_provenance_metadata(json_path, active_config)
+
+    csv_rows = []
+    for cell in grid_results:
+        for run_dict in cell["runs"]:
+            csv_rows.append(run_dict)
+
+    if csv_rows:
+        ordered_fields = list(csv_rows[0].keys())
+        csv_path = out_path / f"{benchmark_name}.csv"
+        _atomic_save_csv(ordered_fields, csv_rows, csv_path)
+        save_provenance_metadata(csv_path, active_config)
 
     return json_export

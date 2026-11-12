@@ -128,8 +128,12 @@ def evaluate_scenario1_metrics(
     loss = float(F.binary_cross_entropy_with_logits(logits_t, y_true_t).item())
 
     probs = torch.sigmoid(logits_t).numpy()
-    preds = (probs >= float(threshold)).astype(np.int64)
+    preds_05 = (probs >= 0.5).astype(np.int64)
+    f1_05 = float(f1_score(y_true, preds_05, zero_division=0.0))
+    precision_05 = float(precision_score(y_true, preds_05, zero_division=0.0))
+    recall_05 = float(recall_score(y_true, preds_05, zero_division=0.0))
 
+    preds = (probs >= float(threshold)).astype(np.int64)
     f1 = float(f1_score(y_true, preds, zero_division=0.0))
     precision = float(precision_score(y_true, preds, zero_division=0.0))
     recall = float(recall_score(y_true, preds, zero_division=0.0))
@@ -155,10 +159,15 @@ def evaluate_scenario1_metrics(
         "f1": f1,
         "precision": precision,
         "recall": recall,
+        "f1_thresh05": f1_05,
+        "precision_thresh05": precision_05,
+        "recall_thresh05": recall_05,
         "auprc": auprc,
         "fpr_at_95_recall": fpr_95,
         "threshold": float(threshold),
         "calibrated_f1": f1,
+        "calibrated_precision": precision,
+        "calibrated_recall": recall,
         "calibrated_threshold": float(threshold),
     }
 
@@ -538,6 +547,30 @@ def train_scenario1(
 
     final_eval = last_metrics
     exposure_diag = exposure_tracker.compute_diagnostics()
+    quadrant_metrics = {
+        "last_thresh05": {
+            "f1": float(last_metrics.get("f1_thresh05", last_metrics["f1"])),
+            "precision": float(last_metrics.get("precision_thresh05", last_metrics["precision"])),
+            "recall": float(last_metrics.get("recall_thresh05", last_metrics["recall"])),
+        },
+        "last_calibrated": {
+            "f1": float(last_metrics.get("calibrated_f1", last_metrics["f1"])),
+            "precision": float(last_metrics.get("calibrated_precision", last_metrics["precision"])),
+            "recall": float(last_metrics.get("calibrated_recall", last_metrics["recall"])),
+            "threshold": float(last_metrics.get("calibrated_threshold", 0.5)),
+        },
+        "best_val_thresh05": {
+            "f1": float(best_validation_metrics.get("f1_thresh05", best_validation_metrics["f1"])),
+            "precision": float(best_validation_metrics.get("precision_thresh05", best_validation_metrics["precision"])),
+            "recall": float(best_validation_metrics.get("recall_thresh05", best_validation_metrics["recall"])),
+        },
+        "best_val_calibrated": {
+            "f1": float(best_validation_metrics.get("calibrated_f1", best_validation_metrics["f1"])),
+            "precision": float(best_validation_metrics.get("calibrated_precision", best_validation_metrics["precision"])),
+            "recall": float(best_validation_metrics.get("calibrated_recall", best_validation_metrics["recall"])),
+            "threshold": float(best_validation_metrics.get("calibrated_threshold", 0.5)),
+        },
+    }
     return {
         "strategy": strategy,
         "history": history,
@@ -546,6 +579,7 @@ def train_scenario1(
         "final_metrics": final_eval,
         "last_metrics": last_metrics,
         "best_validation_metrics": best_validation_metrics,
+        "quadrant_metrics": quadrant_metrics,
         "val_metrics": history[-1] if history else last_metrics,
         "test_metrics": last_metrics if test_features is not None else None,
         "computational_costs": computational_costs,
@@ -892,6 +926,30 @@ def train_scenario2(
 
     final_eval = last_metrics
     exposure_diag = exposure_tracker.compute_diagnostics()
+    quadrant_metrics = {
+        "last_thresh05": {
+            "f1": float(last_metrics.get("f1_thresh05", last_metrics["f1"])),
+            "precision": float(last_metrics.get("precision_thresh05", last_metrics["precision"])),
+            "recall": float(last_metrics.get("recall_thresh05", last_metrics["recall"])),
+        },
+        "last_calibrated": {
+            "f1": float(last_metrics.get("calibrated_f1", last_metrics["f1"])),
+            "precision": float(last_metrics.get("calibrated_precision", last_metrics["precision"])),
+            "recall": float(last_metrics.get("calibrated_recall", last_metrics["recall"])),
+            "threshold": float(last_metrics.get("calibrated_threshold", 0.5)),
+        },
+        "best_val_thresh05": {
+            "f1": float(best_validation_metrics.get("f1_thresh05", best_validation_metrics["f1"])),
+            "precision": float(best_validation_metrics.get("precision_thresh05", best_validation_metrics["precision"])),
+            "recall": float(best_validation_metrics.get("recall_thresh05", best_validation_metrics["recall"])),
+        },
+        "best_val_calibrated": {
+            "f1": float(best_validation_metrics.get("calibrated_f1", best_validation_metrics["f1"])),
+            "precision": float(best_validation_metrics.get("calibrated_precision", best_validation_metrics["precision"])),
+            "recall": float(best_validation_metrics.get("calibrated_recall", best_validation_metrics["recall"])),
+            "threshold": float(best_validation_metrics.get("calibrated_threshold", 0.5)),
+        },
+    }
     return {
         "strategy": strategy,
         "history": history,
@@ -900,6 +958,7 @@ def train_scenario2(
         "final_metrics": final_eval,
         "last_metrics": last_metrics,
         "best_validation_metrics": best_validation_metrics,
+        "quadrant_metrics": quadrant_metrics,
         "val_metrics": history[-1] if history else last_metrics,
         "test_metrics": last_metrics if test_features is not None else None,
         "computational_costs": computational_costs,

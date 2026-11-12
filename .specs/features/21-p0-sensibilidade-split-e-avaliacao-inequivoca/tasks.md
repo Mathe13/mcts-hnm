@@ -108,10 +108,10 @@ T4
 
 **Done when**:
 
-- [ ] Métricas nos checkpoints `last` e `best_val` avaliadas com threshold 0.5 e threshold calibrado na validação
-- [ ] Dicionário e JSON de exportação contêm os 4 pares de métricas sem lacunas
-- [ ] CSV rows incluem todas as colunas dos 4 quadrantes
-- [ ] Gate check passes: `.venv/bin/python -m compileall -q src tests`  
+- [x] Métricas nos checkpoints `last` e `best_val` avaliadas com threshold 0.5 e threshold calibrado na validação
+- [x] Dicionário e JSON de exportação contêm os 4 pares de métricas sem lacunas
+- [x] CSV rows incluem todas as colunas dos 4 quadrantes
+- [x] Gate check passes: `.venv/bin/python -m compileall -q src tests`  
 
 **Tests**: unit  
 **Gate**: quick  
