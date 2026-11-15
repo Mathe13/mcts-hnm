@@ -1,0 +1,12 @@
+{
+  "execution_mode": "real",
+  "dataset": "CIFAR-100",
+  "data_source": "cifar100_resnet18.pt",
+  "seed": 42,
+  "synthetic_data": false,
+  "num_steps": 100,
+  "git_commit": "2f3af6b301c2d10cc616fc2c5fa749038f821c3e",
+  "timestamp_utc": "2026-11-12T16:14:51.537864+00:00",
+  "config_version": "1.0.0",
+  "run_id": "tier1_axis1_samplers_scenario1_cls0_r1_10_none_ohem_s43_2f3af6b3"
+}

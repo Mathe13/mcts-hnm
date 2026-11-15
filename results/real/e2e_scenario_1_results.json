@@ -1,0 +1,143 @@
+{
+  "scenario": 1,
+  "config": {
+    "scenario": 1,
+    "strategies": [
+      "uniform",
+      "mcts_enhanced"
+    ],
+    "seeds": [
+      42,
+      43
+    ],
+    "num_steps": 100,
+    "eval_every": 25,
+    "pos_batch_size": 4,
+    "neg_batch_size": 12,
+    "lr": 0.001,
+    "width_multiplier": 0.25,
+    "enable_leaf_expansion": false,
+    "split_threshold": 10,
+    "k_sub": 2,
+    "refresh_tree_every": null,
+    "output_dir": "/home/mlima/workspace/mcts-hnm/results/real",
+    "checkpoints_dir": "/home/mlima/workspace/mcts-hnm/checkpoints/real"
+  },
+  "strategies": {
+    "uniform": {
+      "mean": 0.22607655502392343,
+      "std": 0.03528708133971291,
+      "runs": [
+        {
+          "loss": 0.09165691207746789,
+          "f1": 0.26136363636363635,
+          "precision": 0.18253968253968253,
+          "recall": 0.46,
+          "f1_thresh05": 0.26136363636363635,
+          "precision_thresh05": 0.18253968253968253,
+          "recall_thresh05": 0.46,
+          "auprc": 0.1543163628882406,
+          "fpr_at_95_recall": 0.13363636363636364,
+          "threshold": 0.5,
+          "calibrated_f1": 0.26136363636363635,
+          "calibrated_precision": 0.18253968253968253,
+          "calibrated_recall": 0.46,
+          "calibrated_threshold": 0.5,
+          "step": 100,
+          "entropy_nats": 0.0,
+          "normalized_entropy": 0.0
+        },
+        {
+          "loss": 0.1832349328095007,
+          "f1": 0.19078947368421054,
+          "precision": 0.10714285714285714,
+          "recall": 0.87,
+          "f1_thresh05": 0.19078947368421054,
+          "precision_thresh05": 0.10714285714285714,
+          "recall_thresh05": 0.87,
+          "auprc": 0.19261474349007576,
+          "fpr_at_95_recall": 0.10212121212121213,
+          "threshold": 0.5,
+          "calibrated_f1": 0.19078947368421054,
+          "calibrated_precision": 0.10714285714285714,
+          "calibrated_recall": 0.87,
+          "calibrated_threshold": 0.5,
+          "step": 100,
+          "entropy_nats": 0.0,
+          "normalized_entropy": 0.0
+        }
+      ]
+    },
+    "mcts_enhanced": {
+      "mean": 0.20169033388979274,
+      "std": 0.052916031269336264,
+      "runs": [
+        {
+          "loss": 0.30488512286810576,
+          "f1": 0.14877430262045646,
+          "precision": 0.08125577100646353,
+          "recall": 0.88,
+          "f1_thresh05": 0.14877430262045646,
+          "precision_thresh05": 0.08125577100646353,
+          "recall_thresh05": 0.88,
+          "auprc": 0.19126719107282333,
+          "fpr_at_95_recall": 0.1692929292929293,
+          "threshold": 0.5,
+          "calibrated_f1": 0.14877430262045646,
+          "calibrated_precision": 0.08125577100646353,
+          "calibrated_recall": 0.88,
+          "calibrated_threshold": 0.5,
+          "step": 100,
+          "entropy_nats": 4.39199355038246,
+          "normalized_entropy": 0.9557952117949262
+        },
+        {
+          "loss": 0.14895260500232488,
+          "f1": 0.254606365159129,
+          "precision": 0.1529175050301811,
+          "recall": 0.76,
+          "f1_thresh05": 0.254606365159129,
+          "precision_thresh05": 0.1529175050301811,
+          "recall_thresh05": 0.76,
+          "auprc": 0.2579111727103681,
+          "fpr_at_95_recall": 0.12737373737373736,
+          "threshold": 0.5,
+          "calibrated_f1": 0.254606365159129,
+          "calibrated_precision": 0.1529175050301811,
+          "calibrated_recall": 0.76,
+          "calibrated_threshold": 0.5,
+          "step": 100,
+          "entropy_nats": 4.447445324827257,
+          "normalized_entropy": 0.967862747844758
+        }
+      ]
+    }
+  },
+  "statistical_tests": {
+    "mcts_enhanced_vs_uniform": {
+      "n": 2,
+      "mean_a": 0.20169033388979274,
+      "std_a": 0.07483456908805412,
+      "mean_b": 0.22607655502392343,
+      "std_b": 0.049903469007184564,
+      "mean_diff": -0.02438622113413072,
+      "std_diff": 0.12473803809523869,
+      "se_diff": 0.08820311260904917,
+      "cohens_d": -0.19549947639477547,
+      "ci_95": [
+        -1.1451130283352848,
+        1.0963405860670232
+      ],
+      "ci_95_lower": -1.1451130283352848,
+      "ci_95_upper": 1.0963405860670232,
+      "t_stat": -0.2764780109543302,
+      "t_pvalue": 0.8282783188260796,
+      "wilcoxon_stat": 1.0,
+      "wilcoxon_pvalue": 1.0,
+      "paired_differences": [
+        -0.11258933374317989,
+        0.06381689147491845
+      ]
+    }
+  }
+}
