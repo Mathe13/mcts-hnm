@@ -36,10 +36,10 @@ Across five seeds, Strict MCTS is competitive in binary one-vs-rest
 classification, whereas the complete Enhanced variant does not improve
 AUPRC over Strict. In 100-class classification, a coverage-balanced
 sampling variant improves substantially on the original Enhanced policy
-but remains below Uniform sampling. Factorial and batch-composition
-ablations identify limitations of Q-normalization and focal-class
-batching, motivating further evaluation rather than a general
-superiority claim.
+but remains below Uniform sampling. Mechanism and batch-composition
+ablations show that the tested normalization and sampling choices do not
+consistently improve performance. The findings are limited to the evaluated
+settings and do not establish general superiority.
 
 \end{abstract}
 
@@ -48,30 +48,30 @@ superiority claim.
 \section{Introduction}
 \label{sec:intro}
 
-Class imbalance is ubiquitous across real-world computer vision tasks, including medical diagnosis, rare object detection, and fine-grained species identification. In settings with increasingly scarce positive training examples, standard stochastic gradient descent (SGD) with uniform mini-batch sampling is dominated by trivial, uninformative negative examples. Consequently, gradient updates provide negligible error signals for refining the decision boundary around rare minority concepts.
+Class imbalance makes the choice of training examples important in visual classification. When a target class has few positive examples, uniformly sampled batches may contain many easy negatives and provide limited information about the minority decision boundary. Hard negative mining instead allocates training effort to examples that the current model finds difficult.
 
-To counteract this inefficiency, practitioners commonly employ Online Hard Example Mining (OHEM)~\cite{shrivastava2016training} or focal loss weighting~\cite{lin2017focal}. However, OHEM evaluates candidate hardness strictly within small, randomly sampled candidate pools, rendering it inherently myopic. In large label spaces, OHEM repeatedly samples boundary outliers and mislabeled instances, inducing severe training instability, high gradient variance, and catastrophic forgetting of canonical class distributions.
+Online Hard Example Mining (OHEM)~\cite{shrivastava2016training} ranks candidate examples by loss, while focal loss~\cite{lin2017focal} reduces the contribution of easy examples. OHEM selects examples from a sampled candidate pool. Hierarchical sampling offers a different way to organize this search: it can maintain estimates of difficulty for groups of classes and use those estimates across training steps.
 
-Recently, Qu et al.~\cite{qu2025gianthunter} proposed \textit{GiantHunter}, introducing Monte Carlo Tree Search (MCTS) to mine informative negative viral genomes from a biological taxonomy tree. While GiantHunter demonstrated the promise of sequential decision-making for negative selection, its official codebase omitted the MCTS training implementation, and its formulation was tightly coupled to genomic transformers without testing whether MCTS-based negative mining generalizes to visual domains. Furthermore, GiantHunter employed raw, unnormalized action-value estimates ($Q$-values) within the Upper Confidence Bound (UCB1) formula~\cite{auer2002finite} and constructed mini-batches consisting entirely ($100\%$) of MCTS-selected negatives, creating significant risks of value scale mismatch and representational drift.
+Qu et al.~\cite{qu2025gianthunter} introduced \textit{GiantHunter}, which uses Monte Carlo Tree Search (MCTS) to select negative viral genomes from a biological taxonomy. This motivates testing hierarchical negative mining in a visual domain. Two design choices warrant evaluation: the scale of the action-value estimates used in the Upper Confidence Bound (UCB1) rule~\cite{auer2002finite}, and the proportion of a batch drawn from a selected class. Normalizing values and mixing mined examples with uniform samples are intended to control these choices; their effect on classification performance must be measured.
 
-In this paper, we present \textbf{MCTS-HNM}, a unified, mathematically rigorous reinforcement learning framework that adapts MCTS for hierarchical hard negative mining in visual classification. We formulate negative selection as a multi-armed bandit problem over a tree hierarchy $\mathcal{T}$, where internal nodes represent semantic superclasses or empirical confusion clusters and leaf nodes represent fine classes. To address the fundamental limitations of prior formulations, we propose:
+We present \textbf{MCTS-HNM}, a framework for evaluating these choices on CIFAR-100 frozen embeddings. Negative selection is treated as a bandit problem over a hierarchy $\mathcal{T}$ whose leaves represent fine classes. We examine the following components:
 \begin{enumerate}
-    \item \textbf{Min-Max $Q$-Value Normalization}: Sibling-level normalization that maps raw action-values dynamically into $[0, 1]$, ensuring invariant exploration--exploitation trade-offs regardless of loss magnitude or tree depth.
-    \item \textbf{Dual-Stream Hybrid Batching}: A sampling mechanism combining MCTS hard negatives with uniformly drawn anchor samples at ratio $\beta$, preserving global feature geometry while focusing capacity on hard negative boundaries.
-    \item \textbf{Dual Hierarchy Comparison}: A rigorous empirical study comparing human-designed Semantic Trees against data-driven Ward Confusion Trees~\cite{ward1963hierarchical}.
-    \item \textbf{Dynamic Leaf Sub-Clustering}: An entropy-driven tree expansion mechanism that partitions visited leaf nodes by classifier uncertainty, mining hard instances within difficult fine classes.
+    \item \textbf{Min-Max $Q$-Value Normalization}: Sibling-level normalization maps action values into $[0, 1]$ before UCB selection. We test whether this rescaling improves on raw values.
+    \item \textbf{Dual-Stream Hybrid Batching}: A fraction $\beta$ of the negative batch is sampled uniformly, and the remaining examples come from an MCTS-selected leaf.
+    \item \textbf{Dual Hierarchy Comparison}: We compare the CIFAR-100 semantic hierarchy with a data-driven Ward Confusion Tree~\cite{ward1963hierarchical}.
+    \item \textbf{Dynamic Leaf Sub-Clustering}: An optional entropy-based expansion partitions a class leaf into groups of instances. Its end-to-end implementation is examined separately from the principal benchmarks.
 \end{enumerate}
 
-Experiments on CIFAR-100~\cite{krizhevsky2009learning} across five seeds quantify where hierarchical negative mining helps, where it falls short, and how batch composition affects results.
+Experiments on CIFAR-100~\cite{krizhevsky2009learning} across five seeds evaluate binary one-vs-rest classification and a 100-class curriculum. The results do not establish a general advantage for the combined Enhanced policy. They allow us to compare its components and examine how class exposure and batch composition relate to performance.
 
 \section{Related Work}
 \label{sec:related}
 
-\textbf{Hard Negative Mining in Deep Learning.} Mining informative negatives is essential in metric learning and object detection~\cite{shrivastava2016training,he2016deep}. Classic approaches select negatives based on instantaneous loss ranking. While effective in bounded regimes, batch-level mining is susceptible to noisy labels and gradient instability~\cite{lin2017focal,cui2019class}. In contrast, MCTS-HNM maintains running value estimates across epochs, providing smooth, temporally consistent guidance.
+\textbf{Hard Negative Mining in Deep Learning.} Loss-based mining selects difficult examples for training~\cite{shrivastava2016training,he2016deep}. Focal loss and class-balanced loss address the contribution of examples or classes through weighting~\cite{lin2017focal,cui2019class}. MCTS-HNM instead maintains running estimates of class-level difficulty to guide sampling across training steps. Whether those estimates improve classification is the empirical question studied here.
 
-\textbf{Monte Carlo Tree Search in Machine Learning.} MCTS has achieved landmark breakthroughs in combinatorial games~\cite{silver2016mastering} and sequential planning~\cite{sutton2018reinforcement}. Adapting MCTS to training sample selection remains an emerging frontier. Qu et al.~\cite{qu2025gianthunter} demonstrated its efficacy for metagenomic classification, but relied on raw $Q$-values and pure MCTS batches. Our work resolves these stabilization challenges and benchmarks tree structures systematically.
+\textbf{Monte Carlo Tree Search in Machine Learning.} MCTS has been used in games~\cite{silver2016mastering} and is related to sequential decision-making and planning~\cite{sutton2018reinforcement}. GiantHunter~\cite{qu2025gianthunter} applies it to negative selection in metagenomic classification. We adapt hierarchical sampling to visual classification and compare raw and normalized $Q$-values, as well as batches with different proportions of mined examples.
 
-\textbf{Hierarchical and Curriculum Learning.} Incorporating semantic hierarchies structures complex multi-class spaces into coarse-to-fine representations~\cite{bengio2009curriculum}. We extend hierarchical modeling by comparing expert taxonomies against empirical Ward clustering trees~\cite{ward1963hierarchical}.
+\textbf{Hierarchical and Curriculum Learning.} Curriculum learning studies how the order and selection of training examples affect learning~\cite{bengio2009curriculum}. Our comparison of semantic and Ward clustering trees~\cite{ward1963hierarchical} examines the hierarchy used to select examples. The classifier still predicts fine-class labels; the tree controls sampling.
 
 \section{Methodology}
 \label{sec:method}
@@ -79,13 +79,13 @@ Experiments on CIFAR-100~\cite{krizhevsky2009learning} across five seeds quantif
 \subsection{Hierarchical Tree Formulations}
 Let $\mathcal{T} = (\mathcal{V}, \mathcal{E})$ denote a rooted directed tree representing the negative label space. We consider two distinct tree topologies:
 \begin{itemize}
-    \item \textbf{Native Semantic Tree}: A 3-level hierarchy mapping a Virtual Root to 20 coarse superclasses, each branching into 5 fine classes ($100$ leaves total).
-    \item \textbf{Data-Driven Ward Confusion Tree}: A binary dendrogram constructed by computing the symmetric validation confusion distance $D_{i,j} = 1 - \frac{C_{i,j} + C_{j,i}}{2 \cdot \max(C)}$ from a warm-up model pass and applying Ward's minimum-variance linkage~\cite{ward1963hierarchical}.
+    \item \textbf{Native Semantic Tree}: A 3-level hierarchy mapping a Virtual Root to 20 coarse superclasses, each branching into 5 fine classes ($100$ leaves total before excluding the binary target class).
+    \item \textbf{Data-Driven Ward Confusion Tree}: A binary dendrogram derived from validation confusion measurements. The symmetric confusion distance is $D_{i,j} = 1 - \frac{C_{i,j} + C_{j,i}}{2 \cdot \max(C)}$, with the diagonal of $C$ set to zero before normalization and the distance diagonal set to zero afterward. If all off-diagonal counts are zero, off-diagonal distances are set to one. The current implementation applies Ward's minimum-variance linkage~\cite{ward1963hierarchical} to row-normalized confusion vectors in Euclidean space and provides a separate legacy distance-based mode. The saved benchmark outputs do not identify the linkage mode used in the reported comparison.
 \end{itemize}
 
-\subsection{The 4-Phase MCTS-HNM Engine}
+\subsection{The Four MCTS-HNM Operations}
 
-Each training iteration executes four sequential MCTS operations:
+Each training iteration uses tree selection, optional expansion, a model step, and a value update:
 
 \textbf{1. Selection.} Starting from the root $s_0$, the agent traverses the tree by selecting child node $i \in \text{Children}(s)$ that maximizes the Upper Confidence Bound:
 \begin{equation}
@@ -97,18 +97,18 @@ where $N_s$ is the visit count of parent $s$, $n_i$ is the visit count of child 
     \bar{Q}_i^{\text{norm}} = \frac{Q_i - \min_{j \in \text{Siblings}(i)} Q_j}{\max_{j \in \text{Siblings}(i)} Q_j - \min_{j \in \text{Siblings}(i)} Q_j + \epsilon}.
     \label{eq:qnorm}
 \end{equation}
-If all siblings have equal $Q$-values, $\bar{Q}_i^{\text{norm}}$ is set to $0$, avoiding division-by-zero.
+If all siblings have equal $Q$-values, $\bar{Q}_i^{\text{norm}}$ is set to $0$, so equal values contribute no exploitation preference.
 
 \textbf{2. Expansion.} Once a leaf node $l$ is reached, the model verifies whether $n_l \ge N_{\text{split}}$. If dynamic leaf expansion is active, the leaf is partitioned into $K_{\text{sub}}$ child leaves sorted by prediction entropy $H(p) = -\sum_k p_k \ln(p_k + \epsilon)$, refining mining to the most ambiguous instances of that class.
 
-\textbf{3. Simulation (Model Step).} The batch sampler draws negative instances from leaf $l$. Under Dual-Stream batching ($\beta \in [0, 1]$), mini-batch $\mathcal{B}_{\text{neg}}$ combines $\lfloor (1 - \beta) B_{\text{neg}} \rfloor$ instances from leaf $l$ and $\lceil \beta B_{\text{neg}} \rceil$ instances sampled uniformly at random across all negative classes. The downstream model computes step loss $\mathcal{L}(\mathcal{B})$. The scalar reward is defined as $r = \mathcal{L}(\mathcal{B})$.
+\textbf{3. Simulation (Model Step).} The batch sampler draws negative instances from leaf $l$. Under Dual-Stream batching ($\beta \in [0, 1]$), mini-batch $\mathcal{B}_{\text{neg}}$ combines $\lfloor (1 - \beta) B_{\text{neg}} \rfloor$ instances from leaf $l$ and $\lceil \beta B_{\text{neg}} \rceil$ instances sampled uniformly at random across all negative classes. The scalar reward is the mean loss on the MCTS-selected negative sub-batch: $r = \mathcal{L}(\mathcal{B})$. Here $\mathcal{B}$ denotes that sub-batch for reward computation. The optimizer uses the full training batch, including positives and uniform negatives in Scenario 1.
 
 \textbf{4. Momentum Backpropagation.} Leaf value $Q_l$ is updated via momentum ($\alpha = 0.3$):
 \begin{equation}
     Q_l^{(t)} = \alpha r + (1 - \alpha) Q_l^{(t-1)}.
     \label{eq:momentum}
 \end{equation}
-Every ancestor $p$ on the path from $l$ to the root aggregates child values weighted by instance count $M_c$:
+Each ancestor $p$ on the path from $l$ to the root aggregates child values weighted by instance count $M_c$:
 \begin{equation}
     Q_p = \frac{1}{\sum_{c \in \text{Children}(p)} M_c} \sum_{c \in \text{Children}(p)} M_c Q_c.
     \label{eq:ancestor}
@@ -117,19 +117,21 @@ Every ancestor $p$ on the path from $l$ to the root aggregates child values weig
 \section{Experimental Setup}
 \label{sec:setup}
 
-\textbf{Dataset and Environments.} Experiments are conducted on CIFAR-100~\cite{krizhevsky2009learning} (50,000 train, 10,000 test images across 100 fine classes and 20 superclasses). We evaluate two execution tiers:
+\textbf{Dataset and Environments.} We use CIFAR-100~\cite{krizhevsky2009learning}, with 50,000 training images and 10,000 test images across 100 fine classes and 20 superclasses. Notebook 01 reserves 5,000 of the training images for stratified validation, leaving 45,000 for training. The workflow has two execution tiers:
 \begin{itemize}
-    \item \textbf{Tier 1}: Feature extraction using a frozen ResNet-18~\cite{he2016deep} backbone ($512$-dim embeddings) with a 2-layer MLP head ($512 \rightarrow 128 \rightarrow K$) trained via Adam ($\eta = 10^{-3}$) for 1,000 steps in the principal binary benchmark (2,000 in the multi-class benchmark).
-    \item \textbf{Tier 2}: End-to-end convolutional training of a CIFAR-adapted ResNet-18 on raw $32 \times 32$ RGB images with periodic Ward confusion tree refreshes.
+    \item \textbf{Tier 1}: Feature extraction using a frozen, ImageNet-pretrained ResNet-18~\cite{he2016deep} backbone ($512$-dim embeddings) with a 2-layer MLP head ($512 \rightarrow 128 \rightarrow K$) trained via Adam ($\eta = 10^{-3}$) for 1,000 steps in the principal binary benchmark (2,000 in the multi-class benchmark).
+    \item \textbf{Tier 2}: End-to-end convolutional training of a CIFAR-adapted ResNet-18 on raw $32 \times 32$ RGB images. The saved Notebook 04 run uses a quarter-width model, two seeds, and 100 steps per sampler, with a semantic tree. A separate single-seed, 30-step comparison exercises optional leaf expansion. These are implementation checks and do not support five-seed end-to-end performance claims or an evaluation of periodic Ward tree refreshes.
 \end{itemize}
 
 \textbf{Evaluation Scenarios.}
 \begin{itemize}
-    \item \textbf{Scenario 1 (One-vs-Rest Binary)}: The positive target class is \textit{beaver}. We retain respectively 10\%, 2\%, and 1\% of its training examples, labeled $1{:}10$, $1{:}50$, and $1{:}100$ (positive-retention settings, not literal positive:negative pool ratios). We measure Minority F1, Average Precision (AUPRC), and FPR at 95\% recall.
+    \item \textbf{Scenario 1 (One-vs-Rest Binary)}: The positive target class is \textit{beaver}. We retain respectively 10\%, 2\%, and 1\% of its training examples (45, 9, and 4 positives after integer truncation), with 44,550 negatives in each setting. The settings are labeled $1{:}10$, $1{:}50$, and $1{:}100$ (positive-retention settings, not literal positive:negative pool ratios). We measure Minority F1, Average Precision (AUPRC), and FPR at 95\% recall.
     \item \textbf{Scenario 2 (100-way Multi-Class)}: Full multi-class curriculum evaluated on Top-1 Accuracy, Macro-F1, and Worst-10-Class Recall.
 \end{itemize}
 
-\textbf{Baselines and inference.} We compare Enhanced MCTS-HNM against Uniform Random Sampling, Online Hard Example Mining (OHEM)~\cite{shrivastava2016training}, and Strict GiantHunter (unnormalized $Q$, $100\%$ MCTS batch) across five paired seeds per positive-retention setting. Point estimates and raw paired $t$-test $p$-values in the primary tables are exploratory. The separate paired-effects table reports paired mean differences, Student-$t$ 95\% confidence intervals, and Holm-adjusted $p$-values across the prespecified binary F1 and multiclass Top-1 comparisons. With five seeds, intervals may be wide; non-significance does not demonstrate equivalence.
+\textbf{Batch composition and evaluation.} The binary benchmark uses 16 positive and 48 negative examples per optimizer step for each sampler. Strict MCTS draws all negative examples from the selected leaf; Enhanced draws 24 from that leaf and 24 uniformly. The multiclass grouped control draws 32 examples from a uniformly selected focal class and 32 uniformly from the full pool. Enhanced uses the same focal proportion with MCTS selection; Coverage-Balanced MCTS reduces it to 16 focal and 48 uniform examples. Binary decision thresholds are calibrated on validation data. The principal tables use the final checkpoint; validation-selected checkpoint results are reported separately.
+
+\textbf{Baselines and inference.} We compare Enhanced MCTS-HNM against Uniform Random Sampling, Online Hard Example Mining (OHEM)~\cite{shrivastava2016training}, and a Strict GiantHunter-style baseline (unnormalized $Q$, $100\%$ MCTS negative batch) across five paired seeds (42--46) per positive-retention setting. Strict MCTS denotes our visual-domain implementation of the GiantHunter-style policy, rather than a reproduction of its genomic model. Point estimates and raw paired $t$-test $p$-values in the primary tables are exploratory. The separate paired-effects table reports paired mean differences, Student-$t$ 95\% confidence intervals, and Holm-adjusted $p$-values across the prespecified binary F1 and multiclass Top-1 comparisons. With five seeds, intervals may be wide; non-significance does not demonstrate equivalence.
 
 \section{Results}
 \label{sec:results}
@@ -146,7 +148,7 @@ $1{:}50$ and $1{:}100$, Strict MCTS has the highest mean F1 (69.7\%
 and 60.0\%). At $1{:}50$, Strict also attains the highest mean AUPRC
 (0.736), whereas Enhanced attains 0.685. Dispersion is larger under the
 most severe positive subsampling setting, and these means alone do not
-establish method superiority after multiple-comparison correction.
+establish method superiority after multiple-comparison correction. None of the nine binary F1 comparisons against Enhanced remains significant under the reported Holm correction (Table~\ref{tab:paired_effects}).
 
 \input{tables/tab_scenario1_imbalanced.tex}
 
@@ -155,16 +157,12 @@ The uniform sampler achieves mean Top-1 accuracy of 63.85\%, compared with
 33.43\% for the original Enhanced method over 2,000 steps and five seeds.
 A coverage-balanced MCTS variant achieves 53.06\%, recovering part of this
 gap without surpassing Uniform; Uniform Grouped reaches approximately 52.24\%.
-All four measured multiclass policies are shown in the table. The class-level
-exposure diagnostics suggest that cumulative class coverage alone cannot
-account for Enhanced's poor recall, but these associations are not causal.
+All four measured multiclass policies are shown in Table~\ref{tab:scenario2_multiclass}. The three Top-1 comparisons against Enhanced remain significant under the reported Holm correction (Table~\ref{tab:paired_effects}). All four policies reach full cumulative class coverage, yet Enhanced has a mean Worst-10-Class Recall of only 0.7\%, compared with 33.5\% for Uniform. Sampling every class at least once therefore does not imply adequate class-level performance. Exposure and recall diagnostics remain descriptive.
 
 \input{tables/tab_scenario2_multiclass.tex}
 
 \subsection{Training and Hierarchy Diagnostics}
-Figure~\ref{fig:convergence} displays the observed training history.
-Figure~\ref{fig:heatmap} shows measured MCTS superclass visit distributions.
-Neither figure alone establishes an improvement in generalization.
+Figure~\ref{fig:convergence} shows validation F1 and loss over training at 2\% positive retention. Figure~\ref{fig:heatmap} reports how MCTS visits are distributed across superclasses. These plots describe optimization and sampling behavior; test-set comparisons are reported in the tables.
 
 \begin{figure*}[t]
   \centering
@@ -182,10 +180,9 @@ Neither figure alone establishes an improvement in generalization.
 
 \subsection{Mechanism and Hierarchy Ablations}
 Table~\ref{tab:ablation_study} reports measured ablations.
-The Q-normalization-only variant obtains a lower AUPRC than the Strict baseline
-in the current experimental setting. With five seeds, the comparison of
-Semantic and Ward hierarchies does not provide sufficient evidence for declaring
-one universally superior. The large differences in tree topology and depth
+At 2\% positive retention, Q-normalization alone attains AUPRC 0.684, compared with 0.736 for Strict MCTS. Dual-Stream batching alone attains F1 0.711 and AUPRC 0.734; combining it with normalization yields F1 0.680 and AUPRC 0.685. The combined policy does not improve either metric over Dual-Stream batching alone. With five seeds, the comparison of
+Semantic and Ward hierarchies does not provide sufficient evidence to establish
+a performance difference in this setting. Non-significance does not establish equivalence. The large differences in tree topology and depth
 are potential confounders to investigate.
 
 \input{tables/tab_ablation_study.tex}
@@ -200,9 +197,7 @@ are potential confounders to investigate.
 }{}
 
 \subsection{Hyperparameter Sensitivity}
-The sensitivity experiment uses the same configured positive subsampling
-protocol as the primary Scenario-1 experiment (nine positive instances in
-the training pool), with five seeds per grid configuration. The reported
+The sensitivity experiment uses the Scenario-1 2\% positive-retention pool (nine positive training instances), with five seeds per grid configuration and 1,000 optimizer steps. The grid evaluates $c$ values 0.5, 1.0, 2.0, and 4.0 and $\alpha$ values 0.1, 0.3, 0.5, and 0.7. Notebook 03 reports both final-checkpoint and validation-selected-checkpoint outcomes, with fixed and calibrated thresholds; those protocols must be compared separately. The reported
 outcomes are exploratory; selected hyperparameters require confirmation
 under a common final benchmark protocol.
 
@@ -216,9 +211,7 @@ under a common final benchmark protocol.
 }{}
 
 \subsection{Supplementary Diagnostic Figures}
-The following figures are included only when the publication pipeline
-produces them from verified measurements. Missing figures are omitted,
-not reconstructed using illustrative data.
+The supplementary figures compare computational cost and evaluation protocols, and describe class exposure and hierarchy structure. Final-checkpoint and validation-selected-checkpoint results are displayed separately. Wall-clock comparisons are descriptive and depend on hardware and system load. Figures are included when the corresponding exported measurements are available.
 
 \IfFileExists{figures/fig_pareto_cost_vs_accuracy.pdf}{
 \begin{figure}[t]
@@ -325,33 +318,19 @@ not reconstructed using illustrative data.
 
 \section{Discussion and Limitations}
 \label{sec:discussion}
-The evaluated Enhanced variant does not consistently outperform Uniform,
-OHEM, or Strict MCTS across any reported settings. Varying positive retention
-from 10\% to 1\% reveals substantial performance degradation and increasing
-between-seed variability, especially in the most data-scarce regime. The
-factorial analysis suggests that Q-normalization may hurt the evaluated
-binary setting; the coverage-balanced policy partially mitigates, but does
-not reverse, the large multiclass deficit. Although most classes are sampled
-at least once early in training, this cumulative coverage saturates and is
-not a sufficient explanation for class-level recall. Whole-run exposure
-inequality and class-level paired differences add descriptive evidence,
-not causal identification. There are only five seeds per setting and only
-one binary target class. Multiple tests require Holm adjustment, and
-neither a non-significant contrast nor a wide confidence interval establishes
-equivalence. Reported sampling ratios refer to positive retention, not
-literal population imbalance.
+The combined Enhanced policy has no consistent advantage over the evaluated baselines. In the binary task, Strict MCTS has the highest mean F1 at 2\% and 1\% positive retention, while OHEM has the highest mean at 10\%. None of the binary F1 comparisons against Enhanced survives the reported multiplicity correction. These results support describing Strict MCTS as competitive within this experiment, without establishing superiority or equivalence.
+
+The mechanism ablation also gives no basis for treating Q-normalization as a general improvement. At 2\% positive retention, its inclusion is associated with lower mean AUPRC in both the pure-mining and Dual-Stream configurations. Normalizing the numerical range of $Q$-values does not, by itself, establish that the resulting exploration policy improves classification.
+
+In multiclass training, reducing the focal-class share recovers part of Enhanced's accuracy deficit. Uniform Grouped also performs below ordinary Uniform sampling. These comparisons motivate closer study of batch composition, but the coverage-balanced policy changes the allocation of examples as well as class exposure. The experiments do not isolate a single cause of the performance gap. Full cumulative coverage is compatible with very low recall on the worst-performing classes; whole-run exposure inequality and exposure--recall associations describe this behavior without identifying its cause.
+
+The principal evidence is limited to frozen embeddings, five seeds per setting, and one binary target class. It does not establish the behavior of the samplers during full backbone fine-tuning. The short Tier-2 runs and leaf-expansion check do not meet the replication level of the main benchmarks. Semantic and Ward trees also differ in depth and branching, so their comparison does not isolate semantic content from topology. The linkage mode used for the saved Ward benchmark needs to be reconciled with the current implementation before that comparison can be reproduced exactly.
+
+The saved REAL-mode notebook outputs and exported tables agree on the central numerical results, but the raw REAL benchmark JSON files are absent from this checkout. The artifact manifest records their hashes and original paths; this supports tracing the exports but does not permit an independent recomputation of the paired statistics here. With five seeds, confidence intervals and paired $t$-tests remain sensitive to distributional assumptions. The reported Holm correction applies to the 12 listed comparisons, and non-significance does not establish equivalence. The positive-retention labels describe subsampling settings rather than literal positive-to-negative pool ratios.
 
 \section{Conclusion}
 \label{sec:conclusion}
-We evaluated hierarchical MCTS-based negative mining on CIFAR-100
-frozen embeddings across three measured positive-retention conditions
-(10\%, 2\%, and 1\%) and a 100-class curriculum. Strict MCTS is
-competitive when positive data are scarce, but the full Enhanced policy
-does not demonstrate a reliable general advantage. Coverage-balanced
-sampling reduces the multiclass deficit but remains behind uniform
-sampling. Evaluation-specific Pareto diagrams and seed-paired, multiplicity-
-controlled effects delimit what these experiments support; broader target
-classes and controlled interventions are required to establish why.
+We evaluated hierarchical MCTS-based negative mining on CIFAR-100 frozen embeddings at three positive-retention settings (10\%, 2\%, and 1\%) and in a 100-class curriculum. Strict MCTS is competitive in the binary experiments, but the full Enhanced policy does not show a reliable general advantage. Coverage-balanced sampling improves on Enhanced in the multiclass task while remaining below Uniform sampling. The ablations show why the effects of normalization and batch composition need to be measured separately. Establishing broader applicability requires additional target classes and replicated end-to-end experiments.
 
 \bibliographystyle{unsrt}
 \bibliography{references}
