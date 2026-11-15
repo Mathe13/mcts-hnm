@@ -1,0 +1,18 @@
+% Recomputed from REAL per-seed records; see paper/result_verification.json.
+\begin{table}[t]
+\centering
+\small
+\caption{Exploratory AUPRC effects at 2\% positive retention over five paired seeds. Each main effect is the on-minus-off difference averaged over the other factor. The interaction is the Dual-Stream effect with normalization minus its effect without normalization. Intervals are unadjusted paired Student-$t$ 95\% intervals; these effects are outside the 12-comparison Holm family.}
+\label{tab:factorial_effects}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lccc}
+\toprule
+Effect & Mean & Between-seed SD & 95\% CI \\
+\midrule
+Q-Norm main effect & -0.0504 & 0.0242 & [-0.0805, -0.0203] \\
+Dual-Stream main effect & -0.0006 & 0.0151 & [-0.0193, +0.0181] \\
+Interaction & +0.0032 & 0.0300 & [-0.0340, +0.0404] \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
