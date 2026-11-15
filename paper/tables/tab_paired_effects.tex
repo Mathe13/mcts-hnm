@@ -7,6 +7,7 @@ comparator minus Enhanced in percentage points; 95\% paired Student-$t$ confiden
 intervals are descriptive with $N=5$ and Holm correction controls the family-wise
 error across 12 reported tests (both scenarios). Raw $p$-values in the primary tables are exploratory.}
 \label{tab:paired_effects}
+\resizebox{\linewidth}{!}{%
 \begin{tabular}{llllrrrr}
 \toprule
 Scenario & Setting & Comparator & Metric & $N$ & $\Delta$ (pp) [95\% CI] & Raw $p$ & Holm $p$ \\
@@ -24,5 +25,6 @@ S2 & — & Uniform & Top-1 & 5 & +30.4 [+28.7, +32.2] & 1.12e-06 & 1.34e-05 \\
 S2 & — & Uniform Grouped & Top-1 & 5 & +18.8 [+17.5, +20.1] & 2.3e-06 & 2.53e-05 \\
 S2 & — & Coverage-Balanced MCTS & Top-1 & 5 & +19.6 [+16.6, +22.6] & 5.27e-05 & 0.000527 \\
 \bottomrule
-\end{tabular}
+\end{tabular}%
+}
 \end{table*}
