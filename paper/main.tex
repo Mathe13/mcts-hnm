@@ -119,10 +119,10 @@ Each ancestor $p$ on the path from $l$ to the root aggregates child values weigh
 \section{Experimental Setup}
 \label{sec:setup}
 
-\textbf{Dataset and Environments.} We use CIFAR-100~\cite{krizhevsky2009learning}, with 50,000 training images and 10,000 test images across 100 fine classes and 20 superclasses. Notebook 01 reserves 5,000 of the training images for stratified validation, leaving 45,000 for training. The workflow has two execution tiers:
+\textbf{Dataset and Environments.} We use CIFAR-100~\cite{krizhevsky2009learning}, with 50,000 training images and 10,000 test images across 100 fine classes and 20 superclasses. The preprocessing procedure reserves 5,000 of the training images for stratified validation, leaving 45,000 for training. The workflow has two execution tiers:
 \begin{itemize}
     \item \textbf{Tier 1}: Feature extraction using a frozen, ImageNet-pretrained ResNet-18~\cite{he2016deep} backbone ($512$-dim embeddings) with a 2-layer MLP head ($512 \rightarrow 128 \rightarrow K$) trained via Adam ($\eta = 10^{-3}$) for 1,000 steps in the principal binary benchmark (2,000 in the multi-class benchmark).
-    \item \textbf{Tier 2}: End-to-end convolutional training of a CIFAR-adapted ResNet-18 on raw $32 \times 32$ RGB images. The saved Notebook 04 run uses a quarter-width model, two seeds, and 100 steps per sampler, with a semantic tree. A separate single-seed, 30-step comparison exercises optional leaf expansion. These are implementation checks and do not support five-seed end-to-end performance claims or an evaluation of periodic Ward tree refreshes.
+    \item \textbf{Tier 2}: End-to-end convolutional training of a CIFAR-adapted ResNet-18 on raw $32 \times 32$ RGB images. The saved end-to-end run uses a quarter-width model, two seeds, and 100 steps per sampler, with a semantic tree. A separate single-seed, 30-step comparison exercises optional leaf expansion. These are implementation checks and do not support five-seed end-to-end performance claims or an evaluation of periodic Ward tree refreshes.
 \end{itemize}
 
 \textbf{Evaluation Scenarios.}
@@ -211,7 +211,7 @@ Table~\ref{tab:evaluation_protocols} separates the four evaluation protocols at 
 \input{tables/tab_evaluation_protocols.tex}
 
 \subsection{Hyperparameter Sensitivity}
-The sensitivity experiment uses the Scenario-1 2\% positive-retention pool (nine positive training instances), with five seeds per grid configuration and 1,000 optimizer steps. The grid evaluates $c$ values 0.5, 1.0, 2.0, and 4.0 and $\alpha$ values 0.1, 0.3, 0.5, and 0.7. Notebook 03 reports both final-checkpoint and validation-selected-checkpoint outcomes, with fixed and calibrated thresholds; those protocols must be compared separately. The plotted F1 uses the checkpoint selected by validation AUPRC and a validation-calibrated threshold. Across the 16 configurations, the highest observed mean test F1 under that protocol is $71.7\% \pm 2.6\%$ at $c=4.0$ and $\alpha=0.5$. This is an exploratory description of the sweep, not an independently confirmed optimum. Hyperparameters chosen after inspecting these test results require evaluation on fresh data before a final performance claim.
+The sensitivity experiment uses the Scenario-1 2\% positive-retention pool (nine positive training instances), with five seeds per grid configuration and 1,000 optimizer steps. The grid evaluates $c$ values 0.5, 1.0, 2.0, and 4.0 and $\alpha$ values 0.1, 0.3, 0.5, and 0.7. The sweep reports both final-checkpoint and validation-selected-checkpoint outcomes, with fixed and calibrated thresholds; those protocols must be compared separately. The plotted F1 uses the checkpoint selected by validation AUPRC and a validation-calibrated threshold. Across the 16 configurations, the highest observed mean test F1 under that protocol is $71.7\% \pm 2.6\%$ at $c=4.0$ and $\alpha=0.5$. This is an exploratory description of the sweep, not an independently confirmed optimum. Hyperparameters chosen after inspecting these test results require evaluation on fresh data before a final performance claim.
 
 \IfFileExists{figures/fig_hyperparameter_sensitivity.pdf}{
 \begin{figure}[t]
@@ -222,11 +222,50 @@ The sensitivity experiment uses the Scenario-1 2\% positive-retention pool (nine
 \end{figure}
 }{}
 
-\subsection{Supplementary Diagnostic Figures}
+Supplementary diagnostic figures and the full paired-effects table are grouped in Appendix~\ref{app:diagnostics}.
+
+\section{Discussion and Limitations}
+\label{sec:discussion}
+The combined Enhanced policy has no consistent advantage over the evaluated baselines. In the binary task, Strict MCTS has the highest mean F1 at 2\% and 1\% positive retention, while OHEM has the highest mean at 10\%. None of the binary F1 comparisons against Enhanced survives the reported multiplicity correction. These results support describing Strict MCTS as competitive within this experiment, without establishing superiority or equivalence.
+
+The mechanism ablation also gives no basis for treating Q-normalization as a general improvement. At 2\% positive retention, its inclusion is associated with lower mean AUPRC in both the pure-mining and Dual-Stream configurations. Normalizing the numerical range of $Q$-values does not, by itself, establish that the resulting exploration policy improves classification.
+
+In multiclass training, reducing the focal-class share recovers part of Enhanced's accuracy deficit. Uniform Grouped also performs below ordinary Uniform sampling. These comparisons motivate closer study of batch composition, but the coverage-balanced policy changes the allocation of examples as well as class exposure. The experiments do not isolate a single cause of the performance gap. Full cumulative coverage is compatible with very low recall on the worst-performing classes; whole-run exposure inequality and exposure--recall associations describe this behavior without identifying its cause.
+
+The principal evidence is limited to frozen embeddings, five seeds per setting, and one binary target class. It does not establish the behavior of the samplers during full backbone fine-tuning. The short Tier-2 runs and leaf-expansion check do not meet the replication level of the main benchmarks. Semantic and Ward trees also differ in depth and branching, so their comparison does not isolate semantic content from topology. The validation confusion matrix needed to reconstruct the exact benchmark Ward tree is unavailable, although hierarchy statistics can be recomputed from the supplied outcomes. Appendix~\ref{app:reproducibility} records the provenance and verification details.
+
+With five seeds, confidence intervals and paired $t$-tests remain sensitive to distributional assumptions. The main inferential family contains only the 12 stated contrasts, and non-significance does not establish equivalence. The mechanism, hierarchy, and sensitivity analyses are exploratory. In particular, selecting a sensitivity configuration from its observed test performance would require a new evaluation before treating that performance as a final estimate. The positive-retention labels describe subsampling settings rather than literal positive-to-negative pool ratios.
+
+\section{Conclusion}
+\label{sec:conclusion}
+We evaluated hierarchical MCTS-based negative mining on CIFAR-100 frozen embeddings at three positive-retention settings (10\%, 2\%, and 1\%) and in a 100-class curriculum. Strict MCTS is competitive in the binary experiments, but the full Enhanced policy does not show a reliable general advantage. Coverage-balanced sampling improves on Enhanced in the multiclass task while remaining below Uniform sampling. The ablations show why the effects of normalization and batch composition need to be measured separately. Establishing broader applicability requires additional target classes and replicated end-to-end experiments.
+
+\clearpage
+\bibliographystyle{unsrt}
+\bibliography{references}
+
+\clearpage
+\appendix
+\section{Reproducibility Statement}
+\label{app:reproducibility}
+
+\subsection{Workflow and Executed Configurations}
+Notebook 01 performs preprocessing and reserves the stratified validation split described in Section~\ref{sec:setup}. Notebook 03 reports the sensitivity experiment's final-checkpoint and validation-selected-checkpoint outcomes, with fixed and calibrated thresholds. Notebook 04 contains the saved Tier-2 run described in Section~\ref{sec:setup}.
+
+\subsection{Source Records and Artifact Verification}
+The supplied REAL per-seed records permit recomputation of means, sample standard deviations, paired confidence intervals, and the 12-comparison Holm correction. We match runs by campaign, target class, retention setting, hierarchy, and seed, excluding unlisted historical records. All 116 available source files listed in the original artifact manifest match their recorded hashes; the confusion matrix and its sidecar are the two missing entries. The result sidecars retain a shared orchestration seed and a 100-step default, while individual records and training histories report seeds 42--46 and 1,000 or 2,000 updates. The per-run fields and histories are therefore needed to check the executed configurations; the sidecars alone are insufficient.
+
+The recorded source revision identifies the Ward vector-based construction. The validation confusion matrix referenced by the artifact manifest is missing. The hierarchy statistics can be recomputed from the supplied outcomes; reconstructing the exact benchmark tree requires that matrix.
+
+\clearpage
+
+\section{Supplementary Diagnostics}
+\label{app:diagnostics}
 The supplementary figures compare computational cost and evaluation protocols, and describe class exposure and hierarchy structure. Final-checkpoint and validation-selected-checkpoint results are displayed separately. Wall-clock comparisons are descriptive and depend on hardware and system load. Figures are included when the corresponding exported measurements are available.
 
+\subsection{Computational Cost and Checkpoint Selection}
 \IfFileExists{figures/fig_pareto_cost_vs_accuracy.pdf}{
-\begin{figure}[t]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.90\linewidth]{figures/fig_pareto_cost_vs_accuracy.pdf}
   \caption{Scenario-1 final-checkpoint \emph{test} minority F1 against recorded training-loop wall-clock seconds at the configured $1{:}50$ positive-retention setting (means $\pm$ SD over matched seeds). Pareto dominance is assessed on the means, not on confidence bounds.}
@@ -234,14 +273,14 @@ The supplementary figures compare computational cost and evaluation protocols, a
 }{}
 
 \IfFileExists{figures/fig_pareto_cost_vs_accuracy_r1_10.pdf}{
-\begin{figure}[t]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.90\linewidth]{figures/fig_pareto_cost_vs_accuracy_r1_10.pdf}
   \caption{Supplementary Pareto comparison at 10\% positive retention ($1{:}10$); final-checkpoint test F1 and recorded training-loop time.}
 \end{figure}
 }{}
 \IfFileExists{figures/fig_pareto_cost_vs_accuracy_r1_100.pdf}{
-\begin{figure}[t]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.90\linewidth]{figures/fig_pareto_cost_vs_accuracy_r1_100.pdf}
   \caption{Supplementary Pareto comparison at 1\% positive retention ($1{:}100$); final-checkpoint test F1 and recorded training-loop time.}
@@ -249,15 +288,17 @@ The supplementary figures compare computational cost and evaluation protocols, a
 }{}
 
 \IfFileExists{figures/fig_pareto_cost_vs_accuracy_bestval_r1_50.pdf}{
-\begin{figure}[t]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.90\linewidth]{figures/fig_pareto_cost_vs_accuracy_bestval_r1_50.pdf}
   \caption{Alternative Pareto evaluation protocol at 2\% positive retention: TEST F1 of the checkpoint selected using validation, against recorded training-loop wall-clock time. Kept separate from the primary last-checkpoint Pareto plot.}
 \end{figure}
 }{}
 
+\clearpage
+\subsection{Class Exposure and Coverage}
 \IfFileExists{figures/fig_measured_visitation_entropy.pdf}{
-\begin{figure}[t]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.90\linewidth]{figures/fig_measured_visitation_entropy.pdf}
   \caption{Measured normalized MCTS visitation entropy in Scenario 2 over retained evaluation checkpoints. Lines show mean and standard deviation across available seeds. Class coverage is not inferred from entropy.}
@@ -266,7 +307,7 @@ The supplementary figures compare computational cost and evaluation protocols, a
 }{}
 
 \IfFileExists{figures/fig_coverage_entropy_dynamics.pdf}{
-\begin{figure}[t]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.90\linewidth]{figures/fig_coverage_entropy_dynamics.pdf}
   \caption{Observed entropy and class coverage statistics where per-step telemetry is available.}
@@ -274,7 +315,7 @@ The supplementary figures compare computational cost and evaluation protocols, a
 }{}
 
 \IfFileExists{figures/fig_class_exposure_concentration.pdf}{
-\begin{figure}[t]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.94\linewidth]{figures/fig_class_exposure_concentration.pdf}
   \caption{Final, whole-run class sampling concentration: effective number of exposed classes and class-exposure Gini coefficient (paired seeds). This is not a per-step history nor evidence of a causal mechanism.}
@@ -283,23 +324,27 @@ The supplementary figures compare computational cost and evaluation protocols, a
 }{}
 
 \IfFileExists{figures/fig_class_exposure_vs_delta_recall.pdf}{
-\begin{figure}[t]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.90\linewidth]{figures/fig_class_exposure_vs_delta_recall.pdf}
   \caption{Measured class exposure and differences in recall between sampling policies.}
 \end{figure}
 }{}
 
+\clearpage
+\subsection{Hierarchy Structure}
 \IfFileExists{figures/fig_ward_vs_semantic_dendrogram.pdf}{
-\begin{figure}[t]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.95\linewidth]{figures/fig_ward_vs_semantic_dendrogram.pdf}
   \caption{Empirical clustering structure from validation confusion measurements.}
 \end{figure}
 }{}
 
+\clearpage
+\subsection{Positive Retention and Precision--Recall Diagnostics}
 \IfFileExists{figures/fig_interaction_ratio_methods.pdf}{
-\begin{figure*}[t]
+\begin{figure*}[!htbp]
   \centering
   \includegraphics[width=0.95\linewidth]{figures/fig_interaction_ratio_methods.pdf}
   \caption{Measured performance across the imbalance configurations actually evaluated. Error bands show sample standard deviations.}
@@ -307,7 +352,7 @@ The supplementary figures compare computational cost and evaluation protocols, a
 }{}
 
 \IfFileExists{figures/fig_precision_recall_curves.pdf}{
-\begin{figure}[t]
+\begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.95\linewidth]{figures/fig_precision_recall_curves.pdf}
   \caption{Measured test precision-recall curves for the configured Scenario-1 reference condition. Shaded areas show between-seed standard deviation; Average Precision is reported separately from interpolated curves.}
@@ -315,8 +360,10 @@ The supplementary figures compare computational cost and evaluation protocols, a
 \end{figure}
 }{}
 
+\clearpage
+\subsection{Evaluation Protocols and Paired Inference}
 \IfFileExists{figures/fig_evaluation_4quadrants_comparison.pdf}{
-\begin{figure*}[t]
+\begin{figure*}[!htbp]
   \centering
   \includegraphics[width=0.95\linewidth]{figures/fig_evaluation_4quadrants_comparison.pdf}
   \caption{Measured final-checkpoint and validation-selected-checkpoint test F1 at fixed and validation-calibrated thresholds, aggregated across paired seeds.}
@@ -328,25 +375,5 @@ The supplementary figures compare computational cost and evaluation protocols, a
 \input{tables/tab_paired_effects.tex}
 }{}
 
-\section{Discussion and Limitations}
-\label{sec:discussion}
-The combined Enhanced policy has no consistent advantage over the evaluated baselines. In the binary task, Strict MCTS has the highest mean F1 at 2\% and 1\% positive retention, while OHEM has the highest mean at 10\%. None of the binary F1 comparisons against Enhanced survives the reported multiplicity correction. These results support describing Strict MCTS as competitive within this experiment, without establishing superiority or equivalence.
-
-The mechanism ablation also gives no basis for treating Q-normalization as a general improvement. At 2\% positive retention, its inclusion is associated with lower mean AUPRC in both the pure-mining and Dual-Stream configurations. Normalizing the numerical range of $Q$-values does not, by itself, establish that the resulting exploration policy improves classification.
-
-In multiclass training, reducing the focal-class share recovers part of Enhanced's accuracy deficit. Uniform Grouped also performs below ordinary Uniform sampling. These comparisons motivate closer study of batch composition, but the coverage-balanced policy changes the allocation of examples as well as class exposure. The experiments do not isolate a single cause of the performance gap. Full cumulative coverage is compatible with very low recall on the worst-performing classes; whole-run exposure inequality and exposure--recall associations describe this behavior without identifying its cause.
-
-The principal evidence is limited to frozen embeddings, five seeds per setting, and one binary target class. It does not establish the behavior of the samplers during full backbone fine-tuning. The short Tier-2 runs and leaf-expansion check do not meet the replication level of the main benchmarks. Semantic and Ward trees also differ in depth and branching, so their comparison does not isolate semantic content from topology. The recorded source revision identifies the Ward vector-based construction, but the validation confusion matrix referenced by the artifact manifest is missing. The hierarchy statistics can be recomputed from the supplied outcomes; reconstructing the exact benchmark tree requires that matrix.
-
-The supplied REAL per-seed records permit recomputation of means, sample standard deviations, paired confidence intervals, and the 12-comparison Holm correction. We match runs by campaign, target class, retention setting, hierarchy, and seed, excluding unlisted historical records. All 116 available source files listed in the original artifact manifest match their recorded hashes; the confusion matrix and its sidecar are the two missing entries. The result sidecars retain a shared orchestration seed and a 100-step default, while individual records and training histories report seeds 42--46 and 1,000 or 2,000 updates. The per-run fields and histories are therefore needed to check the executed configurations; the sidecars alone are insufficient.
-
-With five seeds, confidence intervals and paired $t$-tests remain sensitive to distributional assumptions. The main inferential family contains only the 12 stated contrasts, and non-significance does not establish equivalence. The mechanism, hierarchy, and sensitivity analyses are exploratory. In particular, selecting a sensitivity configuration from its observed test performance would require a new evaluation before treating that performance as a final estimate. The positive-retention labels describe subsampling settings rather than literal positive-to-negative pool ratios.
-
-\section{Conclusion}
-\label{sec:conclusion}
-We evaluated hierarchical MCTS-based negative mining on CIFAR-100 frozen embeddings at three positive-retention settings (10\%, 2\%, and 1\%) and in a 100-class curriculum. Strict MCTS is competitive in the binary experiments, but the full Enhanced policy does not show a reliable general advantage. Coverage-balanced sampling improves on Enhanced in the multiclass task while remaining below Uniform sampling. The ablations show why the effects of normalization and batch composition need to be measured separately. Establishing broader applicability requires additional target classes and replicated end-to-end experiments.
-
-\bibliographystyle{unsrt}
-\bibliography{references}
-
+\clearpage
 \end{document}
