@@ -2,17 +2,17 @@
 \begin{table*}[t]
 \centering
 \small
-\caption{Scenario-1 training cost at 2\% positive retention over five paired seeds, each with 1,000 optimizer updates. Time is the recorded training-loop mean $\pm$ sample standard deviation. Gradient samples count training-example exposures, including repeats. Extra candidate forwards are the recorded OHEM candidate-example evaluations beyond the gradient batch; zero does not imply zero total forward computation. Timings include periodic validation, exclude final test evaluation and frozen-backbone feature extraction and do not establish performance on other hardware.}
+\caption{Scenario-1 training cost at 2\% positive retention over five paired seeds, each with 1,000 optimizer updates. Time is the recorded training-loop mean $\pm$ sample standard deviation. Gradient samples count training-example exposures, including repeats. Extra candidate forwards are the recorded OHEM candidate-example evaluations beyond the gradient batch; zero does not imply zero total forward computation. Timings include periodic validation, exclude final test evaluation and frozen-backbone feature extraction and do not establish performance on other hardware. Bold values identify the lowest mean training time and fewest extra candidate forwards; they do not indicate statistical significance.}
 \label{tab:computational_cost}
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{lrrr}
 \toprule
 Sampler & Time (s) & Gradient samples & Extra candidate forwards \\
 \midrule
-Uniform & 8.31 $\pm$ 0.10 & 64,000 & 0 \\
+Uniform & \textbf{8.31 $\pm$ 0.10} & 64,000 & \textbf{0} \\
 OHEM & 9.01 $\pm$ 0.14 & 64,000 & 192,000 \\
-Strict MCTS & 8.53 $\pm$ 0.13 & 64,000 & 0 \\
-Enhanced MCTS-HNM & 8.47 $\pm$ 0.09 & 64,000 & 0 \\
+Strict MCTS & 8.53 $\pm$ 0.13 & 64,000 & \textbf{0} \\
+Enhanced MCTS-HNM & 8.47 $\pm$ 0.09 & 64,000 & \textbf{0} \\
 \bottomrule
 \end{tabular}%
 }

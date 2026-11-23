@@ -54,7 +54,7 @@ Class imbalance makes the choice of training examples important in visual classi
 
 Online Hard Example Mining (OHEM)~\cite{shrivastava2016training} ranks candidate examples by loss, while focal loss~\cite{lin2017focal} reduces the contribution of easy examples. OHEM selects examples from a sampled candidate pool. Hierarchical sampling offers a different way to organize this search: it can maintain estimates of difficulty for groups of classes and use those estimates across training steps.
 
-Qu et al.~\cite{qu2025gianthunter} introduced \textit{GiantHunter}, which uses Monte Carlo Tree Search (MCTS) to select negative viral genomes from a biological taxonomy. This motivates testing hierarchical negative mining in a visual domain. Two design choices warrant evaluation: the scale of the action-value estimates used in the Upper Confidence Bound (UCB1) rule~\cite{auer2002finite}, and the proportion of a batch drawn from a selected class. Normalizing values and mixing mined examples with uniform samples are intended to control these choices; their effect on classification performance must be measured.
+Qu et al.~\cite{qu2025gianthunter} introduced \textit{GiantHunter}, which uses Monte Carlo Tree Search (MCTS) to select negative viral genomes from a biological taxonomy. This motivates testing hierarchical negative mining in a visual domain. Two design choices warrant evaluation: the scale of the action-value estimates used in the Upper Confidence Bound (UCB1) rule~\cite{auer2002finite}, and the proportion of a batch drawn from a selected class. Value normalization and mixing mined examples with uniform samples are intended to control the value scale and batch composition, respectively. Their effect on classification performance must be measured.
 
 We present \textbf{MCTS-HNM}, a framework for evaluating these choices on CIFAR-100 frozen embeddings. Negative selection is treated as a bandit problem over a hierarchy $\mathcal{T}$ whose leaves represent fine classes. We examine the following components:
 \begin{enumerate}
@@ -79,7 +79,7 @@ Experiments on CIFAR-100~\cite{krizhevsky2009learning} across five seeds evaluat
 \label{sec:method}
 
 \subsection{Hierarchical Tree Formulations}
-Let $\mathcal{T} = (\mathcal{V}, \mathcal{E})$ denote a rooted directed tree representing the negative label space. We consider two distinct tree topologies:
+Let $\mathcal{T} = (\mathcal{V}, \mathcal{E})$ denote a rooted directed tree representing the negative label space. We consider two tree topologies:
 \begin{itemize}
     \item \textbf{Native Semantic Tree}: A 3-level hierarchy mapping a Virtual Root to 20 coarse superclasses, each branching into 5 fine classes ($100$ leaves total before excluding the binary target class).
     \item \textbf{Data-Driven Ward Confusion Tree}: A binary dendrogram derived from validation confusion measurements. The symmetric confusion distance is $D_{i,j} = 1 - \frac{C_{i,j} + C_{j,i}}{2 \cdot \max(C)}$, with the diagonal of $C$ set to zero before normalization and the distance diagonal set to zero afterward. If all off-diagonal counts are zero, off-diagonal distances are set to one. The benchmark code at the source revision recorded in the result metadata applies Ward's minimum-variance linkage~\cite{ward1963hierarchical} to row-normalized confusion vectors in Euclidean space. The distance above is computed as a diagnostic; the default Ward construction clusters the original confusion rows, including diagonal entries, after row normalization. A separate legacy distance-based mode is available in the code but is not selected by the benchmark call.
@@ -89,7 +89,7 @@ Let $\mathcal{T} = (\mathcal{V}, \mathcal{E})$ denote a rooted directed tree rep
 
 Each training iteration uses tree selection, optional expansion, a model step, and a value update:
 
-\textbf{1. Selection.} Starting from the root $s_0$, the agent traverses the tree by selecting child node $i \in \text{Children}(s)$ that maximizes the Upper Confidence Bound:
+\textbf{1. Selection.} Starting from the root $s_0$, the agent traverses the tree by selecting the child node $i \in \text{Children}(s)$ that maximizes the Upper Confidence Bound:
 \begin{equation}
     U_i = \bar{Q}_i^{\text{norm}} + c \cdot \sqrt{\frac{\ln N_s}{n_i + \epsilon}},
     \label{eq:ucb1}
@@ -101,11 +101,11 @@ where $N_s$ is the visit count of parent $s$, $n_i$ is the visit count of child 
 \end{equation}
 If all siblings have equal $Q$-values, $\bar{Q}_i^{\text{norm}}$ is set to $0$, so equal values contribute no exploitation preference.
 
-\textbf{2. Expansion.} Once a leaf node $l$ is reached, the model verifies whether $n_l \ge N_{\text{split}}$. If dynamic leaf expansion is active, the leaf is partitioned into $K_{\text{sub}}$ child leaves sorted by prediction entropy $H(p) = -\sum_k p_k \ln(p_k + \epsilon)$, refining mining to the most ambiguous instances of that class.
+\textbf{2. Expansion.} Once a leaf node $l$ is reached, the model checks whether $n_l \ge N_{\text{split}}$. If dynamic leaf expansion is active, the leaf is partitioned into $K_{\text{sub}}$ child leaves sorted by prediction entropy $H(p) = -\sum_k p_k \ln(p_k + \epsilon)$, refining mining to the most ambiguous instances of that class.
 
 \textbf{3. Simulation (Model Step).} The batch sampler draws negative instances from leaf $l$. Under Dual-Stream batching ($\beta \in [0, 1]$), mini-batch $\mathcal{B}_{\text{neg}}$ combines $\lfloor (1 - \beta) B_{\text{neg}} \rfloor$ instances from leaf $l$ and $\lceil \beta B_{\text{neg}} \rceil$ instances sampled uniformly at random across all negative classes. The scalar reward is the mean loss on the MCTS-selected negative sub-batch: $r = \mathcal{L}(\mathcal{B})$. Here $\mathcal{B}$ denotes that sub-batch for reward computation. The optimizer uses the full training batch, including positives and uniform negatives in Scenario 1.
 
-\textbf{4. Momentum Backpropagation.} Leaf value $Q_l$ is updated via momentum ($\alpha = 0.3$):
+\textbf{4. Momentum Backpropagation.} Leaf value $Q_l$ is updated using momentum ($\alpha = 0.3$):
 \begin{equation}
     Q_l^{(t)} = \alpha r + (1 - \alpha) Q_l^{(t-1)}.
     \label{eq:momentum}
@@ -119,7 +119,7 @@ Each ancestor $p$ on the path from $l$ to the root aggregates child values weigh
 \section{Experimental Setup}
 \label{sec:setup}
 
-\textbf{Dataset and Environments.} We use CIFAR-100~\cite{krizhevsky2009learning}, with 50,000 training images and 10,000 test images across 100 fine classes and 20 superclasses. The preprocessing procedure reserves 5,000 of the training images for stratified validation, leaving 45,000 for training. The workflow has two execution tiers:
+\textbf{Dataset and Environments.} We use CIFAR-100~\cite{krizhevsky2009learning}, with 50,000 training images and 10,000 test images across 100 fine classes and 20 superclasses. Preprocessing reserves 5,000 of the training images for stratified validation, leaving 45,000 for training. The workflow has two execution tiers:
 \begin{itemize}
     \item \textbf{Tier 1}: Feature extraction using a frozen, ImageNet-pretrained ResNet-18~\cite{he2016deep} backbone ($512$-dim embeddings) with a 2-layer MLP head ($512 \rightarrow 128 \rightarrow K$) trained via Adam ($\eta = 10^{-3}$) for 1,000 steps in the principal binary benchmark (2,000 in the multi-class benchmark).
     \item \textbf{Tier 2}: End-to-end convolutional training of a CIFAR-adapted ResNet-18 on raw $32 \times 32$ RGB images. The saved end-to-end run uses a quarter-width model, two seeds, and 100 steps per sampler, with a semantic tree. A separate single-seed, 30-step comparison exercises optional leaf expansion. These are implementation checks and do not support five-seed end-to-end performance claims or an evaluation of periodic Ward tree refreshes.
@@ -127,7 +127,7 @@ Each ancestor $p$ on the path from $l$ to the root aggregates child values weigh
 
 \textbf{Evaluation Scenarios.}
 \begin{itemize}
-    \item \textbf{Scenario 1 (One-vs-Rest Binary)}: The positive target class is \textit{beaver}. We retain respectively 10\%, 2\%, and 1\% of its training examples (45, 9, and 4 positives after integer truncation), with 44,550 negatives in each setting. The settings are labeled $1{:}10$, $1{:}50$, and $1{:}100$ (positive-retention settings, not literal positive:negative pool ratios). We measure Minority F1, Average Precision (AUPRC), and FPR at 95\% recall.
+    \item \textbf{Scenario 1 (One-vs-Rest Binary)}: The positive target class is \textit{beaver}. We retain 10\%, 2\%, and 1\% of its training examples, respectively (45, 9, and 4 positives after integer truncation), with 44,550 negatives in each setting. The settings are labeled $1{:}10$, $1{:}50$, and $1{:}100$ (positive-retention settings, not literal positive:negative pool ratios). We measure Minority F1, Average Precision (AUPRC), and FPR at 95\% recall.
     \item \textbf{Scenario 2 (100-way Multi-Class)}: Full multi-class curriculum evaluated on Top-1 Accuracy, Macro-F1, and Worst-10-Class Recall.
 \end{itemize}
 
@@ -144,22 +144,22 @@ We evaluate four principal samplers at three positive-retention settings
 optimizer steps per run. These labels represent retaining 10\%, 2\%,
 and 1\% of the available positive training examples, respectively; they
 are not measured negative-to-positive pool ratios.
-Table~\ref{tab:scenario1_imbalanced} reports the measured results. At
+Table~\ref{tab:scenario1_imbalanced} reports the results. At
 $1{:}10$, OHEM attains the highest mean minority F1 (79.5\%); at
 $1{:}50$ and $1{:}100$, Strict MCTS has the highest mean F1 (69.7\%
 and 60.0\%). At $1{:}50$, Strict also attains the highest mean AUPRC
 (0.736), whereas Enhanced attains 0.685. Dispersion is larger under the
 most severe positive subsampling setting, and these means alone do not
-establish method superiority after multiple-comparison correction. None of the nine binary F1 comparisons against Enhanced remains significant under the reported Holm correction (Table~\ref{tab:paired_effects}).
+establish superiority after multiple-comparison correction. None of the nine binary F1 comparisons against Enhanced remains significant under the reported Holm correction (Table~\ref{tab:paired_effects}).
 
 \input{tables/tab_scenario1_imbalanced.tex}
 
 \subsection{Scenario 2: 100-Class Curriculum}
 The uniform sampler achieves mean Top-1 accuracy of 63.85\%, compared with
 33.43\% for the original Enhanced method over 2,000 steps and five seeds.
-A coverage-balanced MCTS variant achieves 53.06\%, recovering part of this
+A coverage-balanced MCTS variant achieves 53.06\%, narrowing this
 gap without surpassing Uniform; Uniform Grouped reaches approximately 52.24\%.
-All four measured multiclass policies are shown in Table~\ref{tab:scenario2_multiclass}. The three Top-1 comparisons against Enhanced remain significant under the reported Holm correction (Table~\ref{tab:paired_effects}). All four policies reach full cumulative class coverage, yet Enhanced has a mean Worst-10-Class Recall of only 0.7\%, compared with 33.5\% for Uniform. Sampling every class at least once therefore does not imply adequate class-level performance. The seed-paired Uniform-minus-Enhanced Top-1 difference is 30.4 percentage points (95\% CI [28.7, 32.2]); Coverage-Balanced-minus-Enhanced is 19.6 points (95\% CI [16.6, 22.6]). Exposure and recall diagnostics remain descriptive.
+Results for all four multiclass policies appear in Table~\ref{tab:scenario2_multiclass}. The three Top-1 comparisons against Enhanced remain significant under the reported Holm correction (Table~\ref{tab:paired_effects}). All four policies reach full cumulative class coverage, yet Enhanced has a mean Worst-10-Class Recall of only 0.7\%, compared with 33.5\% for Uniform. Sampling every class at least once therefore does not imply adequate class-level performance. The seed-paired Uniform-minus-Enhanced Top-1 difference is 30.4 percentage points (95\% CI [28.7, 32.2]); Coverage-Balanced-minus-Enhanced is 19.6 points (95\% CI [16.6, 22.6]). Exposure and recall diagnostics remain descriptive.
 
 \input{tables/tab_scenario2_multiclass.tex}
 
@@ -185,7 +185,7 @@ Table~\ref{tab:computational_cost} reports the recorded training-loop cost at 2\
 \end{figure*}
 
 \subsection{Mechanism and Hierarchy Ablations}
-Table~\ref{tab:ablation_study} reports measured ablations.
+Table~\ref{tab:ablation_study} reports the ablation results.
 At 2\% positive retention, Q-normalization alone attains AUPRC 0.684, compared with 0.736 for Strict MCTS. Dual-Stream batching alone attains F1 0.711 and AUPRC 0.734; combining it with normalization yields F1 0.680 and AUPRC 0.685. The combined policy does not improve either metric over Dual-Stream batching alone. With five seeds, the comparison of
 Semantic and Ward hierarchies does not provide sufficient evidence to establish
 a performance difference in this setting. Non-significance does not establish equivalence. The semantic tree has maximum and mean leaf depths of 2, whereas the benchmark Ward tree has maximum depth 39 and mean leaf depth 17.45. This comparison therefore changes topology as well as the information used to construct the hierarchy. The paired Semantic-minus-Ward AUPRC difference is 0.0099 (95\% CI $[-0.0572, 0.0770]$; exploratory raw $p=0.703$).
@@ -200,13 +200,13 @@ Table~\ref{tab:factorial_effects} decomposes AUPRC into paired main effects and 
 \begin{figure*}[t]
   \centering
   \includegraphics[width=0.94\linewidth]{figures/fig_ablation_2x2.pdf}
-  \caption{Empirically measured 2-by-2 mechanism ablation; bars show mean and standard deviation across seeds.}
+  \caption{2-by-2 mechanism ablation; bars show mean and standard deviation across seeds.}
   \label{fig:factorial}
 \end{figure*}
 }{}
 
 \subsection{Checkpoint and Threshold Evaluation}
-Table~\ref{tab:evaluation_protocols} separates the four evaluation protocols at 2\% positive retention. For Enhanced, final-checkpoint test F1 is $52.4\% \pm 9.4\%$ at a fixed threshold of 0.5 and $68.0\% \pm 3.1\%$ with a validation-calibrated threshold. At the validation-selected checkpoint, these values are $69.3\% \pm 2.4\%$ and $70.8\% \pm 2.9\%$, respectively. The values are means and sample standard deviations across five seeds. The numerical differences show why checkpoint selection and threshold calibration must be specified when comparing samplers; they are not additional independent replications.
+Table~\ref{tab:evaluation_protocols} separates the four evaluation protocols at 2\% positive retention. For Enhanced, final-checkpoint test F1 is $52.4\% \pm 9.4\%$ at a fixed threshold of 0.5 and $68.0\% \pm 3.1\%$ with a validation-calibrated threshold. At the validation-selected checkpoint, these values are $69.3\% \pm 2.4\%$ and $70.8\% \pm 2.9\%$, respectively. The values are means and sample standard deviations across five seeds. These differences show why checkpoint selection and threshold calibration must be specified when comparing samplers; they are not additional independent replications.
 
 \input{tables/tab_evaluation_protocols.tex}
 
@@ -228,9 +228,9 @@ Supplementary diagnostic figures and the full paired-effects table are grouped i
 \label{sec:discussion}
 The combined Enhanced policy has no consistent advantage over the evaluated baselines. In the binary task, Strict MCTS has the highest mean F1 at 2\% and 1\% positive retention, while OHEM has the highest mean at 10\%. None of the binary F1 comparisons against Enhanced survives the reported multiplicity correction. These results support describing Strict MCTS as competitive within this experiment, without establishing superiority or equivalence.
 
-The mechanism ablation also gives no basis for treating Q-normalization as a general improvement. At 2\% positive retention, its inclusion is associated with lower mean AUPRC in both the pure-mining and Dual-Stream configurations. Normalizing the numerical range of $Q$-values does not, by itself, establish that the resulting exploration policy improves classification.
+The mechanism ablation does not support treating Q-normalization as a general improvement. At 2\% positive retention, its inclusion is associated with lower mean AUPRC in both the pure-mining and Dual-Stream configurations. Normalizing the numerical range of $Q$-values does not, by itself, establish that the resulting exploration policy improves classification.
 
-In multiclass training, reducing the focal-class share recovers part of Enhanced's accuracy deficit. Uniform Grouped also performs below ordinary Uniform sampling. These comparisons motivate closer study of batch composition, but the coverage-balanced policy changes the allocation of examples as well as class exposure. The experiments do not isolate a single cause of the performance gap. Full cumulative coverage is compatible with very low recall on the worst-performing classes; whole-run exposure inequality and exposure--recall associations describe this behavior without identifying its cause.
+In multiclass training, reducing the focal-class share narrows Enhanced's accuracy deficit. Uniform Grouped also performs below ordinary Uniform sampling. These comparisons motivate closer study of batch composition, but the coverage-balanced policy changes the allocation of examples as well as class exposure. The experiments do not isolate a single cause of the performance gap. Full cumulative coverage is compatible with very low recall on the worst-performing classes; whole-run exposure inequality and exposure--recall associations describe this behavior without identifying its cause.
 
 The principal evidence is limited to frozen embeddings, five seeds per setting, and one binary target class. It does not establish the behavior of the samplers during full backbone fine-tuning. The short Tier-2 runs and leaf-expansion check do not meet the replication level of the main benchmarks. Semantic and Ward trees also differ in depth and branching, so their comparison does not isolate semantic content from topology. The validation confusion matrix needed to reconstruct the exact benchmark Ward tree is unavailable, although hierarchy statistics can be recomputed from the supplied outcomes. Appendix~\ref{app:reproducibility} records the provenance and verification details.
 
@@ -253,7 +253,7 @@ We evaluated hierarchical MCTS-based negative mining on CIFAR-100 frozen embeddi
 Notebook 01 performs preprocessing and reserves the stratified validation split described in Section~\ref{sec:setup}. Notebook 03 reports the sensitivity experiment's final-checkpoint and validation-selected-checkpoint outcomes, with fixed and calibrated thresholds. Notebook 04 contains the saved Tier-2 run described in Section~\ref{sec:setup}.
 
 \subsection{Source Records and Artifact Verification}
-The supplied REAL per-seed records permit recomputation of means, sample standard deviations, paired confidence intervals, and the 12-comparison Holm correction. We match runs by campaign, target class, retention setting, hierarchy, and seed, excluding unlisted historical records. All 116 available source files listed in the original artifact manifest match their recorded hashes; the confusion matrix and its sidecar are the two missing entries. The result sidecars retain a shared orchestration seed and a 100-step default, while individual records and training histories report seeds 42--46 and 1,000 or 2,000 updates. The per-run fields and histories are therefore needed to check the executed configurations; the sidecars alone are insufficient.
+The supplied REAL per-seed records can be used to recompute means, sample standard deviations, paired confidence intervals, and the 12-comparison Holm correction. We match runs by campaign, target class, retention setting, hierarchy, and seed, excluding unlisted historical records. All 116 available source files listed in the original artifact manifest match their recorded hashes; the confusion matrix and its sidecar are the two missing entries. The result sidecars retain a shared orchestration seed and a 100-step default, while individual records and training histories report seeds 42--46 and 1,000 or 2,000 updates. The per-run fields and histories are therefore needed to check the executed configurations; the sidecars alone are insufficient.
 
 The recorded source revision identifies the Ward vector-based construction. The validation confusion matrix referenced by the artifact manifest is missing. The hierarchy statistics can be recomputed from the supplied outcomes; reconstructing the exact benchmark tree requires that matrix.
 
@@ -291,7 +291,7 @@ The supplementary figures compare computational cost and evaluation protocols, a
 \begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.90\linewidth]{figures/fig_pareto_cost_vs_accuracy_bestval_r1_50.pdf}
-  \caption{Alternative Pareto evaluation protocol at 2\% positive retention: TEST F1 of the checkpoint selected using validation, against recorded training-loop wall-clock time. Kept separate from the primary last-checkpoint Pareto plot.}
+  \caption{Alternative Pareto evaluation protocol at 2\% positive retention: test F1 of the checkpoint selected using validation, against recorded training-loop wall-clock time. This protocol is reported separately from the primary last-checkpoint Pareto plot.}
 \end{figure}
 }{}
 
@@ -318,7 +318,7 @@ The supplementary figures compare computational cost and evaluation protocols, a
 \begin{figure}[!htbp]
   \centering
   \includegraphics[width=0.94\linewidth]{figures/fig_class_exposure_concentration.pdf}
-  \caption{Final, whole-run class sampling concentration: effective number of exposed classes and class-exposure Gini coefficient (paired seeds). This is not a per-step history nor evidence of a causal mechanism.}
+  \caption{Final, whole-run class sampling concentration: effective number of exposed classes and class-exposure Gini coefficient (paired seeds). These whole-run statistics do not provide a per-step history or establish a causal mechanism.}
   \label{fig:concentration}
 \end{figure}
 }{}
@@ -347,7 +347,7 @@ The supplementary figures compare computational cost and evaluation protocols, a
 \begin{figure*}[!htbp]
   \centering
   \includegraphics[width=0.95\linewidth]{figures/fig_interaction_ratio_methods.pdf}
-  \caption{Measured performance across the imbalance configurations actually evaluated. Error bands show sample standard deviations.}
+  \caption{Performance across the evaluated imbalance configurations. Error bands show sample standard deviations.}
 \end{figure*}
 }{}
 
