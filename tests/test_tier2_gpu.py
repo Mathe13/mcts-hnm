@@ -15,6 +15,11 @@ from src.training.tier2_gpu import (
     Tier2Data,
     Tier2RunConfig,
     binary_metrics,
+    extract_results_zip_from_notebook,
+    holm_adjust,
+    pooled_tier2_tests,
+    write_tier2_latex_table,
+    write_tier2_pooled_latex_table,
     load_tier2_records,
     random_crop_flip,
     run_tier2_campaign,
@@ -113,3 +118,47 @@ def test_campaign_runs_all_strategies_and_resumes(tmp_path, tree_type: str) -> N
     assert {t["comparison"] for t in tests} == {
         "uniform - mcts_strict", "ohem - mcts_strict", "mcts_enhanced - mcts_strict"
     }
+
+
+def test_holm_adjust_matches_hand_computation() -> None:
+    assert holm_adjust([0.01, 0.04, 0.03]) == pytest.approx([0.03, 0.06, 0.06])
+
+
+def _fake_records() -> list[dict]:
+    recs = []
+    for tc, name in ((0, "apple"), (4, "beaver")):
+        for seed in range(42, 47):
+            for strat, bonus in (("uniform", 0.0), ("ohem", -0.01), ("mcts_strict", 0.05), ("mcts_enhanced", 0.02)):
+                m = {"auprc": 0.5 + bonus + 0.001 * seed, "f1": 0.4 + bonus, "fpr_at_95_recall": 0.2}
+                recs.append({"target_class": tc, "target_class_name": name, "imbalance_ratio": "1:50",
+                             "strategy": strat, "seed": seed, "final_metrics": m,
+                             "best_validation_metrics": dict(m)})
+    return recs
+
+
+def test_pooled_tests_and_latex_tables(tmp_path) -> None:
+    recs = _fake_records()
+    rows = pooled_tier2_tests(recs, metric="auprc")
+    assert {r["comparison"] for r in rows} == {"uniform - mcts_strict", "ohem - mcts_strict",
+                                               "mcts_enhanced - mcts_strict"}
+    assert all(r["n_pairs"] == 10 and r["reference_wins"] == 10 and r["mean_diff"] < 0 for r in rows)
+    t1 = write_tier2_latex_table(recs, tmp_path / "a.tex").read_text(encoding="utf-8")
+    t2 = write_tier2_pooled_latex_table(recs, tmp_path / "b.tex").read_text(encoding="utf-8")
+    assert "beaver" in t1 and t1.count(r"\textbf{") == 8
+    assert "10/10" in t2 and r"\label{tab:tier2_pooled}" in t2
+
+
+def test_results_zip_roundtrip_through_notebook_output(tmp_path, capsys) -> None:
+    from src.training.tier2_gpu import print_results_zip
+
+    src_dir = tmp_path / "res"
+    src_dir.mkdir()
+    (src_dir / "run.json").write_text('{"a": 1}', encoding="utf-8")
+    print_results_zip(src_dir, tmp_path / "bundle")
+    text = capsys.readouterr().out
+    nb = {"cells": [{"cell_type": "code", "outputs": [{"output_type": "stream", "text": text.splitlines(True)}]}]}
+    nb_path = tmp_path / "nb.ipynb"
+    nb_path.write_text(json.dumps(nb), encoding="utf-8")
+    names = extract_results_zip_from_notebook(nb_path, tmp_path / "out")
+    assert names == ["run.json"]
+    assert (tmp_path / "out" / "run.json").read_text(encoding="utf-8") == '{"a": 1}'
