@@ -180,6 +180,15 @@ On JupyterHub or a local workstation with CIFAR-100 available:
 
 Or execute the complete master pipeline sequentially in one click via [`notebooks/00_master_end_to_end.ipynb`](notebooks/00_master_end_to_end.ipynb).
 
+### 2b. Tier-2 GPU Campaign (fine-tuned backbone, Colab T4/A100)
+[`notebooks/06_tier2_gpu_campaign.ipynb`](notebooks/06_tier2_gpu_campaign.ipynb) asks whether MCTS-HNM helps once the representation can learn. It fine-tunes the same ImageNet ResNet-18 that Tier 1 keeps frozen, with the same MLP head, the same 45k/5k split, the same Scenario-1 positive subsampling and batch composition, and the same evaluation protocol: a validation-calibrated threshold, the best-validation-AUPRC checkpoint, and test scored once after training. Implementation: [`src/training/tier2_gpu.py`](src/training/tier2_gpu.py).
+
+- Images stay on the GPU as uint8 tensors and are augmented and upsampled on the device. Training uses AMP: bf16 on A100, fp16 with gradient scaling on T4.
+- Presets: `smoke` checks the pipeline and measures ms/step. `pilot` (backbone lr 1e-4) and `pilot_lowlr` (1e-5) are 2-seed pilots; the first was unstable, so the second fixed the recipe. `full` is the paper campaign: classes apple, beaver and rocket, 4 samplers, 5 seeds, 1,000 steps, backbone lr 1e-5 (~30 min on an A100). `frozen_check` freezes the backbone as a sanity check against Tier 1.
+- Each run writes `results/real/tier2/<run_id>.json`. Re-running skips finished runs, so an interrupted Colab session resumes where it stopped.
+- When the kernel runs on a remote Colab VM, the first cell clones this branch. Results go to Google Drive when it can be mounted. Otherwise, for example under the VS Code Colab extension, the last cell prints them as a base64 zip into the notebook output. Save the notebook and run `python -m src.training.tier2_gpu notebooks/06_tier2_gpu_campaign.ipynb` to unpack them into `results/real/tier2/`.
+- Results of the `full` campaign are committed under `results/real/tier2/` (60 run JSONs plus summary and paired-test CSVs).
+
 ### 3. Reproducing Publication Figures & Tables Programmatically
 ```python
 from src.utils.experiment_config import ExecutionMode, ExperimentConfig
