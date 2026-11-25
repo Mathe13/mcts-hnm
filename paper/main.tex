@@ -102,7 +102,14 @@ Let $\mathcal{T} = (\mathcal{V}, \mathcal{E})$ denote a rooted directed tree rep
 
 \subsection{The Four MCTS-HNM Operations}
 
-Each training iteration uses tree selection, optional expansion, a model step, and a value update:
+Each training iteration uses tree selection, optional expansion, a model step, and a value update (Figure~\ref{fig:method}):
+
+\begin{figure*}[t]
+  \centering
+  \includegraphics[width=\linewidth]{figures/fig_method_overview.pdf}
+  \caption{One MCTS-HNM training step in the binary scenario (target class \textit{apple}, excluded from the tree). \textcircled{\scriptsize 1}~UCB selection descends the negative-class hierarchy to a leaf class; \textcircled{\scriptsize 2}~negatives are drawn from that leaf (Strict) or half from the leaf and half uniformly (Enhanced); \textcircled{\scriptsize 3}~the 16 positive + 48 negative batch updates the classifier; \textcircled{\scriptsize 4}~the mean loss on the mined negatives is the reward; \textcircled{\scriptsize 5}~the leaf value is updated by an exponential moving average and propagated to its ancestors. Source: \texttt{figures/fig\_method\_overview.drawio}.}
+  \label{fig:method}
+\end{figure*}
 
 \textbf{1. Selection.} Starting from the root $s_0$, the agent traverses the tree by selecting the child node $i \in \text{Children}(s)$ that maximizes the Upper Confidence Bound:
 \begin{equation}
