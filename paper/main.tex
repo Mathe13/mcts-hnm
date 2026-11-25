@@ -40,8 +40,14 @@ sampling variant improves substantially on the original Enhanced policy
 but remains below Uniform sampling (53.06\% versus 63.85\% mean Top-1
 accuracy, compared with 33.43\% for Enhanced). Mechanism and batch-composition
 ablations show that the tested normalization and sampling choices do not
-consistently improve performance. The findings are limited to the evaluated
-settings and do not establish general superiority.
+consistently improve performance. When the ResNet-18 backbone is fine-tuned
+on three target classes with nine positive images each, Strict MCTS ends
+training with higher test AUPRC than Uniform, OHEM, and Enhanced (pooled
+Holm-adjusted Wilcoxon $p \le 0.035$), but the differences vanish when each
+run is stopped at its validation-selected checkpoint. Its advantage is
+therefore robustness to late-training degradation rather than a better
+peak model. The findings are limited to the evaluated settings and do not
+establish general superiority.
 
 \end{abstract}
 
@@ -64,7 +70,14 @@ We present \textbf{MCTS-HNM}, a framework for evaluating these choices on CIFAR-
     \item \textbf{Dynamic Leaf Sub-Clustering}: An optional entropy-based expansion partitions a class leaf into groups of instances. Its end-to-end implementation is examined separately from the principal benchmarks.
 \end{enumerate}
 
-Experiments on CIFAR-100~\cite{krizhevsky2009learning} across five seeds evaluate binary one-vs-rest classification and a 100-class curriculum. The results do not establish a general advantage for the combined Enhanced policy. They allow us to compare its components and examine how class exposure and batch composition relate to performance.
+We state three hypotheses before the experiments:
+\begin{itemize}
+    \item \textbf{H1 (hierarchical mining).} Under severe positive scarcity, Strict MCTS negative selection yields higher minority-class AUPRC and F1 than Uniform sampling and OHEM.
+    \item \textbf{H2 (enhancements).} $Q$-normalization and Dual-Stream batching (the Enhanced policy) improve on Strict MCTS.
+    \item \textbf{H3 (representation learning).} The ranking of samplers observed with a frozen backbone persists when the backbone is fine-tuned.
+\end{itemize}
+
+Experiments on CIFAR-100~\cite{krizhevsky2009learning} across five seeds evaluate binary one-vs-rest classification and a 100-class curriculum with frozen embeddings (Tier 1), and binary classification for three target classes with a fine-tuned backbone (Tier 2). The results do not establish a general advantage for the combined Enhanced policy. They allow us to compare its components and examine how class exposure and batch composition relate to performance.
 
 \section{Related Work}
 \label{sec:related}
@@ -74,6 +87,8 @@ Experiments on CIFAR-100~\cite{krizhevsky2009learning} across five seeds evaluat
 \textbf{Monte Carlo Tree Search in Machine Learning.} MCTS has been used in games~\cite{silver2016mastering} and is related to sequential decision-making and planning~\cite{sutton2018reinforcement}. GiantHunter~\cite{qu2025gianthunter} applies it to negative selection in metagenomic classification. We adapt hierarchical sampling to visual classification and compare raw and normalized $Q$-values, as well as batches with different proportions of mined examples.
 
 \textbf{Hierarchical and Curriculum Learning.} Curriculum learning studies how the order and selection of training examples affect learning~\cite{bengio2009curriculum}. Our comparison of semantic and Ward clustering trees~\cite{ward1963hierarchical} examines the hierarchy used to select examples. The classifier still predicts fine-class labels; the tree controls sampling.
+
+\textbf{Data Selection as a Sequential Decision Problem.} Treating the choice of training data as a bandit problem has precedents. Automated curriculum learning uses a non-stationary multi-armed bandit whose reward is a learning-progress signal~\cite{graves2017automated}, and teacher--student curricula select subtasks by the slope of the student's learning curve~\cite{matiisen2020teacher}. Prioritized experience replay samples transitions in proportion to their temporal-difference error~\cite{schaul2016prioritized}, and loss-based online batch selection~\cite{loshchilov2015online} and importance sampling by gradient norm~\cite{katharopoulos2018not} prioritize individual examples. MCTS-HNM differs in two respects: its arms are nodes of a class hierarchy rather than individual examples or tasks, and its reward is the raw loss on the selected negatives, which drifts as the model learns. Because that reward is non-stationary, discounted and sliding-window UCB policies~\cite{garivier2011upper} are a natural alternative to the exponential moving average of Eq.~\eqref{eq:momentum}; we do not evaluate them here.
 
 \section{Methodology}
 \label{sec:method}
@@ -122,12 +137,12 @@ Each ancestor $p$ on the path from $l$ to the root aggregates child values weigh
 \textbf{Dataset and Environments.} We use CIFAR-100~\cite{krizhevsky2009learning}, with 50,000 training images and 10,000 test images across 100 fine classes and 20 superclasses. Preprocessing reserves 5,000 of the training images for stratified validation, leaving 45,000 for training. The workflow has two execution tiers:
 \begin{itemize}
     \item \textbf{Tier 1}: Feature extraction using a frozen, ImageNet-pretrained ResNet-18~\cite{he2016deep} backbone ($512$-dim embeddings) with a 2-layer MLP head ($512 \rightarrow 128 \rightarrow K$) trained via Adam ($\eta = 10^{-3}$) for 1,000 steps in the principal binary benchmark (2,000 in the multi-class benchmark).
-    \item \textbf{Tier 2}: End-to-end convolutional training of a CIFAR-adapted ResNet-18 on raw $32 \times 32$ RGB images. The saved end-to-end run uses a quarter-width model, two seeds, and 100 steps per sampler, with a semantic tree. A separate single-seed, 30-step comparison exercises optional leaf expansion. These are implementation checks and do not support five-seed end-to-end performance claims or an evaluation of periodic Ward tree refreshes.
+    \item \textbf{Tier 2}: Fine-tuning of the same ImageNet-pretrained ResNet-18 that Tier 1 keeps frozen, with the same MLP head, the same 45,000/5,000 split, the same positive subsampling, the same 16+48 batch composition, and the same evaluation protocol. Training images are randomly cropped (4-pixel padding) and flipped, upsampled to $224 \times 224$, and normalized with ImageNet statistics. Adam uses learning rates $10^{-5}$ for the backbone and $10^{-3}$ for the head, without weight decay, for 1,000 steps, with validation every 50 steps and bf16 mixed precision on one NVIDIA A100. The backbone learning rate was set from a two-seed pilot on \textit{apple} (seeds 42--43, reused in the campaign): with $10^{-4}$, validation AUPRC peaked within the first 50--150 steps and then fluctuated, whereas $10^{-5}$ gave stable curves. Earlier quarter-width, 100-step end-to-end runs and a 30-step leaf-expansion check are implementation tests only and are not reported as results.
 \end{itemize}
 
 \textbf{Evaluation Scenarios.}
 \begin{itemize}
-    \item \textbf{Scenario 1 (One-vs-Rest Binary)}: The positive target class is \textit{beaver}. We retain 10\%, 2\%, and 1\% of its training examples, respectively (45, 9, and 4 positives after integer truncation), with 44,550 negatives in each setting. The settings are labeled $1{:}10$, $1{:}50$, and $1{:}100$ (positive-retention settings, not literal positive:negative pool ratios). We measure Minority F1, Average Precision (AUPRC), and FPR at 95\% recall.
+    \item \textbf{Scenario 1 (One-vs-Rest Binary)}: The positive target class is \textit{apple} (CIFAR-100 fine class 0) in all Tier-1 experiments; Tier 2 adds \textit{beaver} and \textit{rocket}. We retain 10\%, 2\%, and 1\% of its training examples, respectively (45, 9, and 4 positives after integer truncation), with 44,550 negatives in each setting. The settings are labeled $1{:}10$, $1{:}50$, and $1{:}100$ (positive-retention settings, not literal positive:negative pool ratios). We measure Minority F1, Average Precision (AUPRC), and FPR at 95\% recall.
     \item \textbf{Scenario 2 (100-way Multi-Class)}: Full multi-class curriculum evaluated on Top-1 Accuracy, Macro-F1, and Worst-10-Class Recall.
 \end{itemize}
 
@@ -162,6 +177,15 @@ gap without surpassing Uniform; Uniform Grouped reaches approximately 52.24\%.
 Results for all four multiclass policies appear in Table~\ref{tab:scenario2_multiclass}. The three Top-1 comparisons against Enhanced remain significant under the reported Holm correction (Table~\ref{tab:paired_effects}). All four policies reach full cumulative class coverage, yet Enhanced has a mean Worst-10-Class Recall of only 0.7\%, compared with 33.5\% for Uniform. Sampling every class at least once therefore does not imply adequate class-level performance. The seed-paired Uniform-minus-Enhanced Top-1 difference is 30.4 percentage points (95\% CI [28.7, 32.2]); Coverage-Balanced-minus-Enhanced is 19.6 points (95\% CI [16.6, 22.6]). Exposure and recall diagnostics remain descriptive.
 
 \input{tables/tab_scenario2_multiclass.tex}
+
+\subsection{Tier 2: Fine-Tuned Backbone}
+\label{sec:tier2}
+Table~\ref{tab:tier2_finetune} reports the fine-tuning campaign at 2\% positive retention for \textit{apple}, \textit{beaver}, and \textit{rocket}, with five paired seeds per class (60 runs). Difficulty differs strongly between classes: mean final AUPRC ranges from 0.67--0.72 for \textit{apple} to 0.08--0.11 for \textit{beaver}, against a chance level of 0.01 at 1\% test prevalence. At the final step, Strict MCTS has the highest mean AUPRC for \textit{apple} and \textit{beaver} and the highest mean F1 for all three classes; for \textit{rocket}, Enhanced has a marginally higher mean AUPRC (0.389 versus 0.385). For \textit{apple}, the Tier-2 Strict result (0.721 final, 0.738 validation-selected) is close to the Tier-1 frozen-backbone result (0.736): fine-tuning on nine positive images does not improve on frozen features.
+
+Table~\ref{tab:tier2_pooled} pools the 15 class--seed pairs. At the final step, Strict MCTS has higher AUPRC than OHEM in 15 of 15 pairs and higher than Uniform and Enhanced in 12 of 15 (Holm-adjusted Wilcoxon $p < 0.001$, $0.007$, and $0.035$), and higher F1 than every alternative in all 15 pairs. With the checkpoint selected by validation AUPRC, no AUPRC difference remains (adjusted $p \ge 0.62$), and only the F1 difference to Uniform remains below 0.05. The two protocols therefore answer different questions. Every sampler reaches a similar peak, but the samplers differ in how much of that peak they retain by the end of training. The median validation-selected step is 100--450 for OHEM, depending on the class, and 600--650 for Strict MCTS.
+
+\IfFileExists{tables/tab_tier2_finetune.tex}{\input{tables/tab_tier2_finetune.tex}}{}
+\IfFileExists{tables/tab_tier2_pooled.tex}{\input{tables/tab_tier2_pooled.tex}}{}
 
 \subsection{Training and Hierarchy Diagnostics}
 Figure~\ref{fig:convergence} shows validation F1 and loss over training at 2\% positive retention. Figure~\ref{fig:heatmap} reports how MCTS visits are distributed across superclasses. These plots describe optimization and sampling behavior; test-set comparisons are reported in the tables.
@@ -232,13 +256,17 @@ The mechanism ablation does not support treating Q-normalization as a general im
 
 In multiclass training, reducing the focal-class share narrows Enhanced's accuracy deficit. Uniform Grouped also performs below ordinary Uniform sampling. These comparisons motivate closer study of batch composition, but the coverage-balanced policy changes the allocation of examples as well as class exposure. The experiments do not isolate a single cause of the performance gap. Full cumulative coverage is compatible with very low recall on the worst-performing classes; whole-run exposure inequality and exposure--recall associations describe this behavior without identifying its cause.
 
-The principal evidence is limited to frozen embeddings, five seeds per setting, and one binary target class. It does not establish the behavior of the samplers during full backbone fine-tuning. The short Tier-2 runs and leaf-expansion check do not meet the replication level of the main benchmarks. Semantic and Ward trees also differ in depth and branching, so their comparison does not isolate semantic content from topology. The validation confusion matrix needed to reconstruct the exact benchmark Ward tree is unavailable, although hierarchy statistics can be recomputed from the supplied outcomes. Appendix~\ref{app:reproducibility} records the provenance and verification details.
+With regard to the hypotheses, H1 receives partial support. With frozen embeddings, Strict MCTS has the best mean F1 at 2\% and 1\% retention without significant differences. With fine-tuning, it is significantly better at the final step but not at the validation-selected checkpoint. H2 is not supported: the Enhanced policy does not improve on Strict in either tier. H3 is supported for the ranking but not for absolute performance, since fine-tuning does not improve on frozen features for \textit{apple}.
+
+The Tier-2 protocol contrast suggests an interpretation that the experiments do not test directly. With nine positive images, all samplers drive the training loss close to zero within a few hundred steps, after which further updates mainly fit the few positives and the selected negatives. OHEM concentrates every update on the currently highest-loss candidates and reaches its validation peak earliest. Strict MCTS also seeks high-loss negatives, but at the level of a leaf class. The momentum average and visit-count bonus spread its selections across classes over time, which may act as a regularizer against fitting individual hard examples. In practice the final-step advantage matters when the validation set is too small to select checkpoints reliably; here it contains 50 positives per class.
+
+The Tier-1 evidence is limited to frozen embeddings, five seeds per setting, and one binary target class. Tier 2 extends the binary comparison to three classes with fine-tuning, but only at 2\% retention, with one learning-rate setting chosen from a pilot on one of those classes, and without a frozen-backbone control run through the same GPU preprocessing pipeline. Its pooled tests treat class--seed pairs as exchangeable although seeds within a class are correlated. Semantic and Ward trees also differ in depth and branching, so their comparison does not isolate semantic content from topology. The validation confusion matrix needed to reconstruct the exact benchmark Ward tree is unavailable, although hierarchy statistics can be recomputed from the supplied outcomes. Appendix~\ref{app:reproducibility} records the provenance and verification details.
 
 With five seeds, confidence intervals and paired $t$-tests remain sensitive to distributional assumptions. The main inferential family contains only the 12 stated contrasts, and non-significance does not establish equivalence. The mechanism, hierarchy, and sensitivity analyses are exploratory. In particular, selecting a sensitivity configuration from its observed test performance would require a new evaluation before treating that performance as a final estimate. The positive-retention labels describe subsampling settings rather than literal positive-to-negative pool ratios.
 
 \section{Conclusion}
 \label{sec:conclusion}
-We evaluated hierarchical MCTS-based negative mining on CIFAR-100 frozen embeddings at three positive-retention settings (10\%, 2\%, and 1\%) and in a 100-class curriculum. Strict MCTS is competitive in the binary experiments, but the full Enhanced policy does not show a reliable general advantage. Coverage-balanced sampling improves on Enhanced in the multiclass task while remaining below Uniform sampling. The ablations show why the effects of normalization and batch composition need to be measured separately. Establishing broader applicability requires additional target classes and replicated end-to-end experiments.
+We evaluated hierarchical MCTS-based negative mining on CIFAR-100 frozen embeddings at three positive-retention settings (10\%, 2\%, and 1\%) and in a 100-class curriculum. Strict MCTS is competitive in the binary experiments, but the full Enhanced policy does not show a reliable general advantage. Coverage-balanced sampling improves on Enhanced in the multiclass task while remaining below Uniform sampling. The ablations show why the effects of normalization and batch composition need to be measured separately. With a fine-tuned backbone, Strict MCTS retains more of its peak performance until the end of training than Uniform, OHEM, or Enhanced sampling, although all four reach similar validation-selected peaks. Establishing broader applicability requires more target classes and retention settings, a frozen-backbone control within the fine-tuning pipeline, and rewards designed for non-stationarity, such as learning progress or discounted UCB.
 
 \clearpage
 \bibliographystyle{unsrt}
@@ -250,7 +278,7 @@ We evaluated hierarchical MCTS-based negative mining on CIFAR-100 frozen embeddi
 \label{app:reproducibility}
 
 \subsection{Workflow and Executed Configurations}
-Notebook 01 performs preprocessing and reserves the stratified validation split described in Section~\ref{sec:setup}. Notebook 03 reports the sensitivity experiment's final-checkpoint and validation-selected-checkpoint outcomes, with fixed and calibrated thresholds. Notebook 04 contains the saved Tier-2 run described in Section~\ref{sec:setup}.
+Notebook 01 performs preprocessing and reserves the stratified validation split described in Section~\ref{sec:setup}. Notebook 03 reports the sensitivity experiment's final-checkpoint and validation-selected-checkpoint outcomes, with fixed and calibrated thresholds. Notebook 04 contains the earlier end-to-end implementation checks. Notebook 06 runs the Tier-2 fine-tuning campaign of Section~\ref{sec:tier2} on a Colab GPU. Its per-run records, with GPU model, precision, library versions, training histories, and MCTS diagnostics, are stored in \texttt{results/real/tier2/}. Tables~\ref{tab:tier2_finetune} and~\ref{tab:tier2_pooled} are generated from these records by \texttt{src/training/tier2\_gpu.py}.
 
 \subsection{Source Records and Artifact Verification}
 The supplied REAL per-seed records can be used to recompute means, sample standard deviations, paired confidence intervals, and the 12-comparison Holm correction. We match runs by campaign, target class, retention setting, hierarchy, and seed, excluding unlisted historical records. All 116 available source files listed in the original artifact manifest match their recorded hashes; the confusion matrix and its sidecar are the two missing entries. The result sidecars retain a shared orchestration seed and a 100-step default, while individual records and training histories report seeds 42--46 and 1,000 or 2,000 updates. The per-run fields and histories are therefore needed to check the executed configurations; the sidecars alone are insufficient.
