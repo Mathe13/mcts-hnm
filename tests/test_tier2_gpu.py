@@ -148,6 +148,20 @@ def test_pooled_tests_and_latex_tables(tmp_path) -> None:
     assert "10/10" in t2 and r"\label{tab:tier2_pooled}" in t2
 
 
+def test_backbone_comparison_table(tmp_path) -> None:
+    from src.training.tier2_gpu import write_tier2_backbone_latex_table
+
+    ft = [r for r in _fake_records() if r["target_class"] == 0]
+    fz = json.loads(json.dumps(ft))
+    for r in ft + fz:
+        r["best_validation_metrics"]["selected_step"] = 300
+    for r in fz:
+        r["final_metrics"]["auprc"] += 0.1
+    text = write_tier2_backbone_latex_table(fz, ft, tmp_path / "c.tex").read_text(encoding="utf-8")
+    assert "apple" in text and "(5/5)" in text and r"\label{tab:tier2_frozen}" in text
+    assert text.count(r" \\") == 4 + 2  # four strategy rows + two header rows
+
+
 def test_results_zip_roundtrip_through_notebook_output(tmp_path, capsys) -> None:
     from src.training.tier2_gpu import print_results_zip
 
